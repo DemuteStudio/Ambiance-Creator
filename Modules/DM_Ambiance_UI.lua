@@ -14,7 +14,7 @@ local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 
 local UI_Preset = require("DM_Ambiance_UI_Preset")
-
+local UI_Container = require("DM_Ambiance_UI_Container")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
@@ -34,174 +34,62 @@ function UI.initModule(g)
   
   -- Initialize UI sub-modules
   UI_Preset.initModule(globals)
-end
-
--- Function to display global preset controls in the top section
-local function drawPresetControls()
-  -- Section title with colored text
-  reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Global Presets")
-  
-  -- Refresh button to update preset list
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Refresh") then
-    Presets.listPresets("Global", nil, true)
-  end
-  
-  -- Dropdown list of presets
-  reaper.ImGui_SameLine(globals.ctx)
-  
-  -- Get the preset list from presets module
-  local presetList = Presets.listPresets("Global")
-  
-  -- Prepare items for the dropdown (ImGui Combo)
-  -- The \0 character is used as a separator in ImGui
-  local presetItems = ""
-  for _, name in ipairs(presetList) do
-    presetItems = presetItems .. name .. "\0"
-  end
-  presetItems = presetItems .. "\0"
-  
-  -- Display the dropdown list with existing presets
-  reaper.ImGui_PushItemWidth(globals.ctx, 300)
-  local rv, newSelectedIndex = reaper.ImGui_Combo(globals.ctx, "##PresetSelector", globals.selectedPresetIndex, presetItems)
-  
-  -- Handle selection change
-  if rv then
-    globals.selectedPresetIndex = newSelectedIndex
-    globals.currentPresetName = presetList[globals.selectedPresetIndex + 1] or ""
-  end
-  
-  -- Action buttons: Load, Save, Delete, Open Directory
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Load") and globals.currentPresetName ~= "" then
-    Presets.loadPreset(globals.currentPresetName)
-  end
-  
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Save") then
-    Utils.safeOpenPopup("Save Preset")
-    globals.newPresetName = globals.currentPresetName
-  end
-  
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Delete") and globals.currentPresetName ~= "" then
-    Utils.safeOpenPopup("Confirm deletion")
-  end
-  
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Open Preset Directory") then
-    Utils.openPresetsFolder("Global")
-  end
-  
-  -- Save preset popup modal
-  if reaper.ImGui_BeginPopupModal(globals.ctx, "Save Preset", nil, reaper.ImGui_WindowFlags_AlwaysAutoResize()) then
-    reaper.ImGui_Text(globals.ctx, "Preset name:")
-    local rv, value = reaper.ImGui_InputText(globals.ctx, "##PresetName", globals.newPresetName)
-    if rv then globals.newPresetName = value end
-    
-    if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newPresetName ~= "" then
-      if Presets.savePreset(globals.newPresetName) then
-        globals.currentPresetName = globals.newPresetName
-        for i, name in ipairs(presetList) do
-          if name == globals.currentPresetName then
-            globals.selectedPresetIndex = i - 1
-            break
-          end
-        end
-        Utils.safeClosePopup("Save Preset")
-      end
-    end
-    
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Cancel", 120, 0) then
-      Utils.safeClosePopup("Save Preset")
-    end
-    
-    reaper.ImGui_EndPopup(globals.ctx)
-  end
-  
-  -- Deletion confirmation popup modal
-  if reaper.ImGui_BeginPopupModal(globals.ctx, "Confirm deletion", nil, reaper.ImGui_WindowFlags_AlwaysAutoResize()) then
-    reaper.ImGui_Text(globals.ctx, "Are you sure you want to delete the preset \"" .. globals.currentPresetName .. "\"?")
-    reaper.ImGui_Separator(globals.ctx)
-    
-    if reaper.ImGui_Button(globals.ctx, "Yes", 120, 0) then
-      Presets.deletePreset(globals.currentPresetName, "Global")
-      Utils.safeClosePopup("Confirm deletion")
-    end
-    
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "No", 120, 0) then
-      Utils.safeClosePopup("Confirm deletion")
-    end
-    
-    reaper.ImGui_EndPopup(globals.ctx)
-  end
+  UI_Container.initModule(globals)
 end
 
 -- Function to display track preset controls for a specific track
 local function drawTrackPresetControls(i)
+  -- Code existant, inchangé
   local trackId = "track" .. i
-  
   -- Initialize selected preset index if needed
   if not globals.selectedTrackPresetIndex[i] then
-    globals.selectedTrackPresetIndex[i] = -1
+      globals.selectedTrackPresetIndex[i] = -1
   end
-  
   -- Get track presets
   local trackPresetList = Presets.listPresets("Tracks")
-  
   -- Prepare items for the preset dropdown
   local trackPresetItems = ""
   for _, name in ipairs(trackPresetList) do
-    trackPresetItems = trackPresetItems .. name .. "\0"
+      trackPresetItems = trackPresetItems .. name .. "\0"
   end
   trackPresetItems = trackPresetItems .. "\0"
-  
   -- Track preset dropdown
   reaper.ImGui_PushItemWidth(globals.ctx, 200)
-  local rv, newSelectedTrackIndex = reaper.ImGui_Combo(globals.ctx, "##TrackPresetSelector" .. trackId, 
-                                                      globals.selectedTrackPresetIndex[i], trackPresetItems)
-  
+  local rv, newSelectedTrackIndex = reaper.ImGui_Combo(globals.ctx, "##TrackPresetSelector" .. trackId,
+      globals.selectedTrackPresetIndex[i], trackPresetItems)
   if rv then
-    globals.selectedTrackPresetIndex[i] = newSelectedTrackIndex
+      globals.selectedTrackPresetIndex[i] = newSelectedTrackIndex
   end
-  
   -- Load preset button
   reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Load Track##" .. trackId) and 
-     globals.selectedTrackPresetIndex[i] >= 0 and 
-     globals.selectedTrackPresetIndex[i] < #trackPresetList then
-    local presetName = trackPresetList[globals.selectedTrackPresetIndex[i] + 1]
-    Presets.loadTrackPreset(presetName, i)
+  if reaper.ImGui_Button(globals.ctx, "Load Track##" .. trackId) and
+      globals.selectedTrackPresetIndex[i] >= 0 and
+      globals.selectedTrackPresetIndex[i] < #trackPresetList then
+      local presetName = trackPresetList[globals.selectedTrackPresetIndex[i] + 1]
+      Presets.loadTrackPreset(presetName, i)
   end
-  
   -- Save preset button
   reaper.ImGui_SameLine(globals.ctx)
   if reaper.ImGui_Button(globals.ctx, "Save Track##" .. trackId) then
-    globals.newTrackPresetName = globals.tracks[i].name
-    globals.currentSaveTrackIndex = i
-    Utils.safeOpenPopup("Save Track Preset##" .. trackId)
+      globals.newTrackPresetName = globals.tracks[i].name
+      globals.currentSaveTrackIndex = i
+      Utils.safeOpenPopup("Save Track Preset##" .. trackId)
   end
-  
   -- Track save dialog popup
   if reaper.ImGui_BeginPopupModal(globals.ctx, "Save Track Preset##" .. trackId, nil, reaper.ImGui_WindowFlags_AlwaysAutoResize()) then
-    reaper.ImGui_Text(globals.ctx, "Track preset name:")
-    local rv, value = reaper.ImGui_InputText(globals.ctx, "##TrackPresetName" .. trackId, globals.newTrackPresetName)
-    if rv then globals.newTrackPresetName = value end
-    
-    if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newTrackPresetName ~= "" then
-      if Presets.saveTrackPreset(globals.newTrackPresetName, globals.currentSaveTrackIndex) then
-        Utils.safeClosePopup("Save Track Preset##" .. trackId)
+      reaper.ImGui_Text(globals.ctx, "Track preset name:")
+      local rv, value = reaper.ImGui_InputText(globals.ctx, "##TrackPresetName" .. trackId, globals.newTrackPresetName)
+      if rv then globals.newTrackPresetName = value end
+      if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newTrackPresetName ~= "" then
+          if Presets.saveTrackPreset(globals.newTrackPresetName, globals.currentSaveTrackIndex) then
+              Utils.safeClosePopup("Save Track Preset##" .. trackId)
+          end
       end
-    end
-    
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Cancel", 120, 0) then
-      Utils.safeClosePopup("Save Track Preset##" .. trackId)
-    end
-    
-    reaper.ImGui_EndPopup(globals.ctx)
+      reaper.ImGui_SameLine(globals.ctx)
+      if reaper.ImGui_Button(globals.ctx, "Cancel", 120, 0) then
+          Utils.safeClosePopup("Save Track Preset##" .. trackId)
+      end
+      reaper.ImGui_EndPopup(globals.ctx)
   end
 end
 
@@ -1087,188 +975,22 @@ end
 local function drawRightPanel(width)
   -- If we're in multi-select mode, draw the multi-selection panel
   if globals.inMultiSelectMode then
-    drawMultiSelectionPanel(width)
-    return
+      drawMultiSelectionPanel(width)
+      return
   end
   
   -- Show container details if a container is selected
   if globals.selectedTrackIndex and globals.selectedContainerIndex then
-    local track = globals.tracks[globals.selectedTrackIndex]
-    local container = track.containers[globals.selectedContainerIndex]
-    local trackId = "track" .. globals.selectedTrackIndex
-    local containerId = trackId .. "_container" .. globals.selectedContainerIndex
-    
-    -- Panel title showing which container is being edited
-    reaper.ImGui_Text(globals.ctx, "Container Settings: " .. container.name)
-    reaper.ImGui_Separator(globals.ctx)
-    
-    -- Container name input field
-    local containerName = container.name
-    reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-    local rv, newContainerName = reaper.ImGui_InputText(globals.ctx, "Name##detail_" .. containerId, containerName)
-    if rv then container.name = newContainerName end
-    
-    -- Container preset controls
-    drawContainerPresetControls(globals.selectedTrackIndex, globals.selectedContainerIndex)
-    
-    -- Button to import selected items from REAPER
-    if reaper.ImGui_Button(globals.ctx, "Import Selected Items##" .. containerId) then
-      local items = Items.getSelectedItems()
-      if #items > 0 then
-        for _, item in ipairs(items) do
-          table.insert(container.items, item)
-        end
-      else
-        reaper.MB("No item selected!", "Error", 0)
-      end
-    end
-    
-    -- Display imported items in a collapsible header
-    if #container.items > 0 then
-      if reaper.ImGui_CollapsingHeader(globals.ctx, "Imported items (" .. #container.items .. ")##" .. containerId) then
-        local itemToDelete = nil
-        
-        -- Loop through all items
-        for l, item in ipairs(container.items) do
-          reaper.ImGui_Text(globals.ctx, l .. ". " .. item.name)
-          reaper.ImGui_SameLine(globals.ctx)
-          if reaper.ImGui_Button(globals.ctx, "X##item" .. containerId .. "_" .. l) then
-            itemToDelete = l
-          end
-        end
-        
-        -- Delete the marked item if any
-        if itemToDelete then
-          table.remove(container.items, itemToDelete)
-        end
-      end
-    end
-    
-    -- TRIGGER SETTINGS SECTION
-    reaper.ImGui_Separator(globals.ctx)
-    reaper.ImGui_Text(globals.ctx, "Trigger Settings")
-    
-    -- Repetition activation checkbox
-    local useRepetition = container.useRepetition
-    local rv, newUseRepetition = reaper.ImGui_Checkbox(globals.ctx, "Use trigger rate##" .. containerId, useRepetition)
-    if rv then container.useRepetition = newUseRepetition end
-    
-    -- Only show trigger settings if repetition is enabled
-    if container.useRepetition then
-      -- Interval Mode dropdown - different modes for triggering sounds
-      local intervalModes = "Absolute\0Relative\0Coverage\0\0"
-      local intervalMode = container.intervalMode
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-      local rv, newIntervalMode = reaper.ImGui_Combo(globals.ctx, "Interval Mode##" .. containerId, intervalMode, intervalModes)
-      if rv then container.intervalMode = newIntervalMode end
-      
-      -- Trigger rate label and slider range changes based on selected mode
-      local triggerRateLabel = "Interval (sec)"
-      local triggerRateMin = -10.0
-      local triggerRateMax = 60.0
-      
-      if container.intervalMode == 1 then
-        triggerRateLabel = "Interval (%)"
-        triggerRateMin = 0.1
-        triggerRateMax = 100.0
-      elseif container.intervalMode == 2 then
-        triggerRateLabel = "Coverage (%)"
-        triggerRateMin = 0.1
-        triggerRateMax = 100.0
-      end
-      
-      -- Trigger rate slider
-      local triggerRate = container.triggerRate
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-      local rv, newTriggerRate = reaper.ImGui_SliderDouble(globals.ctx, triggerRateLabel .. "##" .. containerId, 
-                                                 triggerRate, triggerRateMin, triggerRateMax, "%.1f")
-      if rv then container.triggerRate = newTriggerRate end
-      
-      -- Help text explaining the selected mode
-      if container.intervalMode == 0 then
-        if container.triggerRate < 0 then
-          reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-        else
-          reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
-        end
-      elseif container.intervalMode == 1 then
-        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
-      else
-        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
-      end
-      
-      -- Trigger drift slider (randomness in timing)
-      local triggerDrift = container.triggerDrift
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-      local rv, newTriggerDrift = reaper.ImGui_SliderInt(globals.ctx, "Random variation (%)##" .. containerId, triggerDrift, 0, 100, "%d")
-      if rv then container.triggerDrift = newTriggerDrift end
-    end
-    
-    -- RANDOMIZATION PARAMETERS SECTION
-    reaper.ImGui_Separator(globals.ctx)
-    reaper.ImGui_Text(globals.ctx, "Randomization parameters")
-    
-    -- Pitch randomization checkbox
-    local randomizePitch = container.randomizePitch
-    local rv, newRandomizePitch = reaper.ImGui_Checkbox(globals.ctx, "Randomize Pitch##" .. containerId, randomizePitch)
-    if rv then container.randomizePitch = newRandomizePitch end
-    
-    -- Only show pitch range if pitch randomization is enabled
-    if container.randomizePitch then
-      local pitchMin = container.pitchRange.min
-      local pitchMax = container.pitchRange.max
-      
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-      local rv, newPitchMin, newPitchMax = reaper.ImGui_DragFloatRange2(globals.ctx, "Pitch Range (semitones)##" .. containerId, pitchMin, pitchMax, 0.1, -48, 48)
-      if rv then 
-        container.pitchRange.min = newPitchMin
-        container.pitchRange.max = newPitchMax
-      end
-    end
-    
-    -- Volume randomization checkbox
-    local randomizeVolume = container.randomizeVolume
-    local rv, newRandomizeVolume = reaper.ImGui_Checkbox(globals.ctx, "Randomize Volume##" .. containerId, randomizeVolume)
-    if rv then container.randomizeVolume = newRandomizeVolume end
-    
-    -- Only show volume range if volume randomization is enabled
-    if container.randomizeVolume then
-      local volumeMin = container.volumeRange.min
-      local volumeMax = container.volumeRange.max
-      
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-      local rv, newVolumeMin, newVolumeMax = reaper.ImGui_DragFloatRange2(globals.ctx, "Volume Range (dB)##" .. containerId, volumeMin, volumeMax, 0.1, -24, 24)
-      if rv then 
-        container.volumeRange.min = newVolumeMin
-        container.volumeRange.max = newVolumeMax
-      end
-    end
-    
-    -- Pan randomization checkbox
-    local randomizePan = container.randomizePan
-    local rv, newRandomizePan = reaper.ImGui_Checkbox(globals.ctx, "Randomize Pan##" .. containerId, randomizePan)
-    if rv then container.randomizePan = newRandomizePan end
-    
-    -- Only show pan range if pan randomization is enabled
-    if container.randomizePan then
-      local panMin = container.panRange.min
-      local panMax = container.panRange.max
-      
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-      local rv, newPanMin, newPanMax = reaper.ImGui_DragFloatRange2(globals.ctx, "Pan Range (-100/+100)##" .. containerId, panMin, panMax, 1, -100, 100)
-      if rv then 
-        container.panRange.min = newPanMin
-        container.panRange.max = newPanMax
-      end
-    end
+      -- Utiliser le module UI_Container pour afficher les paramètres du conteneur
+      UI_Container.displayContainerSettings(globals.selectedTrackIndex, globals.selectedContainerIndex, width)
   elseif globals.selectedTrackIndex then
-    -- Show track details if only a track is selected
-    local track = globals.tracks[globals.selectedTrackIndex]
-    reaper.ImGui_Text(globals.ctx, "Track Settings: " .. track.name)
-    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a container to view and edit its settings.")
+      -- Show track details if only a track is selected
+      local track = globals.tracks[globals.selectedTrackIndex]
+      reaper.ImGui_Text(globals.ctx, "Track Settings: " .. track.name)
+      reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a container to view and edit its settings.")
   else
-    -- No selection
-    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a track or container to view and edit its settings.")
+      -- No selection
+      reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a track or container to view and edit its settings.")
   end
 end
 
@@ -1290,50 +1012,50 @@ function UI.mainLoop()
   local visible, open = reaper.ImGui_Begin(globals.ctx, 'Sound Randomizer', true)
   
   if visible then
-    -- Section with presets controls at the top
-    UI_Preset.drawPresetControls()
-    
-    -- Button to generate all tracks and place items - moved to top, with custom styling
-    reaper.ImGui_SameLine(globals.ctx)
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_Button(), 0xFF4CAF50)     -- Green button
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonHovered(), 0xFF66BB6A)  -- Lighter green when hovered
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonActive(), 0xFF43A047)   -- Darker green when clicked
-    
-    if reaper.ImGui_Button(globals.ctx, "Create Ambiance", 150, 30) then
-      Generation.generateTracks()
-    end
-    
-    -- Pop styling colors to return to default
-    reaper.ImGui_PopStyleColor(globals.ctx, 3)
-    
-    -- Display time selection information
-    if Utils.checkTimeSelection() then
-      reaper.ImGui_Text(globals.ctx, "Time Selection: " .. Utils.formatTime(globals.startTime) .. " - " .. Utils.formatTime(globals.endTime) .. " | Length: " .. Utils.formatTime(globals.endTime - globals.startTime))
-    else
-      reaper.ImGui_TextColored(globals.ctx, 0xFF0000FF, "No time selection! Please create one.")
-    end
-    
-    reaper.ImGui_Separator(globals.ctx)
-    
-    -- Calculate dimensions for the split view layout
-    local windowWidth = reaper.ImGui_GetWindowWidth(globals.ctx)
-    local leftPanelWidth = windowWidth * 0.35
-    local rightPanelWidth = windowWidth * 0.63
-    
-    -- We'll use a manual split view since ImGui_Columns might not be available
-    -- Left panel (Tracks & Containers list)
-    reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
-    drawLeftPanel(leftPanelWidth)
-    reaper.ImGui_EndChild(globals.ctx)
-    
-    -- Right panel (Container Settings)
-    reaper.ImGui_SameLine(globals.ctx)
-    reaper.ImGui_BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
-    drawRightPanel(rightPanelWidth)
-    reaper.ImGui_EndChild(globals.ctx)
-    
-    -- End the main window
-    reaper.ImGui_End(globals.ctx)
+      -- Section with presets controls at the top
+      UI_Preset.drawPresetControls()
+      
+      -- Button to generate all tracks and place items - moved to top, with custom styling
+      reaper.ImGui_SameLine(globals.ctx)
+      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_Button(), 0xFF4CAF50) -- Green button
+      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonHovered(), 0xFF66BB6A) -- Lighter green when hovered
+      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonActive(), 0xFF43A047) -- Darker green when clicked
+      
+      if reaper.ImGui_Button(globals.ctx, "Create Ambiance", 150, 30) then
+          Generation.generateTracks()
+      end
+      
+      -- Pop styling colors to return to default
+      reaper.ImGui_PopStyleColor(globals.ctx, 3)
+      
+      -- Display time selection information
+      if Utils.checkTimeSelection() then
+          reaper.ImGui_Text(globals.ctx, "Time Selection: " .. Utils.formatTime(globals.startTime) .. " - " .. Utils.formatTime(globals.endTime) .. " | Length: " .. Utils.formatTime(globals.endTime - globals.startTime))
+      else
+          reaper.ImGui_TextColored(globals.ctx, 0xFF0000FF, "No time selection! Please create one.")
+      end
+      
+      reaper.ImGui_Separator(globals.ctx)
+      
+      -- Calculate dimensions for the split view layout
+      local windowWidth = reaper.ImGui_GetWindowWidth(globals.ctx)
+      local leftPanelWidth = windowWidth * 0.35
+      local rightPanelWidth = windowWidth * 0.63
+      
+      -- We'll use a manual split view since ImGui_Columns might not be available
+      -- Left panel (Tracks & Containers list)
+      reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
+      drawLeftPanel(leftPanelWidth)
+      reaper.ImGui_EndChild(globals.ctx)
+      
+      -- Right panel (Container Settings)
+      reaper.ImGui_SameLine(globals.ctx)
+      reaper.ImGui_BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
+      drawRightPanel(rightPanelWidth)
+      reaper.ImGui_EndChild(globals.ctx)
+      
+      -- End the main window
+      reaper.ImGui_End(globals.ctx)
   end
   
   -- Handle popup management
@@ -1341,9 +1063,9 @@ function UI.mainLoop()
   
   -- Defer next UI refresh or destroy context if window is closed
   if open then
-    reaper.defer(UI.mainLoop)
+      reaper.defer(UI.mainLoop)
   else
-    reaper.ImGui_DestroyContext(globals.ctx)
+      reaper.ImGui_DestroyContext(globals.ctx)
   end
 end
 
