@@ -1,40 +1,44 @@
 --[[
-  Sound Randomizer for REAPER
-  This script provides a GUI interface for creating randomized ambient sounds
-  It allows creating tracks with containers of audio items that can be randomized by pitch, volume, and pan
-  Uses ReaImGui for UI rendering
+Sound Randomizer for REAPER
+This script provides a GUI interface for creating randomized ambient sounds
+It allows creating tracks with containers of audio items that can be randomized by pitch, volume, and pan
+Uses ReaImGui for UI rendering
 ]]
 
 local UI = {}
 local globals = {}
+
 local Utils = require("DM_Ambiance_Utils")
 local Structures = require("DM_Ambiance_Structures")
 local Items = require("DM_Ambiance_Items")
 local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 
+-- Import UI modules
 local UI_Preset = require("DM_Ambiance_UI_Preset")
 local UI_Container = require("DM_Ambiance_UI_Container")
+local UI_Tracks = require("DM_Ambiance_UI_Tracks")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
-  globals = g
-  
-  -- Initialize selection tracking variables for two-panel layout
-  globals.selectedTrackIndex = nil
-  globals.selectedContainerIndex = nil
-  
-  -- Initialize structure for multi-selection
-  globals.selectedContainers = {} -- Format: {[trackIndex_containerIndex] = true}
-  globals.inMultiSelectMode = false
-  
-  -- Initialize variables for Shift multi-selection
-  globals.shiftAnchorTrackIndex = nil
-  globals.shiftAnchorContainerIndex = nil
-  
-  -- Initialize UI sub-modules
-  UI_Preset.initModule(globals)
-  UI_Container.initModule(globals)
+    globals = g
+    
+    -- Initialize selection tracking variables for two-panel layout
+    globals.selectedTrackIndex = nil
+    globals.selectedContainerIndex = nil
+    
+    -- Initialize structure for multi-selection
+    globals.selectedContainers = {} -- Format: {[trackIndex_containerIndex] = true}
+    globals.inMultiSelectMode = false
+    
+    -- Initialize variables for Shift multi-selection
+    globals.shiftAnchorTrackIndex = nil
+    globals.shiftAnchorContainerIndex = nil
+    
+    -- Initialize UI sub-modules
+    UI_Preset.initModule(globals)
+    UI_Container.initModule(globals)
+    UI_Tracks.initModule(globals)
 end
 
 -- Function to display track preset controls for a specific track
@@ -93,77 +97,16 @@ local function drawTrackPresetControls(i)
   end
 end
 
--- Function to display container preset controls for a specific container
-local function drawContainerPresetControls(trackIndex, containerIndex)
-  local trackId = "track" .. trackIndex
-  local containerId = trackId .. "_container" .. containerIndex
-  local presetKey = trackIndex .. "_" .. containerIndex
+-- Function to clear all container selections
+local function clearContainerSelections()
+  globals.selectedContainers = {}
+  globals.inMultiSelectMode = false
   
-  -- Initialize selected preset index if needed
-  if not globals.selectedContainerPresetIndex[presetKey] then
-    globals.selectedContainerPresetIndex[presetKey] = -1
-  end
-  
-  -- Get sanitized track name for folder structure (replacing non-alphanumeric chars with underscore)
-  local trackName = globals.tracks[trackIndex].name:gsub("[^%w]", "_")
-  
-  -- Get container presets for this track
-  local containerPresetList = Presets.listPresets("Containers", trackName)
-  
-  -- Prepare items for the preset dropdown
-  local containerPresetItems = ""
-  for _, name in ipairs(containerPresetList) do
-    containerPresetItems = containerPresetItems .. name .. "\0"
-  end
-  containerPresetItems = containerPresetItems .. "\0"
-  
-  -- Preset dropdown control
-  reaper.ImGui_PushItemWidth(globals.ctx, 200)
-  local rv, newSelectedContainerIndex = reaper.ImGui_Combo(globals.ctx, "##ContainerPresetSelector" .. containerId,
-                                                          globals.selectedContainerPresetIndex[presetKey], containerPresetItems)
-  
-  if rv then
-    globals.selectedContainerPresetIndex[presetKey] = newSelectedContainerIndex
-  end
-  
-  -- Load preset button
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Load Container##" .. containerId) and 
-     globals.selectedContainerPresetIndex[presetKey] >= 0 and 
-     globals.selectedContainerPresetIndex[presetKey] < #containerPresetList then
-    local presetName = containerPresetList[globals.selectedContainerPresetIndex[presetKey] + 1]
-    Presets.loadContainerPreset(presetName, trackIndex, containerIndex)
-  end
-  
-  -- Save preset button
-  reaper.ImGui_SameLine(globals.ctx)
-  if reaper.ImGui_Button(globals.ctx, "Save Container##" .. containerId) then
-    globals.newContainerPresetName = globals.tracks[trackIndex].containers[containerIndex].name
-    globals.currentSaveContainerTrack = trackIndex
-    globals.currentSaveContainerIndex = containerIndex
-    Utils.safeOpenPopup("Save Container Preset##" .. containerId)
-  end
-  
-  -- Container save dialog popup
-  if reaper.ImGui_BeginPopupModal(globals.ctx, "Save Container Preset##" .. containerId, nil, reaper.ImGui_WindowFlags_AlwaysAutoResize()) then
-    reaper.ImGui_Text(globals.ctx, "Container preset name:")
-    local rv, value = reaper.ImGui_InputText(globals.ctx, "##ContainerPresetName" .. containerId, globals.newContainerPresetName)
-    if rv then globals.newContainerPresetName = value end
-    
-    if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newContainerPresetName ~= "" then
-      if Presets.saveContainerPreset(globals.newContainerPresetName, globals.currentSaveContainerTrack, globals.currentSaveContainerIndex) then
-        Utils.safeClosePopup("Save Container Preset##" .. containerId)
-      end
-    end
-    
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Cancel", 120, 0) then
-      Utils.safeClosePopup("Save Container Preset##" .. containerId)
-    end
-    
-    reaper.ImGui_EndPopup(globals.ctx)
-  end
+  -- Also clear the shift anchor when clearing selections
+  globals.shiftAnchorTrackIndex = nil
+  globals.shiftAnchorContainerIndex = nil
 end
+
 
 -- Get count of selected containers
 local function getSelectedContainersCount()
@@ -182,11 +125,10 @@ end
 -- Function to toggle container selection
 local function toggleContainerSelection(trackIndex, containerIndex)
   local key = trackIndex .. "_" .. containerIndex
-  
   if globals.selectedContainers[key] then
-    globals.selectedContainers[key] = nil
+      globals.selectedContainers[key] = nil
   else
-    globals.selectedContainers[key] = true
+      globals.selectedContainers[key] = true
   end
   
   -- Update primary selection for compatibility
@@ -194,34 +136,25 @@ local function toggleContainerSelection(trackIndex, containerIndex)
   globals.selectedContainerIndex = containerIndex
 end
 
--- Function to clear all container selections
-local function clearContainerSelections()
-  globals.selectedContainers = {}
-  globals.inMultiSelectMode = false
-  -- Also clear the shift anchor when clearing selections
-  globals.shiftAnchorTrackIndex = nil
-  globals.shiftAnchorContainerIndex = nil
-end
-
 -- Function to select a range of containers between two points
 local function selectContainerRange(startTrackIndex, startContainerIndex, endTrackIndex, endContainerIndex)
   -- Clear existing selection first if not in multi-select mode
   if not (reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0) then
-    clearContainerSelections()
+      clearContainerSelections()
   end
   
   -- Handle range selection within the same track
   if startTrackIndex == endTrackIndex then
-    local track = globals.tracks[startTrackIndex]
-    local startIdx = math.min(startContainerIndex, endContainerIndex)
-    local endIdx = math.max(startContainerIndex, endContainerIndex)
-    
-    for i = startIdx, endIdx do
-      if i <= #track.containers then
-        globals.selectedContainers[startTrackIndex .. "_" .. i] = true
+      local track = globals.tracks[startTrackIndex]
+      local startIdx = math.min(startContainerIndex, endContainerIndex)
+      local endIdx = math.max(startContainerIndex, endContainerIndex)
+      
+      for i = startIdx, endIdx do
+          if i <= #track.containers then
+              globals.selectedContainers[startTrackIndex .. "_" .. i] = true
+          end
       end
-    end
-    return
+      return
   end
   
   -- Handle range selection across different tracks
@@ -231,250 +164,49 @@ local function selectContainerRange(startTrackIndex, startContainerIndex, endTra
   -- If selecting from higher track to lower track, reverse the container indices
   local firstContainerIdx, lastContainerIdx
   if startTrackIndex < endTrackIndex then
-    firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
+      firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
   else
-    firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
+      firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
   end
   
   -- Select all containers in the range
   for t = startTrack, endTrack do
-    if globals.tracks[t] then
-      if t == startTrack then
-        -- First track: select from firstContainerIdx to end
-        for c = firstContainerIdx, #globals.tracks[t].containers do
-          globals.selectedContainers[t .. "_" .. c] = true
-        end
-      elseif t == endTrack then
-        -- Last track: select from start to lastContainerIdx
-        for c = 1, lastContainerIdx do
-          globals.selectedContainers[t .. "_" .. c] = true
-        end
-      else
-        -- Middle tracks: select all containers
-        for c = 1, #globals.tracks[t].containers do
-          globals.selectedContainers[t .. "_" .. c] = true
-        end
+      if globals.tracks[t] then
+          if t == startTrack then
+              -- First track: select from firstContainerIdx to end
+              for c = firstContainerIdx, #globals.tracks[t].containers do
+                  globals.selectedContainers[t .. "_" .. c] = true
+              end
+          elseif t == endTrack then
+              -- Last track: select from start to lastContainerIdx
+              for c = 1, lastContainerIdx do
+                  globals.selectedContainers[t .. "_" .. c] = true
+              end
+          else
+              -- Middle tracks: select all containers
+              for c = 1, #globals.tracks[t].containers do
+                  globals.selectedContainers[t .. "_" .. c] = true
+              end
+          end
       end
-    end
   end
   
   -- Update the multi-select mode flag
-  globals.inMultiSelectMode = getSelectedContainersCount() > 1
+  globals.inMultiSelectMode = UI_Tracks.getSelectedContainersCount() > 1
 end
 
 
 
 -- Function to draw the left panel containing tracks and containers list
 local function drawLeftPanel(width)
-  -- Title for the left panel
-  reaper.ImGui_Text(globals.ctx, "Tracks & Containers")
-  
-  -- Multi-selection mode toggle and info
-  if getSelectedContainersCount() > 1 then
-    reaper.ImGui_SameLine(globals.ctx)
-    reaper.ImGui_TextColored(globals.ctx, 0xFF4CAF50, "(" .. getSelectedContainersCount() .. " selected)")
-    
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Clear Selection") then
-      clearContainerSelections()
-    end
-  end
-  
-  -- Button to add a new track
-  if reaper.ImGui_Button(globals.ctx, "Add Track") then
-    table.insert(globals.tracks, Structures.createTrack())
-  end
-  
-  reaper.ImGui_Separator(globals.ctx)
-  
-  -- Check if Ctrl key is pressed for multi-selection mode
-  local ctrlPressed = reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0
-  
-  -- Variable to track which track to delete (if any)
-  local trackToDelete = nil
-  
-  -- Loop through all tracks
-  for i, track in ipairs(globals.tracks) do
-    local trackId = "track" .. i
-    -- TreeNode flags - include selection flags if needed
-    local trackFlags = track.expanded and reaper.ImGui_TreeNodeFlags_DefaultOpen() or 0
-    
-    -- Add specific flags to indicate selection
-    if globals.selectedTrackIndex == i and globals.selectedContainerIndex == nil then
-      trackFlags = trackFlags + reaper.ImGui_TreeNodeFlags_Selected()
-    end
-    
-    -- Create tree node for the track
-    local trackOpen = reaper.ImGui_TreeNodeEx(globals.ctx, trackId, track.name, trackFlags)
-    
-    -- Handle selection on click
-    if reaper.ImGui_IsItemClicked(globals.ctx) then
-      globals.selectedTrackIndex = i
-      globals.selectedContainerIndex = nil
-      
-      -- Clear multi-selection if not holding Ctrl
-      if not ctrlPressed then
-        clearContainerSelections()
-      end
-    end
-    
-    -- Delete track button
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Delete##" .. trackId) then
-      trackToDelete = i
-    end
-    
-    -- Regenerate track button
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. trackId) then
-      Generation.generateSingleTrack(i)
-    end
-    
-    -- If the track node is open, display its contents
-    if trackOpen then
-      -- Track name input field
-      local trackName = track.name
-      reaper.ImGui_PushItemWidth(globals.ctx, width * 0.8)
-      local rv, newTrackName = reaper.ImGui_InputText(globals.ctx, "Name##" .. trackId, trackName)
-      if rv then track.name = newTrackName end
-      
-      -- Track preset controls
-      drawTrackPresetControls(i)
-      
-      -- Button to add a container to this track
-      if reaper.ImGui_Button(globals.ctx, "Add Container##" .. trackId) then
-        table.insert(track.containers, Structures.createContainer())
-      end
-      
-      -- Variable to track which container to delete (if any)
-      local containerToDelete = nil
-      
-      -- Loop through all containers in this track
-      for j, container in ipairs(track.containers) do
-        local containerId = trackId .. "_container" .. j
-        -- TreeNode flags - leaf nodes for containers with selection support
-        local containerFlags = reaper.ImGui_TreeNodeFlags_Leaf() + reaper.ImGui_TreeNodeFlags_NoTreePushOnOpen()
-        
-        -- Add specific flags to indicate selection
-        if isContainerSelected(i, j) then
-          containerFlags = containerFlags + reaper.ImGui_TreeNodeFlags_Selected()
-        end
-        
-        -- Indent container items for better visual hierarchy
-        reaper.ImGui_Indent(globals.ctx, 20)
-        reaper.ImGui_TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
-        
-        -- Handle selection on click with multi-selection support
-        if reaper.ImGui_IsItemClicked(globals.ctx) then
-          -- Check if Shift is pressed for range selection
-          local shiftPressed = reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Shift() ~= 0
-          
-          -- If Ctrl is pressed, toggle this container in multi-selection
-          if ctrlPressed then
-            toggleContainerSelection(i, j)
-            globals.inMultiSelectMode = getSelectedContainersCount() > 1
-            
-            -- Update anchor point for Shift+Click
-            globals.shiftAnchorTrackIndex = i
-            globals.shiftAnchorContainerIndex = j
-          -- If Shift is pressed, select range from last anchor to this container
-          elseif shiftPressed and globals.shiftAnchorTrackIndex then
-            selectContainerRange(globals.shiftAnchorTrackIndex, globals.shiftAnchorContainerIndex, i, j)
-          else
-            -- Otherwise, select only this container and update anchor
-            clearContainerSelections()
-            toggleContainerSelection(i, j)
-            globals.inMultiSelectMode = false
-            
-            -- Set new anchor point for Shift+Click
-            globals.shiftAnchorTrackIndex = i
-            globals.shiftAnchorContainerIndex = j
-          end
-        end
-
-        
-        -- Delete container button
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Delete##" .. containerId) then
-          containerToDelete = j
-        end
-        
-        -- Regenerate container button
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. containerId) then
-          Generation.generateSingleContainer(i, j)
-        end
-        
-        reaper.ImGui_Unindent(globals.ctx, 20)
-      end
-      
-      -- Delete the marked container if any
-      if containerToDelete then
-        -- Remove from selected containers if it was selected
-        globals.selectedContainers[i .. "_" .. containerToDelete] = nil
-        
-        table.remove(track.containers, containerToDelete)
-        
-        -- Update primary selection if necessary
-        if globals.selectedTrackIndex == i and globals.selectedContainerIndex == containerToDelete then
-          globals.selectedContainerIndex = nil
-        elseif globals.selectedTrackIndex == i and globals.selectedContainerIndex > containerToDelete then
-          globals.selectedContainerIndex = globals.selectedContainerIndex - 1
-        end
-        
-        -- Update multi-selection references for containers after the deleted one
-        for k = containerToDelete + 1, #track.containers + 1 do  -- +1 because we just deleted one
-          if globals.selectedContainers[i .. "_" .. k] then
-            globals.selectedContainers[i .. "_" .. (k-1)] = true
-            globals.selectedContainers[i .. "_" .. k] = nil
-          end
-        end
-      end
-      
-      reaper.ImGui_TreePop(globals.ctx)
-    end
-  end
-  
-  -- Delete the marked track if any
-  if trackToDelete then
-    -- Remove any selected containers from this track
-    for key in pairs(globals.selectedContainers) do
-      local t, c = key:match("(%d+)_(%d+)")
-      if tonumber(t) == trackToDelete then
-        globals.selectedContainers[key] = nil
-      end
-    end
-    
-    table.remove(globals.tracks, trackToDelete)
-    
-    -- Update primary selection if necessary
-    if globals.selectedTrackIndex == trackToDelete then
-      globals.selectedTrackIndex = nil
-      globals.selectedContainerIndex = nil
-    elseif globals.selectedTrackIndex > trackToDelete then
-      globals.selectedTrackIndex = globals.selectedTrackIndex - 1
-    end
-    
-    -- Update multi-selection references for tracks after the deleted one
-    for key in pairs(globals.selectedContainers) do
-      local t, c = key:match("(%d+)_(%d+)")
-      if tonumber(t) > trackToDelete then
-        globals.selectedContainers[(tonumber(t)-1) .. "_" .. c] = true
-        globals.selectedContainers[key] = nil
-      end
-    end
-  end
-  
-  -- Update the multi-select mode flag
-  globals.inMultiSelectMode = getSelectedContainersCount() > 1
+  UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
-
 -- Function to get all selected containers as a table of {trackIndex, containerIndex} pairs
 local function getSelectedContainersList()
   local containers = {}
   for key in pairs(globals.selectedContainers) do
-    local t, c = key:match("(%d+)_(%d+)")
-    table.insert(containers, {trackIndex = tonumber(t), containerIndex = tonumber(c)})
+      local t, c = key:match("(%d+)_(%d+)")
+      table.insert(containers, {trackIndex = tonumber(t), containerIndex = tonumber(c)})
   end
   return containers
 end
@@ -998,11 +730,11 @@ end
 local function handlePopups()
   -- Check for any popup that might be stuck (safety measure)
   for name, popup in pairs(globals.activePopups) do
-    if popup.active and reaper.time_precise() - popup.timeOpened > 5 then
-      -- Force close popups that have been open too long (5 seconds)
-      reaper.ImGui_CloseCurrentPopup(globals.ctx)
-      globals.activePopups[name] = nil
-    end
+      if popup.active and reaper.time_precise() - popup.timeOpened > 5 then
+          -- Force close popups that have been open too long (5 seconds)
+          reaper.ImGui_CloseCurrentPopup(globals.ctx)
+          globals.activePopups[name] = nil
+      end
   end
 end
 
@@ -1042,7 +774,6 @@ function UI.mainLoop()
       local leftPanelWidth = windowWidth * 0.35
       local rightPanelWidth = windowWidth * 0.63
       
-      -- We'll use a manual split view since ImGui_Columns might not be available
       -- Left panel (Tracks & Containers list)
       reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
       drawLeftPanel(leftPanelWidth)
