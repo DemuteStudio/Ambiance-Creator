@@ -13,6 +13,8 @@ local Items = require("DM_Ambiance_Items")
 local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 
+
+
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
   globals = g
@@ -24,6 +26,11 @@ function UI.initModule(g)
   -- Initialize structure for multi-selection
   globals.selectedContainers = {}  -- Format: {[trackIndex_containerIndex] = true}
   globals.inMultiSelectMode = false
+
+  -- Initialize variables for Shift multi-selection
+  globals.shiftAnchorTrackIndex = nil
+  globals.shiftAnchorContainerIndex = nil
+
 end
 
 -- Function to display global preset controls in the top section
@@ -300,7 +307,71 @@ end
 local function clearContainerSelections()
   globals.selectedContainers = {}
   globals.inMultiSelectMode = false
+  -- Also clear the shift anchor when clearing selections
+  globals.shiftAnchorTrackIndex = nil
+  globals.shiftAnchorContainerIndex = nil
 end
+
+-- Function to select a range of containers between two points
+local function selectContainerRange(startTrackIndex, startContainerIndex, endTrackIndex, endContainerIndex)
+  -- Clear existing selection first if not in multi-select mode
+  if not (reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0) then
+    clearContainerSelections()
+  end
+  
+  -- Handle range selection within the same track
+  if startTrackIndex == endTrackIndex then
+    local track = globals.tracks[startTrackIndex]
+    local startIdx = math.min(startContainerIndex, endContainerIndex)
+    local endIdx = math.max(startContainerIndex, endContainerIndex)
+    
+    for i = startIdx, endIdx do
+      if i <= #track.containers then
+        globals.selectedContainers[startTrackIndex .. "_" .. i] = true
+      end
+    end
+    return
+  end
+  
+  -- Handle range selection across different tracks
+  local startTrack = math.min(startTrackIndex, endTrackIndex)
+  local endTrack = math.max(startTrackIndex, endTrackIndex)
+  
+  -- If selecting from higher track to lower track, reverse the container indices
+  local firstContainerIdx, lastContainerIdx
+  if startTrackIndex < endTrackIndex then
+    firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
+  else
+    firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
+  end
+  
+  -- Select all containers in the range
+  for t = startTrack, endTrack do
+    if globals.tracks[t] then
+      if t == startTrack then
+        -- First track: select from firstContainerIdx to end
+        for c = firstContainerIdx, #globals.tracks[t].containers do
+          globals.selectedContainers[t .. "_" .. c] = true
+        end
+      elseif t == endTrack then
+        -- Last track: select from start to lastContainerIdx
+        for c = 1, lastContainerIdx do
+          globals.selectedContainers[t .. "_" .. c] = true
+        end
+      else
+        -- Middle tracks: select all containers
+        for c = 1, #globals.tracks[t].containers do
+          globals.selectedContainers[t .. "_" .. c] = true
+        end
+      end
+    end
+  end
+  
+  -- Update the multi-select mode flag
+  globals.inMultiSelectMode = getSelectedContainersCount() > 1
+end
+
+
 
 -- Function to draw the left panel containing tracks and containers list
 local function drawLeftPanel(width)
@@ -404,17 +475,32 @@ local function drawLeftPanel(width)
         
         -- Handle selection on click with multi-selection support
         if reaper.ImGui_IsItemClicked(globals.ctx) then
+          -- Check if Shift is pressed for range selection
+          local shiftPressed = reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Shift() ~= 0
+          
           -- If Ctrl is pressed, toggle this container in multi-selection
           if ctrlPressed then
             toggleContainerSelection(i, j)
             globals.inMultiSelectMode = getSelectedContainersCount() > 1
+            
+            -- Update anchor point for Shift+Click
+            globals.shiftAnchorTrackIndex = i
+            globals.shiftAnchorContainerIndex = j
+          -- If Shift is pressed, select range from last anchor to this container
+          elseif shiftPressed and globals.shiftAnchorTrackIndex then
+            selectContainerRange(globals.shiftAnchorTrackIndex, globals.shiftAnchorContainerIndex, i, j)
           else
-            -- Otherwise, select only this container
+            -- Otherwise, select only this container and update anchor
             clearContainerSelections()
             toggleContainerSelection(i, j)
             globals.inMultiSelectMode = false
+            
+            -- Set new anchor point for Shift+Click
+            globals.shiftAnchorTrackIndex = i
+            globals.shiftAnchorContainerIndex = j
           end
         end
+
         
         -- Delete container button
         reaper.ImGui_SameLine(globals.ctx)
