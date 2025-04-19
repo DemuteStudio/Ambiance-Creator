@@ -13,6 +13,7 @@ local Items = require("DM_Ambiance_Items")
 local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 
+local UI_Preset = require("DM_Ambiance_UI_Preset")
 
 
 -- Initialize the module with global variables from the main script
@@ -24,13 +25,15 @@ function UI.initModule(g)
   globals.selectedContainerIndex = nil
   
   -- Initialize structure for multi-selection
-  globals.selectedContainers = {}  -- Format: {[trackIndex_containerIndex] = true}
+  globals.selectedContainers = {} -- Format: {[trackIndex_containerIndex] = true}
   globals.inMultiSelectMode = false
-
+  
   -- Initialize variables for Shift multi-selection
   globals.shiftAnchorTrackIndex = nil
   globals.shiftAnchorContainerIndex = nil
-
+  
+  -- Initialize UI sub-modules
+  UI_Preset.initModule(globals)
 end
 
 -- Function to display global preset controls in the top section
@@ -1288,7 +1291,7 @@ function UI.mainLoop()
   
   if visible then
     -- Section with presets controls at the top
-    drawPresetControls()
+    UI_Preset.drawPresetControls()
     
     -- Button to generate all tracks and place items - moved to top, with custom styling
     reaper.ImGui_SameLine(globals.ctx)
