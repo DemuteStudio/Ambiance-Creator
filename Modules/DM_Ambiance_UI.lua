@@ -20,6 +20,7 @@ local UI_Container = require("DM_Ambiance_UI_Container")
 local UI_Tracks = require("DM_Ambiance_UI_Tracks")
 local UI_MultiSelection = require("DM_Ambiance_UI_MultiSelection")
 local UI_Generation = require("DM_Ambiance_UI_Generation")
+local UI_Track = require("DM_Ambiance_UI_Track")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
@@ -43,7 +44,12 @@ function UI.initModule(g)
     UI_Tracks.initModule(globals)
     UI_MultiSelection.initModule(globals)
     UI_Generation.initModule(globals)
+    UI_Track.initModule(globals) -- Initialisation du nouveau module
+    
+    -- Make UI_Tracks accessible to the UI_Track module
+    globals.UI_Tracks = UI_Tracks
 end
+
 
 -- Function to clear all container selections
 local function clearContainerSelections()
@@ -142,26 +148,24 @@ end
 
 -- Function to draw the right panel containing detailed settings for the selected container
 local function drawRightPanel(width)
-  -- If we're in multi-select mode, draw the multi-selection panel
-  if globals.inMultiSelectMode then
-      UI_MultiSelection.drawMultiSelectionPanel(width)
-      return
-  end
-  
-  -- Show container details if a container is selected
-  if globals.selectedTrackIndex and globals.selectedContainerIndex then
-      -- Utiliser le module UI_Container pour afficher les paramètres du conteneur
-      UI_Container.displayContainerSettings(globals.selectedTrackIndex, globals.selectedContainerIndex, width)
-  elseif globals.selectedTrackIndex then
-      -- Show track details if only a track is selected
-      local track = globals.tracks[globals.selectedTrackIndex]
-      reaper.ImGui_Text(globals.ctx, "Track Settings: " .. track.name)
-      reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a container to view and edit its settings.")
-  else
-      -- No selection
-      reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a track or container to view and edit its settings.")
-  end
+    -- If we're in multi-select mode, draw the multi-selection panel
+    if globals.inMultiSelectMode then
+        UI_MultiSelection.drawMultiSelectionPanel(width)
+        return
+    end
+    
+    -- Show container details if a container is selected
+    if globals.selectedTrackIndex and globals.selectedContainerIndex then
+        UI_Container.displayContainerSettings(globals.selectedTrackIndex, globals.selectedContainerIndex, width)
+    elseif globals.selectedTrackIndex then
+        -- Show track details if only a track is selected
+        UI_Track.displayTrackSettings(globals.selectedTrackIndex, width)
+    else
+        -- No selection
+        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a track or container to view and edit its settings.")
+    end
 end
+
 
 -- Function to handle popup management and timeout
 local function handlePopups()

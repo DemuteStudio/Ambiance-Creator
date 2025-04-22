@@ -5,6 +5,8 @@ This module handles UI components related to the sound generation process
 
 local UI_Generation = {}
 local globals = {}
+local Utils = require("DM_Ambiance_Utils")
+local Items = require("DM_Ambiance_Items")
 
 -- Initialize the module with global variables from the main script
 function UI_Generation.initModule(g)

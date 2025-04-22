@@ -95,6 +95,18 @@ function UI_Container.displayContainerSettings(trackIndex, containerIndex, width
     reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
     local rv, newContainerName = reaper.ImGui_InputText(globals.ctx, "Name##detail_" .. containerId, containerName)
     if rv then container.name = newContainerName end
+
+    -- Override parent checkbox
+    local overrideParent = container.overrideParent
+    local rv, newOverrideParent = reaper.ImGui_Checkbox(globals.ctx, "Override Parent Settings##" .. containerId, overrideParent)
+    if rv then container.overrideParent = newOverrideParent end
+
+    -- Add explanatory text
+    if container.overrideParent then
+        reaper.ImGui_TextColored(globals.ctx, 0x00AA00FF, "Using container's own settings")
+    else
+        reaper.ImGui_TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent track")
+    end
     
     -- Container preset controls
     UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
