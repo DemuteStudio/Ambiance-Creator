@@ -5,45 +5,45 @@ function Utils.initModule(g)
   globals = g
 end
 
--- Function to find a track by its name
-function Utils.findTrackByName(name)
-  for i = 0, reaper.CountTracks(0) - 1 do
-    local track = reaper.GetTrack(0, i)
-    local _, trackName = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
-    if trackName == name then
-      return track, i
+-- Function to find a group by its name
+function Utils.findGroupByName(name)
+  for i = 0, reaper.CountGroups(0) - 1 do
+    local group = reaper.GetGroup(0, i)
+    local _, groupName = reaper.GetSetMediaGroupInfo_String(group, "P_NAME", "", false)
+    if groupName == name then
+      return group, i
     end
   end
   return nil, -1
 end
 
--- Function to find a container track within a parent track
-function Utils.findContainerTrack(parentTrackIdx, containerName)
-  local trackCount = reaper.CountTracks(0)
+-- Function to find a container group within a parent group
+function Utils.findContainerGroup(parentGroupIdx, containerName)
+  local groupCount = reaper.CountGroups(0)
   local folderDepth = 1 -- Commencer avec profondeur 1 (à l'intérieur d'un dossier)
   
   -- Log for debugging purposes
-  -- reaper.ShowConsoleMsg("Searching for container: '" .. containerName .. "' starting from parent index " .. parentTrackIdx .. "\n")
+  -- reaper.ShowConsoleMsg("Searching for container: '" .. containerName .. "' starting from parent index " .. parentGroupIdx .. "\n")
   
-  for i = parentTrackIdx + 1, trackCount - 1 do
-      local childTrack = reaper.GetTrack(0, i)
-      local _, name = reaper.GetSetMediaTrackInfo_String(childTrack, "P_NAME", "", false)
+  for i = parentGroupIdx + 1, groupCount - 1 do
+      local childGroup = reaper.GetGroup(0, i)
+      local _, name = reaper.GetSetMediaGroupInfo_String(childGroup, "P_NAME", "", false)
       
       -- Debug info
-      -- reaper.ShowConsoleMsg("  Checking track at index " .. i .. ": '" .. name .. "' (depth: " .. folderDepth .. ")\n")
+      -- reaper.ShowConsoleMsg("  Checking group at index " .. i .. ": '" .. name .. "' (depth: " .. folderDepth .. ")\n")
       
       -- Compare names with trim to avoid whitespace issues
       local containerNameTrimmed = string.gsub(containerName, "^%s*(.-)%s*$", "%1")
-      local trackNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
+      local groupNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
       
       -- Case insensitive comparison
-      if string.lower(trackNameTrimmed) == string.lower(containerNameTrimmed) then
-          -- reaper.ShowConsoleMsg("  Found container track at index " .. i .. "\n")
-          return childTrack, i
+      if string.lower(groupNameTrimmed) == string.lower(containerNameTrimmed) then
+          -- reaper.ShowConsoleMsg("  Found container group at index " .. i .. "\n")
+          return childGroup, i
       end
       
-      -- Update folder depth based on this track's folder status
-      local depth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+      -- Update folder depth based on this group's folder status
+      local depth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
       folderDepth = folderDepth + depth
       
       -- If we reach the end of the folder, stop searching
@@ -58,22 +58,22 @@ function Utils.findContainerTrack(parentTrackIdx, containerName)
   return nil, nil
 end
 
--- Function to delete all media items from a track
-function Utils.clearTrackItems(track)
-  if not track then return false end
+-- Function to delete all media items from a group
+function Utils.clearGroupItems(group)
+  if not group then return false end
   
-  local itemCount = reaper.GetTrackNumMediaItems(track)
+  local itemCount = reaper.GetGroupNumMediaItems(group)
   for i = itemCount-1, 0, -1 do
-    local item = reaper.GetTrackMediaItem(track, i)
-    reaper.DeleteTrackMediaItem(track, item)
+    local item = reaper.GetGroupMediaItem(group, i)
+    reaper.DeleteGroupMediaItem(group, item)
   end
   
   return true
 end
 
 -- Function to open the preset folder
-function Utils.openPresetsFolder(type, trackName)
-  local path = globals.Presets.getPresetsPath(type, trackName)
+function Utils.openPresetsFolder(type, groupName)
+  local path = globals.Presets.getPresetsPath(type, groupName)
   
   if reaper.GetOS():match("Win") then
     os.execute('start "" "' .. path .. '"')

@@ -1,7 +1,7 @@
 --[[
 Sound Randomizer for REAPER
 This script provides a GUI interface for creating randomized ambient sounds
-It allows creating tracks with containers of audio items that can be randomized by pitch, volume, and pan
+It allows creating groups with containers of audio items that can be randomized by pitch, volume, and pan
 Uses ReaImGui for UI rendering
 ]]
 
@@ -17,37 +17,37 @@ local Generation = require("DM_Ambiance_Generation")
 -- Import UI modules
 local UI_Preset = require("DM_Ambiance_UI_Preset")
 local UI_Container = require("DM_Ambiance_UI_Container")
-local UI_Tracks = require("DM_Ambiance_UI_Tracks")
+local UI_Groups = require("DM_Ambiance_UI_Groups")
 local UI_MultiSelection = require("DM_Ambiance_UI_MultiSelection")
 local UI_Generation = require("DM_Ambiance_UI_Generation")
-local UI_Track = require("DM_Ambiance_UI_Track")
+local UI_Group = require("DM_Ambiance_UI_Group")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
     globals = g
     
-    -- Initialize selection tracking variables for two-panel layout
-    globals.selectedTrackIndex = nil
+    -- Initialize selection grouping variables for two-panel layout
+    globals.selectedGroupIndex = nil
     globals.selectedContainerIndex = nil
     
     -- Initialize structure for multi-selection
-    globals.selectedContainers = {} -- Format: {[trackIndex_containerIndex] = true}
+    globals.selectedContainers = {} -- Format: {[groupIndex_containerIndex] = true}
     globals.inMultiSelectMode = false
     
     -- Initialize variables for Shift multi-selection
-    globals.shiftAnchorTrackIndex = nil
+    globals.shiftAnchorGroupIndex = nil
     globals.shiftAnchorContainerIndex = nil
     
     -- Initialize UI sub-modules
     UI_Preset.initModule(globals)
     UI_Container.initModule(globals)
-    UI_Tracks.initModule(globals)
+    UI_Groups.initModule(globals)
     UI_MultiSelection.initModule(globals)
     UI_Generation.initModule(globals)
-    UI_Track.initModule(globals) -- Initialisation du nouveau module
+    UI_Group.initModule(globals) -- Initialisation du nouveau module
     
-    -- Make UI_Tracks accessible to the UI_Track module
-    globals.UI_Tracks = UI_Tracks
+    -- Make UI_Groups accessible to the UI_Group module
+    globals.UI_Groups = UI_Groups
 end
 
 
@@ -57,19 +57,19 @@ local function clearContainerSelections()
   globals.inMultiSelectMode = false
   
   -- Also clear the shift anchor when clearing selections
-  globals.shiftAnchorTrackIndex = nil
+  globals.shiftAnchorGroupIndex = nil
   globals.shiftAnchorContainerIndex = nil
 end
 
 
 -- Function to check if a container is selected
-local function isContainerSelected(trackIndex, containerIndex)
-  return globals.selectedContainers[trackIndex .. "_" .. containerIndex] == true
+local function isContainerSelected(groupIndex, containerIndex)
+  return globals.selectedContainers[groupIndex .. "_" .. containerIndex] == true
 end
 
 -- Function to toggle container selection
-local function toggleContainerSelection(trackIndex, containerIndex)
-  local key = trackIndex .. "_" .. containerIndex
+local function toggleContainerSelection(groupIndex, containerIndex)
+  local key = groupIndex .. "_" .. containerIndex
   if globals.selectedContainers[key] then
       globals.selectedContainers[key] = nil
   else
@@ -77,59 +77,59 @@ local function toggleContainerSelection(trackIndex, containerIndex)
   end
   
   -- Update primary selection for compatibility
-  globals.selectedTrackIndex = trackIndex
+  globals.selectedGroupIndex = groupIndex
   globals.selectedContainerIndex = containerIndex
 end
 
 -- Function to select a range of containers between two points
-local function selectContainerRange(startTrackIndex, startContainerIndex, endTrackIndex, endContainerIndex)
+local function selectContainerRange(startGroupIndex, startContainerIndex, endGroupIndex, endContainerIndex)
   -- Clear existing selection first if not in multi-select mode
   if not (reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0) then
       clearContainerSelections()
   end
   
-  -- Handle range selection within the same track
-  if startTrackIndex == endTrackIndex then
-      local track = globals.tracks[startTrackIndex]
+  -- Handle range selection within the same group
+  if startGroupIndex == endGroupIndex then
+      local group = globals.groups[startGroupIndex]
       local startIdx = math.min(startContainerIndex, endContainerIndex)
       local endIdx = math.max(startContainerIndex, endContainerIndex)
       
       for i = startIdx, endIdx do
-          if i <= #track.containers then
-              globals.selectedContainers[startTrackIndex .. "_" .. i] = true
+          if i <= #group.containers then
+              globals.selectedContainers[startGroupIndex .. "_" .. i] = true
           end
       end
       return
   end
   
-  -- Handle range selection across different tracks
-  local startTrack = math.min(startTrackIndex, endTrackIndex)
-  local endTrack = math.max(startTrackIndex, endTrackIndex)
+  -- Handle range selection across different groups
+  local startGroup = math.min(startGroupIndex, endGroupIndex)
+  local endGroup = math.max(startGroupIndex, endGroupIndex)
   
-  -- If selecting from higher track to lower track, reverse the container indices
+  -- If selecting from higher group to lower group, reverse the container indices
   local firstContainerIdx, lastContainerIdx
-  if startTrackIndex < endTrackIndex then
+  if startGroupIndex < endGroupIndex then
       firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
   else
       firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
   end
   
   -- Select all containers in the range
-  for t = startTrack, endTrack do
-      if globals.tracks[t] then
-          if t == startTrack then
-              -- First track: select from firstContainerIdx to end
-              for c = firstContainerIdx, #globals.tracks[t].containers do
+  for t = startGroup, endGroup do
+      if globals.groups[t] then
+          if t == startGroup then
+              -- First group: select from firstContainerIdx to end
+              for c = firstContainerIdx, #globals.groups[t].containers do
                   globals.selectedContainers[t .. "_" .. c] = true
               end
-          elseif t == endTrack then
-              -- Last track: select from start to lastContainerIdx
+          elseif t == endGroup then
+              -- Last group: select from start to lastContainerIdx
               for c = 1, lastContainerIdx do
                   globals.selectedContainers[t .. "_" .. c] = true
               end
           else
-              -- Middle tracks: select all containers
-              for c = 1, #globals.tracks[t].containers do
+              -- Middle groups: select all containers
+              for c = 1, #globals.groups[t].containers do
                   globals.selectedContainers[t .. "_" .. c] = true
               end
           end
@@ -137,12 +137,12 @@ local function selectContainerRange(startTrackIndex, startContainerIndex, endTra
   end
   
   -- Update the multi-select mode flag
-  globals.inMultiSelectMode = UI_Tracks.getSelectedContainersCount() > 1
+  globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
 
--- Function to draw the left panel containing tracks and containers list
+-- Function to draw the left panel containing groups and containers list
 local function drawLeftPanel(width)
-    UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
+    UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
 
 
@@ -155,14 +155,14 @@ local function drawRightPanel(width)
     end
     
     -- Show container details if a container is selected
-    if globals.selectedTrackIndex and globals.selectedContainerIndex then
-        UI_Container.displayContainerSettings(globals.selectedTrackIndex, globals.selectedContainerIndex, width)
-    elseif globals.selectedTrackIndex then
-        -- Show track details if only a track is selected
-        UI_Track.displayTrackSettings(globals.selectedTrackIndex, width)
+    if globals.selectedGroupIndex and globals.selectedContainerIndex then
+        UI_Container.displayContainerSettings(globals.selectedGroupIndex, globals.selectedContainerIndex, width)
+    elseif globals.selectedGroupIndex then
+        -- Show group details if only a group is selected
+        UI_Group.displayGroupSettings(globals.selectedGroupIndex, width)
     else
         -- No selection
-        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a track or container to view and edit its settings.")
+        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a group or container to view and edit its settings.")
     end
 end
 
@@ -182,13 +182,13 @@ end
 -- Main interface loop - this is called repeatedly to render the UI
 function UI.mainLoop()
     -- Begin the main window
-    local visible, open = reaper.ImGui_Begin(globals.ctx, 'Sound Randomizer', true)
+    local visible, open = reaper.ImGui_Begin(globals.ctx, 'Ambiance Creator', true)
     
     if visible then
         -- Section with presets controls at the top
         UI_Preset.drawPresetControls()
         
-        -- Button to generate all tracks and place items - moved to top, with custom styling
+        -- Button to generate all groups and place items - moved to top, with custom styling
         reaper.ImGui_SameLine(globals.ctx)
         UI_Generation.drawMainGenerationButton()
         
@@ -202,7 +202,7 @@ function UI.mainLoop()
         local leftPanelWidth = windowWidth * 0.35
         local rightPanelWidth = windowWidth * 0.63
         
-        -- Left panel (Tracks & Containers list)
+        -- Left panel (Groups & Containers list)
         reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
         drawLeftPanel(leftPanelWidth)
         reaper.ImGui_EndChild(globals.ctx)

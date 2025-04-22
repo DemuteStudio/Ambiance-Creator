@@ -8,7 +8,7 @@ function Presets.initModule(g)
 end
 
 -- Function to determine the presets path with correct subfolder structure
-function Presets.getPresetsPath(type, trackName)
+function Presets.getPresetsPath(type, groupName)
   local basePath
   
   if globals.presetsPath ~= "" then 
@@ -40,10 +40,10 @@ function Presets.getPresetsPath(type, trackName)
   
   if type == "Global" then
     specificPath = basePath .. "Global\\"
-  elseif type == "Tracks" then
-    specificPath = basePath .. "Tracks\\"
+  elseif type == "Groups" then
+    specificPath = basePath .. "Groups\\"
   elseif type == "Containers" then
-    -- Élimination de la dépendance à trackName pour les conteneurs
+    -- Élimination de la dépendance à groupName pour les conteneurs
     specificPath = basePath .. "Containers\\"
   end
   
@@ -60,9 +60,9 @@ function Presets.getPresetsPath(type, trackName)
 end
 
 -- Function to list available presets by type
-function Presets.listPresets(type, trackName, forceRefresh)
+function Presets.listPresets(type, groupName, forceRefresh)
   local currentTime = os.time()
-  local cacheKey = type .. (trackName or "")
+  local cacheKey = type .. (groupName or "")
   
   if not type then type = "Global" end
   
@@ -74,7 +74,7 @@ function Presets.listPresets(type, trackName, forceRefresh)
     return presetCache[cacheKey] -- Return cached list if recent
   end
   
-  local path = Presets.getPresetsPath(type, trackName)
+  local path = Presets.getPresetsPath(type, groupName)
   
   -- Reset the presets list
   local typePresets = {}
@@ -101,9 +101,9 @@ function Presets.listPresets(type, trackName, forceRefresh)
 end
 
 -- Function to serialize a table
-function Presets.listPresets(type, trackName, forceRefresh)
+function Presets.listPresets(type, groupName, forceRefresh)
   local currentTime = os.time()
-  local cacheKey = type -- Plus besoin d'inclure trackName pour les conteneurs
+  local cacheKey = type -- Plus besoin d'inclure groupName pour les conteneurs
   
   if not type then type = "Global" end
   
@@ -115,7 +115,7 @@ function Presets.listPresets(type, trackName, forceRefresh)
     return presetCache[cacheKey] -- Retour du cache si récent
   end
   
-  -- Obtention du chemin sans référence au trackName pour les conteneurs
+  -- Obtention du chemin sans référence au groupName pour les conteneurs
   local path = Presets.getPresetsPath(type, nil)
   
   -- Reset de la liste des presets
@@ -180,7 +180,7 @@ function Presets.savePreset(name)
   if file then
     file:write("-- Ambiance Creator Global Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-    file:write("return " .. serializeTable(globals.tracks) .. "\n")
+    file:write("return " .. serializeTable(globals.groups) .. "\n")
     file:close()
     
     -- Refresh the preset list
@@ -199,7 +199,7 @@ function Presets.loadPreset(name)
   local success, presetData = pcall(dofile, path)
   
   if success and type(presetData) == "table" then
-    globals.tracks = presetData
+    globals.groups = presetData
     globals.currentPresetName = name
     return true
   else
@@ -209,17 +209,17 @@ function Presets.loadPreset(name)
 end
 
 -- Function to delete a preset
-function Presets.deletePreset(name, type, trackName)
+function Presets.deletePreset(name, type, groupName)
   if name == "" then return false end
   
   if not type then type = "Global" end
   
-  local path = Presets.getPresetsPath(type, trackName) .. name .. ".lua"
+  local path = Presets.getPresetsPath(type, groupName) .. name .. ".lua"
   local success, result = os.remove(path)
   
   if success then
     -- Refresh the preset list
-    Presets.listPresets(type, trackName, true)
+    Presets.listPresets(type, groupName, true)
     if type == "Global" then
       globals.currentPresetName = ""
       globals.selectedPresetIndex = 0
@@ -231,50 +231,50 @@ function Presets.deletePreset(name, type, trackName)
   end
 end
 
--- Function to save a track preset
-function Presets.saveTrackPreset(name, trackIndex)
+-- Function to save a group preset
+function Presets.saveGroupPreset(name, groupIndex)
   if name == "" then return false end
   
-  local track = globals.tracks[trackIndex]
-  local path = Presets.getPresetsPath("Tracks") .. name .. ".lua"
+  local group = globals.groups[groupIndex]
+  local path = Presets.getPresetsPath("Groups") .. name .. ".lua"
   local file = io.open(path, "w")
   
   if file then
-    file:write("-- Ambiance Creator Track Preset: " .. name .. "\n")
+    file:write("-- Ambiance Creator Group Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-    file:write("return " .. serializeTable(track) .. "\n")
+    file:write("return " .. serializeTable(group) .. "\n")
     file:close()
     
     -- Refresh the preset list
-    Presets.listPresets("Tracks", nil, true)
+    Presets.listPresets("Groups", nil, true)
     return true
   end
   
   return false
 end
 
--- Function to load a track preset
-function Presets.loadTrackPreset(name, trackIndex)
+-- Function to load a group preset
+function Presets.loadGroupPreset(name, groupIndex)
   if name == "" then return false end
   
-  local path = Presets.getPresetsPath("Tracks") .. name .. ".lua"
+  local path = Presets.getPresetsPath("Groups") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
   
   if success and type(presetData) == "table" then
-    globals.tracks[trackIndex] = presetData
+    globals.groups[groupIndex] = presetData
     return true
   else
-    reaper.ShowConsoleMsg("Error loading track preset: " .. tostring(presetData) .. "\n")
+    reaper.ShowConsoleMsg("Error loading group preset: " .. tostring(presetData) .. "\n")
     return false
   end
 end
 
 -- Function to save a container preset
-function Presets.saveContainerPreset(name, trackIndex, containerIndex)
+function Presets.saveContainerPreset(name, groupIndex, containerIndex)
   if name == "" then return false end
   
   -- Suppression de la référence au nom de la piste
-  local container = globals.tracks[trackIndex].containers[containerIndex]
+  local container = globals.groups[groupIndex].containers[containerIndex]
   local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
   local file = io.open(path, "w")
   
@@ -284,7 +284,7 @@ function Presets.saveContainerPreset(name, trackIndex, containerIndex)
     file:write("return " .. serializeTable(container) .. "\n")
     file:close()
     
-    -- Rafraîchir la liste des presets sans référence au trackName
+    -- Rafraîchir la liste des presets sans référence au groupName
     Presets.listPresets("Containers", nil, true)
     return true
   end
@@ -293,7 +293,7 @@ function Presets.saveContainerPreset(name, trackIndex, containerIndex)
 end
 
 -- Function to load a container preset
-function Presets.loadContainerPreset(name, trackIndex, containerIndex)
+function Presets.loadContainerPreset(name, groupIndex, containerIndex)
   if name == "" then return false end
   
   -- Suppression de la référence au nom de la piste
@@ -302,13 +302,13 @@ function Presets.loadContainerPreset(name, trackIndex, containerIndex)
   
   if success and type(presetData) == "table" then
     -- Préservation des items existants
-    local existingItems = globals.tracks[trackIndex].containers[containerIndex].items
+    local existingItems = globals.groups[groupIndex].containers[containerIndex].items
     
     -- Application du preset
-    globals.tracks[trackIndex].containers[containerIndex] = presetData
+    globals.groups[groupIndex].containers[containerIndex] = presetData
     
     -- Restauration des items
-    globals.tracks[trackIndex].containers[containerIndex].items = existingItems
+    globals.groups[groupIndex].containers[containerIndex].items = existingItems
     
     return true
   else

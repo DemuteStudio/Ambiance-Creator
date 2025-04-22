@@ -17,12 +17,12 @@ local function showMixedValues()
     reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
 end
 
--- Function to get all selected containers as a table of {trackIndex, containerIndex} pairs
+-- Function to get all selected containers as a table of {groupIndex, containerIndex} pairs
 function UI_MultiSelection.getSelectedContainersList()
     local containers = {}
     for key in pairs(globals.selectedContainers) do
         local t, c = key:match("(%d+)_(%d+)")
-        table.insert(containers, {trackIndex = tonumber(t), containerIndex = tonumber(c)})
+        table.insert(containers, {groupIndex = tonumber(t), containerIndex = tonumber(c)})
     end
     return containers
 end
@@ -49,7 +49,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     -- Button to regenerate all selected containers
     if reaper.ImGui_Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
         for _, c in ipairs(containers) do
-            globals.Generation.generateSingleContainer(c.trackIndex, c.containerIndex)
+            globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end
     end
     
@@ -75,9 +75,9 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     
     -- Check all containers to determine common settings
     for _, c in ipairs(containers) do
-        local trackIndex = c.trackIndex
+        local groupIndex = c.groupIndex
         local containerIndex = c.containerIndex
-        local container = globals.tracks[trackIndex].containers[containerIndex]
+        local container = globals.groups[groupIndex].containers[containerIndex]
         
         -- Repetition settings
         if container.useRepetition then anyUseRepetition = true else allUseRepetition = false end
@@ -155,7 +155,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
-            globals.tracks[c.trackIndex].containers[c.containerIndex].useRepetition = newUseRep
+            globals.groups[c.groupIndex].containers[c.containerIndex].useRepetition = newUseRep
         end
         
         -- Update state for UI refresh
@@ -186,7 +186,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].intervalMode = newIntervalMode
+                    globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
                 end
                 
                 -- Update state for UI refresh
@@ -199,7 +199,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].intervalMode = newIntervalMode
+                    globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
                 end
                 
                 -- Update state for UI refresh
@@ -235,7 +235,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].triggerRate = newTriggerRate
+                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
                 end
                 
                 -- Update state for UI refresh
@@ -249,7 +249,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].triggerRate = newTriggerRate
+                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
                 end
                 
                 -- Update state for UI refresh
@@ -282,7 +282,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
+                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
                 end
                 
                 -- Update state for UI refresh
@@ -296,7 +296,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
+                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
                 end
                 
                 -- Update state for UI refresh
@@ -327,7 +327,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
-            globals.tracks[c.trackIndex].containers[c.containerIndex].randomizePitch = newRandomizePitch
+            globals.groups[c.groupIndex].containers[c.containerIndex].randomizePitch = newRandomizePitch
         end
         
         -- Update state for UI refresh
@@ -355,8 +355,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].pitchRange.min = newPitchMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].pitchRange.max = newPitchMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].pitchRange.min = newPitchMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].pitchRange.max = newPitchMax
                 end
                 
                 -- Update state for UI refresh
@@ -372,8 +372,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].pitchRange.min = newPitchMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].pitchRange.max = newPitchMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].pitchRange.min = newPitchMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].pitchRange.max = newPitchMax
                 end
                 
                 -- Update state for UI refresh
@@ -401,7 +401,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
-            globals.tracks[c.trackIndex].containers[c.containerIndex].randomizeVolume = newRandomizeVolume
+            globals.groups[c.groupIndex].containers[c.containerIndex].randomizeVolume = newRandomizeVolume
         end
         
         -- Update state for UI refresh
@@ -429,8 +429,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].volumeRange.min = newVolumeMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].volumeRange.max = newVolumeMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].volumeRange.min = newVolumeMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].volumeRange.max = newVolumeMax
                 end
                 
                 -- Update state for UI refresh
@@ -446,8 +446,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].volumeRange.min = newVolumeMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].volumeRange.max = newVolumeMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].volumeRange.min = newVolumeMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].volumeRange.max = newVolumeMax
                 end
                 
                 -- Update state for UI refresh
@@ -475,7 +475,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
-            globals.tracks[c.trackIndex].containers[c.containerIndex].randomizePan = newRandomizePan
+            globals.groups[c.groupIndex].containers[c.containerIndex].randomizePan = newRandomizePan
         end
         
         -- Update state for UI refresh
@@ -503,8 +503,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].panRange.min = newPanMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].panRange.max = newPanMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].panRange.min = newPanMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].panRange.max = newPanMax
                 end
                 
                 -- Update state for UI refresh
@@ -520,8 +520,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].panRange.min = newPanMin
-                    globals.tracks[c.trackIndex].containers[c.containerIndex].panRange.max = newPanMax
+                    globals.groups[c.groupIndex].containers[c.containerIndex].panRange.min = newPanMin
+                    globals.groups[c.groupIndex].containers[c.containerIndex].panRange.max = newPanMax
                 end
                 
                 -- Update state for UI refresh

@@ -10,35 +10,35 @@ function Generation.initModule(g)
     globals = g
 end
 
--- Function to delete existing tracks with same names before generating
-function Generation.deleteExistingTracks()
-  -- Create a map of track names we're about to create
-  local trackNames = {}
-  for _, track in ipairs(globals.tracks) do
-      trackNames[track.name] = true
+-- Function to delete existing groups with same names before generating
+function Generation.deleteExistingGroups()
+  -- Create a map of group names we're about to create
+  local groupNames = {}
+  for _, group in ipairs(globals.groups) do
+      groupNames[group.name] = true
   end
   
-  -- Find all tracks with matching names and their children
-  local tracksToDelete = {}
-  local trackCount = reaper.CountTracks(0)
+  -- Find all groups with matching names and their children
+  local groupsToDelete = {}
+  local groupCount = reaper.CountGroups(0)
   local i = 0
-  while i < trackCount do
-      local track = reaper.GetTrack(0, i)
-      local _, name = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
-      if trackNames[name] then
-          -- Check if this is a folder track
-          local depth = reaper.GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH")
-          -- Add this track to the delete list
-          table.insert(tracksToDelete, track)
-          -- If this is a folder track, also find all its children
+  while i < groupCount do
+      local group = reaper.GetGroup(0, i)
+      local _, name = reaper.GetSetMediaGroupInfo_String(group, "P_NAME", "", false)
+      if groupNames[name] then
+          -- Check if this is a folder group
+          local depth = reaper.GetMediaGroupInfo_Value(group, "I_FOLDERDEPTH")
+          -- Add this group to the delete list
+          table.insert(groupsToDelete, group)
+          -- If this is a folder group, also find all its children
           if depth == 1 then
               local j = i + 1
               local folderDepth = 1 -- Start with depth 1 (we're inside one folder)
-              while j < trackCount and folderDepth > 0 do
-                  local childTrack = reaper.GetTrack(0, j)
-                  table.insert(tracksToDelete, childTrack)
-                  -- Update folder depth based on this track's folder status
-                  local childDepth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+              while j < groupCount and folderDepth > 0 do
+                  local childGroup = reaper.GetGroup(0, j)
+                  table.insert(groupsToDelete, childGroup)
+                  -- Update folder depth based on this group's folder status
+                  local childDepth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
                   folderDepth = folderDepth + childDepth
                   j = j + 1
               end
@@ -49,17 +49,17 @@ function Generation.deleteExistingTracks()
       i = i + 1
   end
   
-  -- Delete tracks in reverse order to avoid index issues
-  for i = #tracksToDelete, 1, -1 do
-      reaper.DeleteTrack(tracksToDelete[i])
+  -- Delete groups in reverse order to avoid index issues
+  for i = #groupsToDelete, 1, -1 do
+      reaper.DeleteGroup(groupsToDelete[i])
   end
 end
 
 
 -- Function to place items for a container with inheritance support
-function Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
-    -- Get effective parameters considering inheritance from parent track
-    local effectiveParams = globals.Structures.getEffectiveContainerParams(track, container)
+function Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
+    -- Get effective parameters considering inheritance from parent group
+    local effectiveParams = globals.Structures.getEffectiveContainerParams(group, container)
     
     if effectiveParams.items and #effectiveParams.items > 0 then
         if effectiveParams.useRepetition then
@@ -116,7 +116,7 @@ function Generation.placeItemsForContainer(track, container, containerTrack, xfa
                 end
                 
                 -- Create and configure the new item
-                local newItem = reaper.AddMediaItemToTrack(containerTrack)
+                local newItem = reaper.AddMediaItemToGroup(containerGroup)
                 local newTake = reaper.AddTakeToMediaItem(newItem)
                 
                 -- Configure the item
@@ -168,7 +168,7 @@ function Generation.placeItemsForContainer(track, container, containerTrack, xfa
                 local position = globals.startTime + math.random() * globals.timeSelectionLength
                 
                 -- Create a new item from the source file
-                local newItem = reaper.AddMediaItemToTrack(containerTrack)
+                local newItem = reaper.AddMediaItemToGroup(containerGroup)
                 local newTake = reaper.AddTakeToMediaItem(newItem)
                 
                 -- Configure the item with saved data
@@ -208,17 +208,17 @@ function Generation.placeItemsForContainer(track, container, containerTrack, xfa
     end
 end
 
--- Update all functions that call placeItemsForContainer to pass track parameter
+-- Update all functions that call placeItemsForContainer to pass group parameter
 
--- Function to generate tracks and place items
-function Generation.generateTracks()
+-- Function to generate groups and place items
+function Generation.generateGroups()
     if not globals.timeSelectionValid then
-        reaper.MB("Please create a time selection before generating tracks!", "Error", 0)
+        reaper.MB("Please create a time selection before generating groups!", "Error", 0)
         return
     end
     
-    -- Delete existing tracks with the same names
-    Generation.deleteExistingTracks()
+    -- Delete existing groups with the same names
+    Generation.deleteExistingGroups()
     
     reaper.Main_OnCommand(40289, 0) -- "Item: Unselect all items"
 
@@ -228,53 +228,53 @@ function Generation.generateTracks()
     -- Get default crossfade shape from REAPER preferences
     local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
     
-    for i, track in ipairs(globals.tracks) do
-        -- Create a parent track
-        local parentTrackIdx = reaper.GetNumTracks()
-        reaper.InsertTrackAtIndex(parentTrackIdx, true)
-        local parentTrack = reaper.GetTrack(0, parentTrackIdx)
-        reaper.GetSetMediaTrackInfo_String(parentTrack, "P_NAME", track.name, true)
+    for i, group in ipairs(globals.groups) do
+        -- Create a parent group
+        local parentGroupIdx = reaper.GetNumGroups()
+        reaper.InsertGroupAtIndex(parentGroupIdx, true)
+        local parentGroup = reaper.GetGroup(0, parentGroupIdx)
+        reaper.GetSetMediaGroupInfo_String(parentGroup, "P_NAME", group.name, true)
         
-        -- Set the track as parent (folder start)
-        reaper.SetMediaTrackInfo_Value(parentTrack, "I_FOLDERDEPTH", 1)
+        -- Set the group as parent (folder start)
+        reaper.SetMediaGroupInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
         
-        local containerCount = #track.containers
+        local containerCount = #group.containers
         
-        for j, container in ipairs(track.containers) do
-            -- Create a track for each container
-            local containerTrackIdx = reaper.GetNumTracks()
-            reaper.InsertTrackAtIndex(containerTrackIdx, true)
-            local containerTrack = reaper.GetTrack(0, containerTrackIdx)
-            reaper.GetSetMediaTrackInfo_String(containerTrack, "P_NAME", container.name, true)
+        for j, container in ipairs(group.containers) do
+            -- Create a group for each container
+            local containerGroupIdx = reaper.GetNumGroups()
+            reaper.InsertGroupAtIndex(containerGroupIdx, true)
+            local containerGroup = reaper.GetGroup(0, containerGroupIdx)
+            reaper.GetSetMediaGroupInfo_String(containerGroup, "P_NAME", container.name, true)
             
             -- Set folder state based on position
-            local folderState = 0 -- Default: normal track in a folder
+            local folderState = 0 -- Default: normal group in a folder
             if j == containerCount then
                 -- If it's the last container, mark as folder end
                 folderState = -1
             end
-            reaper.SetMediaTrackInfo_Value(containerTrack, "I_FOLDERDEPTH", folderState)
+            reaper.SetMediaGroupInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
             
             -- Place items on the timeline according to the chosen mode
-            -- Now passing track to enable inheritance
-            Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
+            -- Now passing group to enable inheritance
+            Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
         end
     end
     
     reaper.PreventUIRefresh(-1)
     reaper.UpdateArrange()
-    reaper.Undo_EndBlock("Generate tracks and place items", -1)
+    reaper.Undo_EndBlock("Generate groups and place items", -1)
 end
 
--- Function to regenerate a single track (updated to pass track parameter)
-function Generation.generateSingleTrack(trackIndex)
+-- Function to regenerate a single group (updated to pass group parameter)
+function Generation.generateSingleGroup(groupIndex)
     if not globals.timeSelectionValid then
         reaper.MB("Please create a time selection before regenerating!", "Error", 0)
         return
     end
     
-    local track = globals.tracks[trackIndex]
-    if not track then return end
+    local group = globals.groups[groupIndex]
+    if not group then return end
     
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
@@ -284,21 +284,21 @@ function Generation.generateSingleTrack(trackIndex)
     -- Get default crossfade shape from REAPER preferences
     local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
     
-    -- Find the existing track by its name
-    local existingTrack, existingTrackIdx = Utils.findTrackByName(track.name)
+    -- Find the existing group by its name
+    local existingGroup, existingGroupIdx = Utils.findGroupByName(group.name)
     
-    if existingTrack then
-        -- Find all container tracks within this folder
-        local containerTracks = {}
-        local trackCount = reaper.CountTracks(0)
+    if existingGroup then
+        -- Find all container groups within this folder
+        local containerGroups = {}
+        local groupCount = reaper.CountGroups(0)
         local folderDepth = 1 -- Start with depth 1 (inside a folder)
         
-        for i = existingTrackIdx + 1, trackCount - 1 do
-            local childTrack = reaper.GetTrack(0, i)
-            local depth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+        for i = existingGroupIdx + 1, groupCount - 1 do
+            local childGroup = reaper.GetGroup(0, i)
+            local depth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
             
-            -- Add this track to our container list
-            table.insert(containerTracks, childTrack)
+            -- Add this group to our container list
+            table.insert(containerGroups, childGroup)
             
             -- Update folder depth
             folderDepth = folderDepth + depth
@@ -307,66 +307,66 @@ function Generation.generateSingleTrack(trackIndex)
             if folderDepth <= 0 then break end
         end
         
-        -- Clear items from all container tracks
-        for i, containerTrack in ipairs(containerTracks) do
-            Utils.clearTrackItems(containerTrack)
+        -- Clear items from all container groups
+        for i, containerGroup in ipairs(containerGroups) do
+            Utils.clearGroupItems(containerGroup)
         end
         
         -- Regenerate items for each container
-        for j, container in ipairs(track.containers) do
-            if j <= #containerTracks then
-                -- Pass track to enable inheritance
-                Generation.placeItemsForContainer(track, container, containerTracks[j], xfadeshape)
+        for j, container in ipairs(group.containers) do
+            if j <= #containerGroups then
+                -- Pass group to enable inheritance
+                Generation.placeItemsForContainer(group, container, containerGroups[j], xfadeshape)
             end
         end
     else
-        -- Track doesn't exist, create it
-        local parentTrackIdx = reaper.GetNumTracks()
-        reaper.InsertTrackAtIndex(parentTrackIdx, true)
-        local parentTrack = reaper.GetTrack(0, parentTrackIdx)
-        reaper.GetSetMediaTrackInfo_String(parentTrack, "P_NAME", track.name, true)
+        -- Group doesn't exist, create it
+        local parentGroupIdx = reaper.GetNumGroups()
+        reaper.InsertGroupAtIndex(parentGroupIdx, true)
+        local parentGroup = reaper.GetGroup(0, parentGroupIdx)
+        reaper.GetSetMediaGroupInfo_String(parentGroup, "P_NAME", group.name, true)
         
-        -- Set the track as parent (folder start)
-        reaper.SetMediaTrackInfo_Value(parentTrack, "I_FOLDERDEPTH", 1)
+        -- Set the group as parent (folder start)
+        reaper.SetMediaGroupInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
         
-        local containerCount = #track.containers
+        local containerCount = #group.containers
         
-        for j, container in ipairs(track.containers) do
-            -- Create a track for each container
-            local containerTrackIdx = reaper.GetNumTracks()
-            reaper.InsertTrackAtIndex(containerTrackIdx, true)
-            local containerTrack = reaper.GetTrack(0, containerTrackIdx)
-            reaper.GetSetMediaTrackInfo_String(containerTrack, "P_NAME", container.name, true)
+        for j, container in ipairs(group.containers) do
+            -- Create a group for each container
+            local containerGroupIdx = reaper.GetNumGroups()
+            reaper.InsertGroupAtIndex(containerGroupIdx, true)
+            local containerGroup = reaper.GetGroup(0, containerGroupIdx)
+            reaper.GetSetMediaGroupInfo_String(containerGroup, "P_NAME", container.name, true)
             
             -- Set folder state based on position
-            local folderState = 0 -- Default: normal track in a folder
+            local folderState = 0 -- Default: normal group in a folder
             if j == containerCount then
                 -- If it's the last container, mark as folder end
                 folderState = -1
             end
-            reaper.SetMediaTrackInfo_Value(containerTrack, "I_FOLDERDEPTH", folderState)
+            reaper.SetMediaGroupInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
             
             -- Place items on the timeline according to the chosen mode
-            -- Pass track to enable inheritance
-            Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
+            -- Pass group to enable inheritance
+            Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
         end
     end
     
     reaper.PreventUIRefresh(-1)
     reaper.UpdateArrange()
-    reaper.Undo_EndBlock("Regenerate track '" .. track.name .. "'", -1)
+    reaper.Undo_EndBlock("Regenerate group '" .. group.name .. "'", -1)
 end
 
--- Function to regenerate a single container (updated to pass track parameter)
-function Generation.generateSingleContainer(trackIndex, containerIndex)
+-- Function to regenerate a single container (updated to pass group parameter)
+function Generation.generateSingleContainer(groupIndex, containerIndex)
   if not globals.timeSelectionValid then
       reaper.MB("Please create a time selection before regenerating!", "Error", 0)
       return
   end
   
-  local track = globals.tracks[trackIndex]
-  local container = track.containers[containerIndex]
-  if not track or not container then return end
+  local group = globals.groups[groupIndex]
+  local container = group.containers[containerIndex]
+  if not group or not container then return end
   
   reaper.Undo_BeginBlock()
   reaper.PreventUIRefresh(1)
@@ -377,29 +377,29 @@ function Generation.generateSingleContainer(trackIndex, containerIndex)
   -- Get default crossfade shape from REAPER preferences
   local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
   
-  -- Find the existing parent track by its name
-  local parentTrack, parentTrackIdx = Utils.findTrackByName(track.name)
+  -- Find the existing parent group by its name
+  local parentGroup, parentGroupIdx = Utils.findGroupByName(group.name)
   
-  if parentTrack then
-      -- Find the specific container track within the parent
-      local containerTrack, containerTrackIdx = Utils.findContainerTrack(parentTrackIdx, container.name)
+  if parentGroup then
+      -- Find the specific container group within the parent
+      local containerGroup, containerGroupIdx = Utils.findContainerGroup(parentGroupIdx, container.name)
       
-      if containerTrack then
-          -- Clear items from this container track
-          Utils.clearTrackItems(containerTrack)
+      if containerGroup then
+          -- Clear items from this container group
+          Utils.clearGroupItems(containerGroup)
           
           -- Regenerate items for this container only
-          Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
+          Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
       else
-          reaper.MB("Container '" .. container.name .. "' not found in track '" .. track.name .. "'", "Error", 0)
+          reaper.MB("Container '" .. container.name .. "' not found in group '" .. group.name .. "'", "Error", 0)
       end
   else
-      reaper.MB("Track '" .. track.name .. "' not found", "Error", 0)
+      reaper.MB("Group '" .. group.name .. "' not found", "Error", 0)
   end
   
   reaper.PreventUIRefresh(-1)
   reaper.UpdateArrange()
-  reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
+  reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in group '" .. group.name .. "'", -1)
 end
 
 

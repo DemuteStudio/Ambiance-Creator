@@ -1,6 +1,6 @@
 -- Sound Randomizer - Reaper Script
--- Allows creating tracks and containers to organize audio samples with advanced preset management
--- Features selective regeneration of individual tracks and containers
+-- Allows creating groups and containers to organize audio samples with advanced preset management
+-- Features selective regeneration of individual groups and containers
 
 -- Checking if ReaImGui exists
 if not reaper.ImGui_CreateContext then
@@ -24,7 +24,7 @@ local UI = require("DM_Ambiance_UI")
 local ctx = reaper.ImGui_CreateContext('Ambiance Creator')
 
 -- Global variables
-local tracks = {}
+local groups = {}
 local timeSelectionValid = false
 local startTime, endTime = 0, 0
 local timeSelectionLength = 0
@@ -33,20 +33,20 @@ local timeSelectionLength = 0
 local currentPresetName = ""
 local presetsPath = ""
 
--- Variables for container and track preset management
-local selectedTrackPresetIndex = {}
+-- Variables for container and group preset management
+local selectedGroupPresetIndex = {}
 local selectedContainerPresetIndex = {}
-local currentSaveTrackIndex = nil
-local currentSaveContainerTrack = nil
+local currentSaveGroupIndex = nil
+local currentSaveContainerGroup = nil
 local currentSaveContainerIndex = nil
-local newTrackPresetName = ""
+local newGroupPresetName = ""
 local newContainerPresetName = ""
 
 -- Variables for the interface
 local newPresetName = ""
 local selectedPresetIndex = -1
 
--- Variables to track active popups, avoid window flashing issues
+-- Variables to group active popups, avoid window flashing issues
 local activePopups = {}
 
 -- Random number generator initialization
@@ -55,19 +55,19 @@ math.randomseed(os.time())
 -- Partage des variables globales avec les modules
 local globals = {
   ctx = ctx,
-  tracks = tracks,
+  groups = groups,
   timeSelectionValid = timeSelectionValid,
   startTime = startTime,
   endTime = endTime,
   timeSelectionLength = timeSelectionLength,
   currentPresetName = currentPresetName,
   presetsPath = presetsPath,
-  selectedTrackPresetIndex = selectedTrackPresetIndex,
+  selectedGroupPresetIndex = selectedGroupPresetIndex,
   selectedContainerPresetIndex = selectedContainerPresetIndex,
-  currentSaveTrackIndex = currentSaveTrackIndex,
-  currentSaveContainerTrack = currentSaveContainerTrack,
+  currentSaveGroupIndex = currentSaveGroupIndex,
+  currentSaveContainerGroup = currentSaveContainerGroup,
   currentSaveContainerIndex = currentSaveContainerIndex,
-  newTrackPresetName = newTrackPresetName,
+  newGroupPresetName = newGroupPresetName,
   newContainerPresetName = newContainerPresetName,
   newPresetName = newPresetName,
   selectedPresetIndex = selectedPresetIndex,
@@ -93,7 +93,7 @@ UI.initModule(globals)
 -- Initialize the presets path at startup
 presetsPath = ""  -- Reset to force proper folder creation
 Presets.getPresetsPath("Global")
-Presets.getPresetsPath("Tracks")
+Presets.getPresetsPath("Groups")
 
 -- Start the main loop
 reaper.defer(UI.mainLoop)

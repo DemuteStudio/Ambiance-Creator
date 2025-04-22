@@ -12,20 +12,20 @@ function UI_Container.initModule(g)
 end
 
 -- Function to display container preset controls for a specific container
-function UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
-    local trackId = "track" .. trackIndex
-    local containerId = trackId .. "_container" .. containerIndex
-    local presetKey = trackIndex .. "_" .. containerIndex
+function UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
+    local groupId = "group" .. groupIndex
+    local containerId = groupId .. "_container" .. containerIndex
+    local presetKey = groupIndex .. "_" .. containerIndex
     
     -- Initialize selected preset index if needed
     if not globals.selectedContainerPresetIndex[presetKey] then
         globals.selectedContainerPresetIndex[presetKey] = -1
     end
     
-    -- Get sanitized track name for folder structure (replacing non-alphanumeric chars with underscore)
-    local trackName = globals.tracks[trackIndex].name:gsub("[^%w]", "_")
+    -- Get sanitized group name for folder structure (replacing non-alphanumeric chars with underscore)
+    local groupName = globals.groups[groupIndex].name:gsub("[^%w]", "_")
     
-    -- Get container presets for this track
+    -- Get container presets for this group
     local containerPresetList = globals.Presets.listPresets("Containers")
     
     -- Prepare items for the preset dropdown
@@ -49,14 +49,14 @@ function UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
         globals.selectedContainerPresetIndex[presetKey] >= 0 and
         globals.selectedContainerPresetIndex[presetKey] < #containerPresetList then
         local presetName = containerPresetList[globals.selectedContainerPresetIndex[presetKey] + 1]
-        globals.Presets.loadContainerPreset(presetName, trackIndex, containerIndex)
+        globals.Presets.loadContainerPreset(presetName, groupIndex, containerIndex)
     end
     
     -- Save preset button
     reaper.ImGui_SameLine(globals.ctx)
     if reaper.ImGui_Button(globals.ctx, "Save Container##" .. containerId) then
-        globals.newContainerPresetName = globals.tracks[trackIndex].containers[containerIndex].name
-        globals.currentSaveContainerTrack = trackIndex
+        globals.newContainerPresetName = globals.groups[groupIndex].containers[containerIndex].name
+        globals.currentSaveContainerGroup = groupIndex
         globals.currentSaveContainerIndex = containerIndex
         globals.Utils.safeOpenPopup("Save Container Preset##" .. containerId)
     end
@@ -67,7 +67,7 @@ function UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
         local rv, value = reaper.ImGui_InputText(globals.ctx, "##ContainerPresetName" .. containerId, globals.newContainerPresetName)
         if rv then globals.newContainerPresetName = value end
         if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newContainerPresetName ~= "" then
-            if globals.Presets.saveContainerPreset(globals.newContainerPresetName, globals.currentSaveContainerTrack, globals.currentSaveContainerIndex) then
+            if globals.Presets.saveContainerPreset(globals.newContainerPresetName, globals.currentSaveContainerGroup, globals.currentSaveContainerIndex) then
                 globals.Utils.safeClosePopup("Save Container Preset##" .. containerId)
             end
         end
@@ -81,11 +81,11 @@ end
 
 -- Function to display container settings in the right panel
 -- Function to display container settings in the right panel
-function UI_Container.displayContainerSettings(trackIndex, containerIndex, width)
-    local track = globals.tracks[trackIndex]
-    local container = track.containers[containerIndex]
-    local trackId = "track" .. trackIndex
-    local containerId = trackId .. "_container" .. containerIndex
+function UI_Container.displayContainerSettings(groupIndex, containerIndex, width)
+    local group = globals.groups[groupIndex]
+    local container = group.containers[containerIndex]
+    local groupId = "group" .. groupIndex
+    local containerId = groupId .. "_container" .. containerIndex
     
     -- Panel title showing which container is being edited
     reaper.ImGui_Text(globals.ctx, "Container Settings: " .. container.name)
@@ -103,7 +103,7 @@ function UI_Container.displayContainerSettings(trackIndex, containerIndex, width
     if rv then container.overrideParent = newOverrideParent end
     
     -- Container preset controls
-    UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
+    UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
     
     -- Button to import selected items from REAPER
     if reaper.ImGui_Button(globals.ctx, "Import Selected Items##" .. containerId) then
@@ -256,7 +256,7 @@ function UI_Container.displayContainerSettings(trackIndex, containerIndex, width
         end
     else
         -- Si Override Parent n'est pas coché, afficher un message explicatif
-        reaper.ImGui_TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent track")
+        reaper.ImGui_TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent group")
         reaper.ImGui_TextColored(globals.ctx, 0xAAAAAAFF, "Enable 'Override Parent Settings' to customize parameters")
     end
 end

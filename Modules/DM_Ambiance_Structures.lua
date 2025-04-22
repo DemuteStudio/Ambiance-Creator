@@ -7,10 +7,10 @@ function Structures.initModule(g)
     globals = g
 end
 
--- Track structure with randomization parameters
-function Structures.createTrack(name)
+-- Group structure with randomization parameters
+function Structures.createGroup(name)
     return {
-        name = name or "New Track",
+        name = name or "New Group",
         containers = {},
         expanded = true,
         -- Added randomization parameters similar to containers
@@ -43,12 +43,12 @@ function Structures.createContainer(name)
         triggerRate = 10.0, -- Can be negative for overlaps
         triggerDrift = 30,
         intervalMode = 0, -- 0 = Absolute, 1 = Relative, 2 = Coverage
-        overrideParent = false -- New flag to override parent track settings
+        overrideParent = false -- New flag to override parent group settings
     }
 end
 
 -- Function to get effective container parameters, considering parent inheritance
-function Structures.getEffectiveContainerParams(track, container)
+function Structures.getEffectiveContainerParams(group, container)
     -- If container is set to override parent settings, return its own parameters
     if container.overrideParent then
         return container
@@ -70,21 +70,21 @@ function Structures.getEffectiveContainerParams(track, container)
         end
     end
     
-    -- Override with parent track randomization settings
-    effectiveParams.randomizePitch = track.randomizePitch
-    effectiveParams.randomizeVolume = track.randomizeVolume
-    effectiveParams.randomizePan = track.randomizePan
+    -- Override with parent group randomization settings
+    effectiveParams.randomizePitch = group.randomizePitch
+    effectiveParams.randomizeVolume = group.randomizeVolume
+    effectiveParams.randomizePan = group.randomizePan
     
     -- Copy parent range values (creating new tables to avoid reference issues)
-    effectiveParams.pitchRange = {min = track.pitchRange.min, max = track.pitchRange.max}
-    effectiveParams.volumeRange = {min = track.volumeRange.min, max = track.volumeRange.max}
-    effectiveParams.panRange = {min = track.panRange.min, max = track.panRange.max}
+    effectiveParams.pitchRange = {min = group.pitchRange.min, max = group.pitchRange.max}
+    effectiveParams.volumeRange = {min = group.volumeRange.min, max = group.volumeRange.max}
+    effectiveParams.panRange = {min = group.panRange.min, max = group.panRange.max}
     
     -- Inherit trigger settings
-    effectiveParams.useRepetition = track.useRepetition
-    effectiveParams.triggerRate = track.triggerRate
-    effectiveParams.triggerDrift = track.triggerDrift
-    effectiveParams.intervalMode = track.intervalMode
+    effectiveParams.useRepetition = group.useRepetition
+    effectiveParams.triggerRate = group.triggerRate
+    effectiveParams.triggerDrift = group.triggerDrift
+    effectiveParams.intervalMode = group.intervalMode
     
     return effectiveParams
 end

@@ -27,7 +27,7 @@ function UI_Generation.drawMainGenerationButton()
     
     -- Execute generation if button was pressed
     if buttonPressed then
-        globals.Generation.generateTracks()
+        globals.Generation.generateGroups()
     end
     
     return buttonPressed
@@ -44,22 +44,22 @@ function UI_Generation.drawTimeSelectionInfo()
     end
 end
 
--- Function to draw regenerate button for a track
-function UI_Generation.drawTrackRegenerateButton(trackIndex)
-    local trackId = "track" .. trackIndex
-    if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. trackId) then
-        globals.Generation.generateSingleTrack(trackIndex)
+-- Function to draw regenerate button for a group
+function UI_Generation.drawGroupRegenerateButton(groupIndex)
+    local groupId = "group" .. groupIndex
+    if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. groupId) then
+        globals.Generation.generateSingleGroup(groupIndex)
         return true
     end
     return false
 end
 
 -- Function to draw regenerate button for a container
-function UI_Generation.drawContainerRegenerateButton(trackIndex, containerIndex)
-    local trackId = "track" .. trackIndex
-    local containerId = trackId .. "_container" .. containerIndex
+function UI_Generation.drawContainerRegenerateButton(groupIndex, containerIndex)
+    local groupId = "group" .. groupIndex
+    local containerId = groupId .. "_container" .. containerIndex
     if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. containerId) then
-        globals.Generation.generateSingleContainer(trackIndex, containerIndex)
+        globals.Generation.generateSingleContainer(groupIndex, containerIndex)
         return true
     end
     return false
@@ -71,12 +71,12 @@ function UI_Generation.drawMultiRegenerateButton(width)
     local selectedContainers = {}
     for key in pairs(globals.selectedContainers) do
         local t, c = key:match("(%d+)_(%d+)")
-        table.insert(selectedContainers, {trackIndex = tonumber(t), containerIndex = tonumber(c)})
+        table.insert(selectedContainers, {groupIndex = tonumber(t), containerIndex = tonumber(c)})
     end
     
     if reaper.ImGui_Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
         for _, c in ipairs(selectedContainers) do
-            globals.Generation.generateSingleContainer(c.trackIndex, c.containerIndex)
+            globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end
         return true
     end
