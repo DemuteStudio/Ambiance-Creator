@@ -26,7 +26,7 @@ function UI_Container.drawContainerPresetControls(trackIndex, containerIndex)
     local trackName = globals.tracks[trackIndex].name:gsub("[^%w]", "_")
     
     -- Get container presets for this track
-    local containerPresetList = globals.Presets.listPresets("Containers", trackName)
+    local containerPresetList = globals.Presets.listPresets("Containers")
     
     -- Prepare items for the preset dropdown
     local containerPresetItems = ""

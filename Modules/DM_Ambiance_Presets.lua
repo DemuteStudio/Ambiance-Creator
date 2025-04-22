@@ -42,8 +42,9 @@ function Presets.getPresetsPath(type, trackName)
     specificPath = basePath .. "Global\\"
   elseif type == "Tracks" then
     specificPath = basePath .. "Tracks\\"
-  elseif type == "Containers" and trackName then
-    specificPath = basePath .. "Containers\\" .. trackName .. "\\"
+  elseif type == "Containers" then
+    -- Élimination de la dépendance à trackName pour les conteneurs
+    specificPath = basePath .. "Containers\\"
   end
   
   -- Create the specific directory if it doesn't exist
@@ -100,7 +101,46 @@ function Presets.listPresets(type, trackName, forceRefresh)
 end
 
 -- Function to serialize a table
-function Presets.serializeTable(val, name, depth)
+function Presets.listPresets(type, trackName, forceRefresh)
+  local currentTime = os.time()
+  local cacheKey = type -- Plus besoin d'inclure trackName pour les conteneurs
+  
+  if not type then type = "Global" end
+  
+  -- Initialisation du cache et vérification
+  if not presetCache then presetCache = {} end
+  if not presetCacheTime then presetCacheTime = {} end
+  
+  if not forceRefresh and presetCache[cacheKey] then
+    return presetCache[cacheKey] -- Retour du cache si récent
+  end
+  
+  -- Obtention du chemin sans référence au trackName pour les conteneurs
+  local path = Presets.getPresetsPath(type, nil)
+  
+  -- Reset de la liste des presets
+  local typePresets = {}
+  
+  -- Utilisation de reaper.EnumerateFiles pour lister les fichiers
+  local i = 0
+  local file = reaper.EnumerateFiles(path, i)
+  while file do
+    if file:match("%.lua$") then
+      local presetName = file:gsub("%.lua$", "")
+      typePresets[#typePresets + 1] = presetName
+    end
+    i = i + 1
+    file = reaper.EnumerateFiles(path, i)
+  end
+  
+  table.sort(typePresets)
+  presetCache[cacheKey] = typePresets
+  presetCacheTime[cacheKey] = currentTime
+  
+  return typePresets
+end
+
+local function serializeTable(val, name, depth)
   depth = depth or 0
   local indent = string.rep("  ", depth)
   local result = ""
@@ -112,7 +152,7 @@ function Presets.serializeTable(val, name, depth)
     
     for k, v in pairs(val) do
       local key = type(k) == "number" and "[" .. k .. "]" or k
-      result = result .. Presets.serializeTable(v, key, depth + 1) .. ",\n"
+      result = result .. serializeTable(v, key, depth + 1) .. ",\n"
     end
     
     result = result .. indent .. "}"
@@ -129,6 +169,7 @@ function Presets.serializeTable(val, name, depth)
   return result
 end
 
+
 -- Function to save a global preset
 function Presets.savePreset(name)
   if name == "" then return false end
@@ -139,7 +180,7 @@ function Presets.savePreset(name)
   if file then
     file:write("-- Ambiance Creator Global Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-    file:write("return " .. Presets.serializeTable(globals.tracks) .. "\n")
+    file:write("return " .. serializeTable(globals.tracks) .. "\n")
     file:close()
     
     -- Refresh the preset list
@@ -201,7 +242,7 @@ function Presets.saveTrackPreset(name, trackIndex)
   if file then
     file:write("-- Ambiance Creator Track Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-    file:write("return " .. Presets.serializeTable(track) .. "\n")
+    file:write("return " .. serializeTable(track) .. "\n")
     file:close()
     
     -- Refresh the preset list
@@ -232,19 +273,19 @@ end
 function Presets.saveContainerPreset(name, trackIndex, containerIndex)
   if name == "" then return false end
   
-  local trackName = globals.tracks[trackIndex].name:gsub("[^%w]", "_") -- Sanitize for filename
+  -- Suppression de la référence au nom de la piste
   local container = globals.tracks[trackIndex].containers[containerIndex]
-  local path = Presets.getPresetsPath("Containers", trackName) .. name .. ".lua"
+  local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
   local file = io.open(path, "w")
   
   if file then
     file:write("-- Ambiance Creator Container Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
-    file:write("return " .. Presets.serializeTable(container) .. "\n")
+    file:write("return " .. serializeTable(container) .. "\n")
     file:close()
     
-    -- Refresh the preset list
-    Presets.listPresets("Containers", trackName, true)
+    -- Rafraîchir la liste des presets sans référence au trackName
+    Presets.listPresets("Containers", nil, true)
     return true
   end
   
@@ -255,17 +296,26 @@ end
 function Presets.loadContainerPreset(name, trackIndex, containerIndex)
   if name == "" then return false end
   
-  local trackName = globals.tracks[trackIndex].name:gsub("[^%w]", "_") -- Sanitize for filename
-  local path = Presets.getPresetsPath("Containers", trackName) .. name .. ".lua"
+  -- Suppression de la référence au nom de la piste
+  local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
   
   if success and type(presetData) == "table" then
+    -- Préservation des items existants
+    local existingItems = globals.tracks[trackIndex].containers[containerIndex].items
+    
+    -- Application du preset
     globals.tracks[trackIndex].containers[containerIndex] = presetData
+    
+    -- Restauration des items
+    globals.tracks[trackIndex].containers[containerIndex].items = existingItems
+    
     return true
   else
     reaper.ShowConsoleMsg("Error loading container preset: " .. tostring(presetData) .. "\n")
     return false
   end
 end
+
 
 return Presets
