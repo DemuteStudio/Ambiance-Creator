@@ -220,6 +220,8 @@ function Generation.generateTracks()
     -- Delete existing tracks with the same names
     Generation.deleteExistingTracks()
     
+    reaper.Main_OnCommand(40289, 0) -- "Item: Unselect all items"
+
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
     
@@ -277,6 +279,8 @@ function Generation.generateSingleTrack(trackIndex)
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
     
+    reaper.Main_OnCommand(40289, 0) -- "Item: Unselect all items"
+
     -- Get default crossfade shape from REAPER preferences
     local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
     
@@ -367,6 +371,9 @@ function Generation.generateSingleContainer(trackIndex, containerIndex)
   reaper.Undo_BeginBlock()
   reaper.PreventUIRefresh(1)
   
+  -- Désélectionner tous les items du projet
+  reaper.Main_OnCommand(40289, 0) -- "Item: Unselect all items"
+  
   -- Get default crossfade shape from REAPER preferences
   local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
   
@@ -374,9 +381,7 @@ function Generation.generateSingleContainer(trackIndex, containerIndex)
   local parentTrack, parentTrackIdx = Utils.findTrackByName(track.name)
   
   if parentTrack then
-      -- reaper.ShowConsoleMsg("Regenerating container for track '" .. track.name .. "' (index: " .. parentTrackIdx .. ")\n")
-      
-      -- Find the specific container track within the parent using the modified function
+      -- Find the specific container track within the parent
       local containerTrack, containerTrackIdx = Utils.findContainerTrack(parentTrackIdx, container.name)
       
       if containerTrack then
@@ -386,38 +391,6 @@ function Generation.generateSingleContainer(trackIndex, containerIndex)
           -- Regenerate items for this container only
           Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
       else
-          -- Try a more exhaustive search if normal search fails
-          reaper.ShowConsoleMsg("Container not found with standard method, trying fallback search...\n")
-          
-          -- Fallback method: search all tracks that might be container children
-          local trackCount = reaper.CountTracks(0)
-          local folderDepth = 1
-          
-          for i = parentTrackIdx + 1, trackCount - 1 do
-              local childTrack = reaper.GetTrack(0, i)
-              local _, name = reaper.GetSetMediaTrackInfo_String(childTrack, "P_NAME", "", false)
-              
-              -- Very permissive matching (substring)
-              if string.find(string.lower(name), string.lower(container.name)) then
-                  reaper.ShowConsoleMsg("Found potential match: '" .. name .. "'\n")
-                  
-                  -- Use this track
-                  Utils.clearTrackItems(childTrack)
-                  Generation.placeItemsForContainer(track, container, childTrack, xfadeshape)
-                  
-                  reaper.PreventUIRefresh(-1)
-                  reaper.UpdateArrange()
-                  reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
-                  return
-              end
-              
-              -- Update folder depth
-              local depth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
-              folderDepth = folderDepth + depth
-              if folderDepth <= 0 then break end
-          end
-          
-          -- If we reach here, no matching track was found even with fallback
           reaper.MB("Container '" .. container.name .. "' not found in track '" .. track.name .. "'", "Error", 0)
       end
   else
@@ -428,6 +401,7 @@ function Generation.generateSingleContainer(trackIndex, containerIndex)
   reaper.UpdateArrange()
   reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
 end
+
 
 
 return Generation
