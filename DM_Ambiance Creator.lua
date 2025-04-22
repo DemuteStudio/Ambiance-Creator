@@ -13,6 +13,7 @@ local script_path = debug.getinfo(1, "S").source:match[[^@?(.*[\/])[^\/]-$]]
 package.path = script_path .. "modules/?.lua;" .. package.path
 
 -- Importation des modules
+-- local ImGui = require 'imgui' '0.9.2'
 local Utils = require("DM_Ambiance_Utils")
 local Structures = require("DM_Ambiance_Structures")
 local Items = require("DM_Ambiance_Items")
@@ -74,6 +75,7 @@ local globals = {
   activePopups = activePopups,
   
   -- Ajout des modules dans l'objet globals
+  -- ImGui = ImGui,
   Utils = Utils,
   Structures = Structures,
   Items = Items,
@@ -83,6 +85,7 @@ local globals = {
 }
 
 -- Partage des globals avec tous les modules
+-- ImGui.initModule(globals)
 Utils.initModule(globals)
 Structures.initModule(globals)
 Items.initModule(globals)

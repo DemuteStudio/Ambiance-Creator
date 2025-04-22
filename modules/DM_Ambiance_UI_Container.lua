@@ -2,7 +2,6 @@
 Sound Randomizer for REAPER - UI Container Module
 This module handles container settings UI display and editing
 ]]
-
 local UI_Container = {}
 local globals = {}
 
@@ -100,6 +99,8 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
     -- Override parent checkbox
     local overrideParent = container.overrideParent
     local rv, newOverrideParent = reaper.ImGui_Checkbox(globals.ctx, "Override Parent Settings##" .. containerId, overrideParent)
+    reaper.ImGui_SameLine(globals.ctx)
+    globals.Utils.HelpMarker("Enable 'Override Parent Settings' to customize parameters")
     if rv then container.overrideParent = newOverrideParent end
     
     -- Container preset controls
@@ -155,6 +156,20 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
             local intervalModes = "Absolute\0Relative\0Coverage\0\0"
             local intervalMode = container.intervalMode
             reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
+            
+            -- Help text explaining the selected mode
+            if container.intervalMode == 0 then
+                if container.triggerRate < 0 then
+                    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
+                else
+                    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+                end
+            elseif container.intervalMode == 1 then
+                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+            else
+                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+            end
+            
             local rv, newIntervalMode = reaper.ImGui_Combo(globals.ctx, "Interval Mode##" .. containerId, intervalMode, intervalModes)
             if rv then container.intervalMode = newIntervalMode end
             
@@ -180,18 +195,6 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
                 triggerRate, triggerRateMin, triggerRateMax, "%.1f")
             if rv then container.triggerRate = newTriggerRate end
             
-            -- Help text explaining the selected mode
-            if container.intervalMode == 0 then
-                if container.triggerRate < 0 then
-                    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-                else
-                    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
-                end
-            elseif container.intervalMode == 1 then
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
-            else
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
-            end
             
             -- Trigger drift slider (randomness in timing)
             local triggerDrift = container.triggerDrift

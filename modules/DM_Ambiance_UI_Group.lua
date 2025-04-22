@@ -46,6 +46,20 @@ function UI_Group.displayGroupSettings(groupIndex, width)
         local intervalModes = "Absolute\0Relative\0Coverage\0\0"
         local intervalMode = group.intervalMode
         reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
+
+        -- Help text explaining the selected mode
+        if group.intervalMode == 0 then
+            if group.triggerRate < 0 then
+                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
+            else
+                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+            end
+        elseif group.intervalMode == 1 then
+            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+        else
+            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+        end
+        
         local rv, newIntervalMode = reaper.ImGui_Combo(globals.ctx, "Interval Mode##" .. groupId, intervalMode, intervalModes)
         if rv then group.intervalMode = newIntervalMode end
         
@@ -71,18 +85,6 @@ function UI_Group.displayGroupSettings(groupIndex, width)
             triggerRate, triggerRateMin, triggerRateMax, "%.1f")
         if rv then group.triggerRate = newTriggerRate end
         
-        -- Help text explaining the selected mode
-        if group.intervalMode == 0 then
-            if group.triggerRate < 0 then
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-            else
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
-            end
-        elseif group.intervalMode == 1 then
-            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
-        else
-            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
-        end
         
         -- Trigger drift slider (randomness in timing)
         local triggerDrift = group.triggerDrift
