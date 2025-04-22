@@ -108,7 +108,8 @@ function UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSe
         
         -- TreeNode flags - include selection flags if needed
         local trackFlags = track.expanded and reaper.ImGui_TreeNodeFlags_DefaultOpen() or 0
-        
+        trackFlags = trackFlags + reaper.ImGui_TreeNodeFlags_OpenOnArrow()
+
         -- Add specific flags to indicate selection
         if globals.selectedTrackIndex == i and globals.selectedContainerIndex == nil then
             trackFlags = trackFlags + reaper.ImGui_TreeNodeFlags_Selected()
@@ -116,6 +117,9 @@ function UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSe
         
         -- Create tree node for the track
         local trackOpen = reaper.ImGui_TreeNodeEx(globals.ctx, trackId, track.name, trackFlags)
+
+        -- Update the expanded state in our data structure
+        track.expanded = trackOpen
         
         -- Handle selection on click
         if reaper.ImGui_IsItemClicked(globals.ctx) then
