@@ -265,7 +265,7 @@ function UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSe
         if globals.selectedTrackIndex == trackToDelete then
             globals.selectedTrackIndex = nil
             globals.selectedContainerIndex = nil
-        elseif globals.selectedTrackIndex > trackToDelete then
+        elseif globals.selectedTrackIndex and globals.selectedTrackIndex > trackToDelete then
             globals.selectedTrackIndex = globals.selectedTrackIndex - 1
         end
         

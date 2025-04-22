@@ -10,6 +10,52 @@ function Generation.initModule(g)
     globals = g
 end
 
+-- Function to delete existing tracks with same names before generating
+function Generation.deleteExistingTracks()
+  -- Create a map of track names we're about to create
+  local trackNames = {}
+  for _, track in ipairs(globals.tracks) do
+      trackNames[track.name] = true
+  end
+  
+  -- Find all tracks with matching names and their children
+  local tracksToDelete = {}
+  local trackCount = reaper.CountTracks(0)
+  local i = 0
+  while i < trackCount do
+      local track = reaper.GetTrack(0, i)
+      local _, name = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
+      if trackNames[name] then
+          -- Check if this is a folder track
+          local depth = reaper.GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH")
+          -- Add this track to the delete list
+          table.insert(tracksToDelete, track)
+          -- If this is a folder track, also find all its children
+          if depth == 1 then
+              local j = i + 1
+              local folderDepth = 1 -- Start with depth 1 (we're inside one folder)
+              while j < trackCount and folderDepth > 0 do
+                  local childTrack = reaper.GetTrack(0, j)
+                  table.insert(tracksToDelete, childTrack)
+                  -- Update folder depth based on this track's folder status
+                  local childDepth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+                  folderDepth = folderDepth + childDepth
+                  j = j + 1
+              end
+              -- Skip the children we've already processed
+              i = j - 1
+          end
+      end
+      i = i + 1
+  end
+  
+  -- Delete tracks in reverse order to avoid index issues
+  for i = #tracksToDelete, 1, -1 do
+      reaper.DeleteTrack(tracksToDelete[i])
+  end
+end
+
+
 -- Function to place items for a container with inheritance support
 function Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
     -- Get effective parameters considering inheritance from parent track
