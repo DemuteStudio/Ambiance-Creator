@@ -20,14 +20,14 @@ function Generation.deleteExistingGroups()
   
   -- Find all groups with matching names and their children
   local groupsToDelete = {}
-  local groupCount = reaper.CountGroups(0)
+  local groupCount = reaper.CountTracks(0)
   local i = 0
   while i < groupCount do
-      local group = reaper.GetGroup(0, i)
-      local _, name = reaper.GetSetMediaGroupInfo_String(group, "P_NAME", "", false)
+      local group = reaper.GetTrack(0, i)
+      local _, name = reaper.GetSetMediaTrackInfo_String(group, "P_NAME", "", false)
       if groupNames[name] then
           -- Check if this is a folder group
-          local depth = reaper.GetMediaGroupInfo_Value(group, "I_FOLDERDEPTH")
+          local depth = reaper.GetMediaTrackInfo_Value(group, "I_FOLDERDEPTH")
           -- Add this group to the delete list
           table.insert(groupsToDelete, group)
           -- If this is a folder group, also find all its children
@@ -35,10 +35,10 @@ function Generation.deleteExistingGroups()
               local j = i + 1
               local folderDepth = 1 -- Start with depth 1 (we're inside one folder)
               while j < groupCount and folderDepth > 0 do
-                  local childGroup = reaper.GetGroup(0, j)
+                  local childGroup = reaper.GetTrack(0, j)
                   table.insert(groupsToDelete, childGroup)
                   -- Update folder depth based on this group's folder status
-                  local childDepth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
+                  local childDepth = reaper.GetMediaTackInfo_Value(childGroup, "I_FOLDERDEPTH")
                   folderDepth = folderDepth + childDepth
                   j = j + 1
               end
@@ -51,7 +51,7 @@ function Generation.deleteExistingGroups()
   
   -- Delete groups in reverse order to avoid index issues
   for i = #groupsToDelete, 1, -1 do
-      reaper.DeleteGroup(groupsToDelete[i])
+      reaper.DeleteTrack(groupsToDelete[i])
   end
 end
 
@@ -116,7 +116,7 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
                 end
                 
                 -- Create and configure the new item
-                local newItem = reaper.AddMediaItemToGroup(containerGroup)
+                local newItem = reaper.AddMediaItemToTrack(containerGroup)
                 local newTake = reaper.AddTakeToMediaItem(newItem)
                 
                 -- Configure the item
@@ -168,7 +168,7 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
                 local position = globals.startTime + math.random() * globals.timeSelectionLength
                 
                 -- Create a new item from the source file
-                local newItem = reaper.AddMediaItemToGroup(containerGroup)
+                local newItem = reaper.AddMediaItemToTrack(containerGroup)
                 local newTake = reaper.AddTakeToMediaItem(newItem)
                 
                 -- Configure the item with saved data
@@ -230,22 +230,22 @@ function Generation.generateGroups()
     
     for i, group in ipairs(globals.groups) do
         -- Create a parent group
-        local parentGroupIdx = reaper.GetNumGroups()
-        reaper.InsertGroupAtIndex(parentGroupIdx, true)
-        local parentGroup = reaper.GetGroup(0, parentGroupIdx)
-        reaper.GetSetMediaGroupInfo_String(parentGroup, "P_NAME", group.name, true)
+        local parentGroupIdx = reaper.GetNumTracks()
+        reaper.InsertTrackAtIndex(parentGroupIdx, true)
+        local parentGroup = reaper.GetTrack(0, parentGroupIdx)
+        reaper.GetSetMediaTrackInfo_String(parentGroup, "P_NAME", group.name, true)
         
         -- Set the group as parent (folder start)
-        reaper.SetMediaGroupInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
+        reaper.SetMediaTrackInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
         
         local containerCount = #group.containers
         
         for j, container in ipairs(group.containers) do
             -- Create a group for each container
-            local containerGroupIdx = reaper.GetNumGroups()
-            reaper.InsertGroupAtIndex(containerGroupIdx, true)
-            local containerGroup = reaper.GetGroup(0, containerGroupIdx)
-            reaper.GetSetMediaGroupInfo_String(containerGroup, "P_NAME", container.name, true)
+            local containerGroupIdx = reaper.GetNumTracks()
+            reaper.InsertTrackAtIndex(containerGroupIdx, true)
+            local containerGroup = reaper.GetTrack(0, containerGroupIdx)
+            reaper.GetSetMediaTrackInfo_String(containerGroup, "P_NAME", container.name, true)
             
             -- Set folder state based on position
             local folderState = 0 -- Default: normal group in a folder
@@ -253,7 +253,7 @@ function Generation.generateGroups()
                 -- If it's the last container, mark as folder end
                 folderState = -1
             end
-            reaper.SetMediaGroupInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
+            reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
             
             -- Place items on the timeline according to the chosen mode
             -- Now passing group to enable inheritance
@@ -290,12 +290,12 @@ function Generation.generateSingleGroup(groupIndex)
     if existingGroup then
         -- Find all container groups within this folder
         local containerGroups = {}
-        local groupCount = reaper.CountGroups(0)
+        local groupCount = reaper.CountTracks(0)
         local folderDepth = 1 -- Start with depth 1 (inside a folder)
         
         for i = existingGroupIdx + 1, groupCount - 1 do
-            local childGroup = reaper.GetGroup(0, i)
-            local depth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
+            local childGroup = reaper.GetTrack(0, i)
+            local depth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
             
             -- Add this group to our container list
             table.insert(containerGroups, childGroup)
@@ -321,22 +321,22 @@ function Generation.generateSingleGroup(groupIndex)
         end
     else
         -- Group doesn't exist, create it
-        local parentGroupIdx = reaper.GetNumGroups()
-        reaper.InsertGroupAtIndex(parentGroupIdx, true)
-        local parentGroup = reaper.GetGroup(0, parentGroupIdx)
-        reaper.GetSetMediaGroupInfo_String(parentGroup, "P_NAME", group.name, true)
+        local parentGroupIdx = reaper.GetNumTracks()
+        reaper.InsertTrackAtIndex(parentGroupIdx, true)
+        local parentGroup = reaper.GetTrack(0, parentGroupIdx)
+        reaper.GetSetMediaTrackInfo_String(parentGroup, "P_NAME", group.name, true)
         
         -- Set the group as parent (folder start)
-        reaper.SetMediaGroupInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
+        reaper.SetMediaTrackInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
         
         local containerCount = #group.containers
         
         for j, container in ipairs(group.containers) do
             -- Create a group for each container
-            local containerGroupIdx = reaper.GetNumGroups()
-            reaper.InsertGroupAtIndex(containerGroupIdx, true)
-            local containerGroup = reaper.GetGroup(0, containerGroupIdx)
-            reaper.GetSetMediaGroupInfo_String(containerGroup, "P_NAME", container.name, true)
+            local containerGroupIdx = reaper.GetNumTracks()
+            reaper.InsertTrackAtIndex(containerGroupIdx, true)
+            local containerGroup = reaper.GetTrack(0, containerGroupIdx)
+            reaper.GetSetMediaTrackInfo_String(containerGroup, "P_NAME", container.name, true)
             
             -- Set folder state based on position
             local folderState = 0 -- Default: normal group in a folder
@@ -344,7 +344,7 @@ function Generation.generateSingleGroup(groupIndex)
                 -- If it's the last container, mark as folder end
                 folderState = -1
             end
-            reaper.SetMediaGroupInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
+            reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
             
             -- Place items on the timeline according to the chosen mode
             -- Pass group to enable inheritance
@@ -401,7 +401,5 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
   reaper.UpdateArrange()
   reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in group '" .. group.name .. "'", -1)
 end
-
-
 
 return Generation
