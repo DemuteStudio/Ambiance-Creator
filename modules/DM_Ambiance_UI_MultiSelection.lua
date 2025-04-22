@@ -13,8 +13,8 @@ end
 
 -- Helper function to display a "mixed values" indicator
 local function showMixedValues()
-    reaper.ImGui_SameLine(globals.ctx)
-    reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
+    imgui.SameLine(globals.ctx)
+    imgui.TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
 end
 
 -- Function to get all selected containers as a table of {groupIndex, containerIndex} pairs
@@ -36,10 +36,10 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     end
     
     -- Title with count
-    reaper.ImGui_TextColored(globals.ctx, 0xFF4CAF50, "Editing " .. selectedCount .. " containers")
+    imgui.TextColored(globals.ctx, 0xFF4CAF50, "Editing " .. selectedCount .. " containers")
     
     if selectedCount == 0 then
-        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "No containers selected. Select containers to edit them.")
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "No containers selected. Select containers to edit them.")
         return
     end
     
@@ -47,13 +47,13 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     local containers = UI_MultiSelection.getSelectedContainersList()
     
     -- Button to regenerate all selected containers
-    if reaper.ImGui_Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
+    if imgui.Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
         for _, c in ipairs(containers) do
             globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end
     end
     
-    reaper.ImGui_Separator(globals.ctx)
+    imgui.Separator(globals.ctx)
     
     -- Collect info about selected containers for initial values
     local anyUseRepetition = false
@@ -135,7 +135,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     end
     
     -- TRIGGER SETTINGS SECTION
-    reaper.ImGui_Text(globals.ctx, "Trigger Settings")
+    imgui.Text(globals.ctx, "Trigger Settings")
     
     -- Repetition activation checkbox (three-state checkbox for mixed values)
     local repetitionState = allUseRepetition and 1 or (anyUseRepetition and 2 or 0)
@@ -151,7 +151,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         useRep = true
     end
     
-    local rv, newUseRep = reaper.ImGui_Checkbox(globals.ctx, repetitionText, useRep)
+    local rv, newUseRep = imgui.Checkbox(globals.ctx, repetitionText, useRep)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
@@ -176,13 +176,13 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         
         if intervalMode == -1 then
             -- Mixed values - use a placeholder
-            reaper.ImGui_Text(globals.ctx, "Interval Mode:")
-            reaper.ImGui_SameLine(globals.ctx)
-            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
+            imgui.Text(globals.ctx, "Interval Mode:")
+            imgui.SameLine(globals.ctx)
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
             
             -- Add a dropdown to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newIntervalMode = reaper.ImGui_Combo(globals.ctx, "Set all to##IntervalMode", 0, intervalModes)
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newIntervalMode = imgui.Combo(globals.ctx, "Set all to##IntervalMode", 0, intervalModes)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
@@ -194,8 +194,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newIntervalMode = reaper.ImGui_Combo(globals.ctx, "Interval Mode", intervalMode, intervalModes)
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode", intervalMode, intervalModes)
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
@@ -225,12 +225,12 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         -- Trigger rate slider
         if commonTriggerRate == -999 then
             -- Mixed values - show a text indicator and editable field
-            reaper.ImGui_Text(globals.ctx, triggerRateLabel .. ":")
+            imgui.Text(globals.ctx, triggerRateLabel .. ":")
             showMixedValues()
             
             -- Add a slider to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerRate = reaper.ImGui_SliderDouble(globals.ctx, "Set all to##TriggerRate",
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, "Set all to##TriggerRate",
                 0, triggerRateMin, triggerRateMax, "%.1f")
             if rv then
                 -- Apply to all selected containers
@@ -243,8 +243,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerRate = reaper.ImGui_SliderDouble(globals.ctx, triggerRateLabel,
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel,
                 commonTriggerRate, triggerRateMin, triggerRateMax, "%.1f")
             if rv then
                 -- Apply to all selected containers
@@ -260,25 +260,25 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         -- Help text explaining the selected mode
         if commonIntervalMode == 0 then
             if commonTriggerRate < 0 then
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
+                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
             else
-                reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
             end
         elseif commonIntervalMode == 1 then
-            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
         elseif commonIntervalMode == 2 then
-            reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
         end
         
         -- Trigger drift slider (randomness in timing)
         if commonTriggerDrift == -1 then
             -- Mixed values - show a text indicator and editable field
-            reaper.ImGui_Text(globals.ctx, "Random variation (%):")
+            imgui.Text(globals.ctx, "Random variation (%):")
             showMixedValues()
             
             -- Add a slider to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerDrift = reaper.ImGui_SliderInt(globals.ctx, "Set all to##TriggerDrift", 0, 0, 100, "%d")
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Set all to##TriggerDrift", 0, 0, 100, "%d")
             if rv then
                 -- Apply to all selected containers
                 for _, c in ipairs(containers) do
@@ -290,8 +290,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerDrift = reaper.ImGui_SliderInt(globals.ctx, "Random variation (%)",
+            imgui.PushItemWidth(globals.ctx, width * 0.5)
+            local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)",
                 commonTriggerDrift, 0, 100, "%d")
             if rv then
                 -- Apply to all selected containers
@@ -306,8 +306,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     end
     
     -- RANDOMIZATION PARAMETERS SECTION
-    reaper.ImGui_Separator(globals.ctx)
-    reaper.ImGui_Text(globals.ctx, "Randomization parameters")
+    imgui.Separator(globals.ctx)
+    imgui.Text(globals.ctx, "Randomization parameters")
     
     -- Pitch randomization checkbox
     local pitchState = allRandomizePitch and 1 or (anyRandomizePitch and 2 or 0)
@@ -323,7 +323,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         randomizePitch = true
     end
     
-    local rv, newRandomizePitch = reaper.ImGui_Checkbox(globals.ctx, pitchText, randomizePitch)
+    local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, pitchText, randomizePitch)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
@@ -344,12 +344,12 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if anyRandomizePitch then
         if commonPitchMin == -999 or commonPitchMax == -999 then
             -- Mixed values - show a text indicator and editable field
-            reaper.ImGui_Text(globals.ctx, "Pitch Range (semitones):")
+            imgui.Text(globals.ctx, "Pitch Range (semitones):")
             showMixedValues()
             
             -- Add a range slider to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newPitchMin, newPitchMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx,
                 "Set all to##PitchRange",
                 -12, 12, 0.1, -48, 48)
             if rv then
@@ -365,8 +365,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newPitchMin, newPitchMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx,
                 "Pitch Range (semitones)",
                 commonPitchMin, commonPitchMax, 0.1, -48, 48)
             if rv then
@@ -397,7 +397,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         randomizeVolume = true
     end
     
-    local rv, newRandomizeVolume = reaper.ImGui_Checkbox(globals.ctx, volumeText, randomizeVolume)
+    local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, volumeText, randomizeVolume)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
@@ -418,12 +418,12 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if anyRandomizeVolume then
         if commonVolumeMin == -999 or commonVolumeMax == -999 then
             -- Mixed values - show a text indicator and editable field
-            reaper.ImGui_Text(globals.ctx, "Volume Range (dB):")
+            imgui.Text(globals.ctx, "Volume Range (dB):")
             showMixedValues()
             
             -- Add a range slider to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newVolumeMin, newVolumeMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx,
                 "Set all to##VolumeRange",
                 -6, 6, 0.1, -24, 24)
             if rv then
@@ -439,8 +439,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newVolumeMin, newVolumeMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx,
                 "Volume Range (dB)",
                 commonVolumeMin, commonVolumeMax, 0.1, -24, 24)
             if rv then
@@ -471,7 +471,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         randomizePan = true
     end
     
-    local rv, newRandomizePan = reaper.ImGui_Checkbox(globals.ctx, panText, randomizePan)
+    local rv, newRandomizePan = imgui.Checkbox(globals.ctx, panText, randomizePan)
     if rv then
         -- Apply to all selected containers
         for _, c in ipairs(containers) do
@@ -492,12 +492,12 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     if anyRandomizePan then
         if commonPanMin == -999 or commonPanMax == -999 then
             -- Mixed values - show a text indicator and editable field
-            reaper.ImGui_Text(globals.ctx, "Pan Range (-100/+100):")
+            imgui.Text(globals.ctx, "Pan Range (-100/+100):")
             showMixedValues()
             
             -- Add a range slider to set all values to the same value
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newPanMin, newPanMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx,
                 "Set all to##PanRange",
                 -50, 50, 1, -100, 100)
             if rv then
@@ -513,8 +513,8 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             end
         else
             -- All containers have the same value - normal edit
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.7)
-            local rv, newPanMin, newPanMax = reaper.ImGui_DragFloatRange2(globals.ctx,
+            imgui.PushItemWidth(globals.ctx, width * 0.7)
+            local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx,
                 "Pan Range (-100/+100)",
                 commonPanMin, commonPanMax, 1, -100, 100)
             if rv then

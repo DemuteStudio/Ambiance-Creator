@@ -18,7 +18,7 @@ function Generation.deleteExistingGroups()
       groupNames[group.name] = true
   end
   
-  -- Find all groups with matching names and their children
+  -- Find all tracks with matching names and their children
   local groupsToDelete = {}
   local groupCount = reaper.CountTracks(0)
   local i = 0
@@ -26,11 +26,11 @@ function Generation.deleteExistingGroups()
       local group = reaper.GetTrack(0, i)
       local _, name = reaper.GetSetMediaTrackInfo_String(group, "P_NAME", "", false)
       if groupNames[name] then
-          -- Check if this is a folder group
+          -- Check if this is a folder track
           local depth = reaper.GetMediaTrackInfo_Value(group, "I_FOLDERDEPTH")
-          -- Add this group to the delete list
+          -- Add this track to the delete list
           table.insert(groupsToDelete, group)
-          -- If this is a folder group, also find all its children
+          -- If this is a folder track, also find all its children
           if depth == 1 then
               local j = i + 1
               local folderDepth = 1 -- Start with depth 1 (we're inside one folder)
@@ -38,7 +38,7 @@ function Generation.deleteExistingGroups()
                   local childGroup = reaper.GetTrack(0, j)
                   table.insert(groupsToDelete, childGroup)
                   -- Update folder depth based on this group's folder status
-                  local childDepth = reaper.GetMediaTackInfo_Value(childGroup, "I_FOLDERDEPTH")
+                  local childDepth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
                   folderDepth = folderDepth + childDepth
                   j = j + 1
               end
@@ -49,7 +49,7 @@ function Generation.deleteExistingGroups()
       i = i + 1
   end
   
-  -- Delete groups in reverse order to avoid index issues
+  -- Delete tracks in reverse order to avoid index issues
   for i = #groupsToDelete, 1, -1 do
       reaper.DeleteTrack(groupsToDelete[i])
   end

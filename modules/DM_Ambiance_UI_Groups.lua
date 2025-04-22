@@ -31,16 +31,16 @@ function UI_Groups.drawGroupPresetControls(i)
     groupPresetItems = groupPresetItems .. "\0"
     
     -- Group preset dropdown
-    reaper.ImGui_PushItemWidth(globals.ctx, 200)
-    local rv, newSelectedGroupIndex = reaper.ImGui_Combo(globals.ctx, "##GroupPresetSelector" .. groupId,
+    imgui.PushItemWidth(globals.ctx, 200)
+    local rv, newSelectedGroupIndex = imgui.Combo(globals.ctx, "##GroupPresetSelector" .. groupId,
         globals.selectedGroupPresetIndex[i], groupPresetItems)
     if rv then
         globals.selectedGroupPresetIndex[i] = newSelectedGroupIndex
     end
     
     -- Load preset button
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Load Group##" .. groupId) and
+    imgui.SameLine(globals.ctx)
+    if imgui.Button(globals.ctx, "Load Group##" .. groupId) and
         globals.selectedGroupPresetIndex[i] >= 0 and
         globals.selectedGroupPresetIndex[i] < #groupPresetList then
         local presetName = groupPresetList[globals.selectedGroupPresetIndex[i] + 1]
@@ -48,56 +48,56 @@ function UI_Groups.drawGroupPresetControls(i)
     end
     
     -- Save preset button
-    reaper.ImGui_SameLine(globals.ctx)
-    if reaper.ImGui_Button(globals.ctx, "Save Group##" .. groupId) then
+    imgui.SameLine(globals.ctx)
+    if imgui.Button(globals.ctx, "Save Group##" .. groupId) then
         globals.newGroupPresetName = globals.groups[i].name
         globals.currentSaveGroupIndex = i
         globals.Utils.safeOpenPopup("Save Group Preset##" .. groupId)
     end
     
     -- Group save dialog popup
-    if reaper.ImGui_BeginPopupModal(globals.ctx, "Save Group Preset##" .. groupId, nil, reaper.ImGui_WindowFlags_AlwaysAutoResize()) then
-        reaper.ImGui_Text(globals.ctx, "Group preset name:")
-        local rv, value = reaper.ImGui_InputText(globals.ctx, "##GroupPresetName" .. groupId, globals.newGroupPresetName)
+    if imgui.BeginPopupModal(globals.ctx, "Save Group Preset##" .. groupId, nil, imgui.WindowFlags_AlwaysAutoResize) then
+        imgui.Text(globals.ctx, "Group preset name:")
+        local rv, value = imgui.InputText(globals.ctx, "##GroupPresetName" .. groupId, globals.newGroupPresetName)
         if rv then globals.newGroupPresetName = value end
-        if reaper.ImGui_Button(globals.ctx, "Save", 120, 0) and globals.newGroupPresetName ~= "" then
+        if imgui.Button(globals.ctx, "Save", 120, 0) and globals.newGroupPresetName ~= "" then
             if globals.Presets.saveGroupPreset(globals.newGroupPresetName, globals.currentSaveGroupIndex) then
                 globals.Utils.safeClosePopup("Save Group Preset##" .. groupId)
             end
         end
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Cancel", 120, 0) then
+        imgui.SameLine(globals.ctx)
+        if imgui.Button(globals.ctx, "Cancel", 120, 0) then
             globals.Utils.safeClosePopup("Save Group Preset##" .. groupId)
         end
-        reaper.ImGui_EndPopup(globals.ctx)
+        imgui.EndPopup(globals.ctx)
     end
 end
 
 -- Function to draw the left panel containing groups list
 function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
     -- Title for the left panel
-    reaper.ImGui_Text(globals.ctx, "Groups & Containers")
+    imgui.Text(globals.ctx, "Groups & Containers")
     
     -- Multi-selection mode toggle and info
     local selectedCount = UI_Groups.getSelectedContainersCount()
     if selectedCount > 1 then
-        reaper.ImGui_SameLine(globals.ctx)
-        reaper.ImGui_TextColored(globals.ctx, 0xFF4CAF50, "(" .. selectedCount .. " selected)")
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Clear Selection") then
+        imgui.SameLine(globals.ctx)
+        imgui.TextColored(globals.ctx, 0xFF4CAF50, "(" .. selectedCount .. " selected)")
+        imgui.SameLine(globals.ctx)
+        if imgui.Button(globals.ctx, "Clear Selection") then
             clearContainerSelections()
         end
     end
     
     -- Button to add a new group
-    if reaper.ImGui_Button(globals.ctx, "Add Group") then
+    if imgui.Button(globals.ctx, "Add Group") then
         table.insert(globals.groups, globals.Structures.createGroup())
     end
     
-    reaper.ImGui_Separator(globals.ctx)
+    imgui.Separator(globals.ctx)
     
     -- Check if Ctrl key is pressed for multi-selection mode
-    local ctrlPressed = reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0
+    local ctrlPressed = imgui.GetKeyMods(globals.ctx) & imgui.Mod_Ctrl ~= 0
     
     -- Variable to group which group to delete (if any)
     local groupToDelete = nil
@@ -107,22 +107,22 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
         local groupId = "group" .. i
         
         -- TreeNode flags - include selection flags if needed
-        local groupFlags = group.expanded and reaper.ImGui_TreeNodeFlags_DefaultOpen() or 0
-        groupFlags = groupFlags + reaper.ImGui_TreeNodeFlags_OpenOnArrow()
+        local groupFlags = group.expanded and imgui.TreeNodeFlags_DefaultOpen or 0
+        groupFlags = groupFlags + imgui.TreeNodeFlags_OpenOnArrow
 
         -- Add specific flags to indicate selection
         if globals.selectedGroupIndex == i and globals.selectedContainerIndex == nil then
-            groupFlags = groupFlags + reaper.ImGui_TreeNodeFlags_Selected()
+            groupFlags = groupFlags + imgui.TreeNodeFlags_Selected
         end
         
         -- Create tree node for the group
-        local groupOpen = reaper.ImGui_TreeNodeEx(globals.ctx, groupId, group.name, groupFlags)
+        local groupOpen = imgui.TreeNodeEx(globals.ctx, groupId, group.name, groupFlags)
 
         -- Update the expanded state in our data structure
         group.expanded = groupOpen
         
         -- Handle selection on click
-        if reaper.ImGui_IsItemClicked(globals.ctx) then
+        if imgui.IsItemClicked(globals.ctx) then
             globals.selectedGroupIndex = i
             globals.selectedContainerIndex = nil
             
@@ -133,14 +133,14 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
         end
         
         -- Delete group button
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Delete##" .. groupId) then
+        imgui.SameLine(globals.ctx)
+        if imgui.Button(globals.ctx, "Delete##" .. groupId) then
             groupToDelete = i
         end
         
         -- Regenerate group button
-        reaper.ImGui_SameLine(globals.ctx)
-        if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. groupId) then
+        imgui.SameLine(globals.ctx)
+        if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
             globals.Generation.generateSingleGroup(i)
         end
         
@@ -148,15 +148,15 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
         if groupOpen then
             -- Group name input field
             local groupName = group.name
-            reaper.ImGui_PushItemWidth(globals.ctx, width * 0.8)
-            local rv, newGroupName = reaper.ImGui_InputText(globals.ctx, "Name##" .. groupId, groupName)
+            imgui.PushItemWidth(globals.ctx, width * 0.8)
+            local rv, newGroupName = imgui.InputText(globals.ctx, "Name##" .. groupId, groupName)
             if rv then group.name = newGroupName end
             
             -- Group preset controls
             UI_Groups.drawGroupPresetControls(i)
             
             -- Button to add a container to this group
-            if reaper.ImGui_Button(globals.ctx, "Add Container##" .. groupId) then
+            if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
                 table.insert(group.containers, globals.Structures.createContainer())
             end
             
@@ -168,21 +168,21 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                 local containerId = groupId .. "_container" .. j
                 
                 -- TreeNode flags - leaf nodes for containers with selection support
-                local containerFlags = reaper.ImGui_TreeNodeFlags_Leaf() + reaper.ImGui_TreeNodeFlags_NoTreePushOnOpen()
+                local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen
                 
                 -- Add specific flags to indicate selection
                 if isContainerSelected(i, j) then
-                    containerFlags = containerFlags + reaper.ImGui_TreeNodeFlags_Selected()
+                    containerFlags = containerFlags + imgui.TreeNodeFlags_Selected
                 end
                 
                 -- Indent container items for better visual hierarchy
-                reaper.ImGui_Indent(globals.ctx, 20)
-                reaper.ImGui_TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
+                imgui.Indent(globals.ctx, 20)
+                imgui.TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
                 
                 -- Handle selection on click with multi-selection support
-                if reaper.ImGui_IsItemClicked(globals.ctx) then
+                if imgui.IsItemClicked(globals.ctx) then
                     -- Check if Shift is pressed for range selection
-                    local shiftPressed = reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Shift() ~= 0
+                    local shiftPressed = imgui.GetKeyMods(globals.ctx) & imgui.Mod_Shift ~= 0
                     
                     -- If Ctrl is pressed, toggle this container in multi-selection
                     if ctrlPressed then
@@ -209,18 +209,18 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                 end
                 
                 -- Delete container button
-                reaper.ImGui_SameLine(globals.ctx)
-                if reaper.ImGui_Button(globals.ctx, "Delete##" .. containerId) then
+                imgui.SameLine(globals.ctx)
+                if imgui.Button(globals.ctx, "Delete##" .. containerId) then
                     containerToDelete = j
                 end
                 
                 -- Regenerate container button
-                reaper.ImGui_SameLine(globals.ctx)
-                if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. containerId) then
+                imgui.SameLine(globals.ctx)
+                if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
                     globals.Generation.generateSingleContainer(i, j)
                 end
                 
-                reaper.ImGui_Unindent(globals.ctx, 20)
+                imgui.Unindent(globals.ctx, 20)
             end
             
             -- Delete the marked container if any
@@ -245,7 +245,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                 end
             end
             
-            reaper.ImGui_TreePop(globals.ctx)
+            imgui.TreePop(globals.ctx)
         end
     end
     

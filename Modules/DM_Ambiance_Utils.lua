@@ -6,20 +6,20 @@ function Utils.initModule(g)
 end
 
 function Utils.HelpMarker(desc)
-  reaper.ImGui_TextDisabled(globals.ctx, '(?)')
-  if reaper.ImGui_BeginItemTooltip(globals.ctx) then
-    reaper.ImGui_PushTextWrapPos(globals.ctx, reaper.ImGui_GetFontSize(globals.ctx) * 35.0)
-    reaper.ImGui_Text(globals.ctx, desc)
-    reaper.ImGui_PopTextWrapPos(globals.ctx)
-    reaper.ImGui_EndTooltip(globals.ctx)
+  imgui.TextDisabled(globals.ctx, '(?)')
+  if imgui.BeginItemTooltip(globals.ctx) then
+    imgui.PushTextWrapPos(globals.ctx, imgui.GetFontSize(globals.ctx) * 35.0)
+    imgui.Text(globals.ctx, desc)
+    imgui.PopTextWrapPos(globals.ctx)
+    imgui.EndTooltip(globals.ctx)
   end
 end
 
 -- Function to find a group by its name
 function Utils.findGroupByName(name)
-  for i = 0, reaper.CountGroups(0) - 1 do
-    local group = reaper.GetGroup(0, i)
-    local _, groupName = reaper.GetSetMediaGroupInfo_String(group, "P_NAME", "", false)
+  for i = 0, reaper.CountTracks(0) - 1 do
+    local group = reaper.GetTrack(0, i)
+    local _, groupName = reaper.GetSetMediaTrackInfo_String(group, "P_NAME", "", false)
     if groupName == name then
       return group, i
     end
@@ -29,15 +29,15 @@ end
 
 -- Function to find a container group within a parent group
 function Utils.findContainerGroup(parentGroupIdx, containerName)
-  local groupCount = reaper.CountGroups(0)
+  local groupCount = reaper.CountTracks(0)
   local folderDepth = 1 -- Commencer avec profondeur 1 (à l'intérieur d'un dossier)
   
   -- Log for debugging purposes
   -- reaper.ShowConsoleMsg("Searching for container: '" .. containerName .. "' starting from parent index " .. parentGroupIdx .. "\n")
   
   for i = parentGroupIdx + 1, groupCount - 1 do
-      local childGroup = reaper.GetGroup(0, i)
-      local _, name = reaper.GetSetMediaGroupInfo_String(childGroup, "P_NAME", "", false)
+      local childGroup = reaper.GetTrack(0, i)
+      local _, name = reaper.GetSetMediaTrackInfo_String(childGroup, "P_NAME", "", false)
       
       -- Debug info
       -- reaper.ShowConsoleMsg("  Checking group at index " .. i .. ": '" .. name .. "' (depth: " .. folderDepth .. ")\n")
@@ -53,7 +53,7 @@ function Utils.findContainerGroup(parentGroupIdx, containerName)
       end
       
       -- Update folder depth based on this group's folder status
-      local depth = reaper.GetMediaGroupInfo_Value(childGroup, "I_FOLDERDEPTH")
+      local depth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
       folderDepth = folderDepth + depth
       
       -- If we reach the end of the folder, stop searching
@@ -72,10 +72,10 @@ end
 function Utils.clearGroupItems(group)
   if not group then return false end
   
-  local itemCount = reaper.GetGroupNumMediaItems(group)
+  local itemCount = reaper.GetTrackNumMediaItems(group)
   for i = itemCount-1, 0, -1 do
-    local item = reaper.GetGroupMediaItem(group, i)
-    reaper.DeleteGroupMediaItem(group, item)
+    local item = reaper.GetTrackMediaItem(group, i)
+    reaper.DeleteTrackMediaItem(group, item)
   end
   
   return true
@@ -97,13 +97,13 @@ end
 -- Safe popup management to avoid flashing issues
 function Utils.safeOpenPopup(popupName)
   if not globals.activePopups[popupName] then
-    reaper.ImGui_OpenPopup(globals.ctx, popupName)
+    imgui.OpenPopup(globals.ctx, popupName)
     globals.activePopups[popupName] = { active = true, timeOpened = reaper.time_precise() }
   end
 end
 
 function Utils.safeClosePopup(popupName)
-  reaper.ImGui_CloseCurrentPopup(globals.ctx)
+  imgui.CloseCurrentPopup(globals.ctx)
   globals.activePopups[popupName] = nil
 end
 

@@ -16,14 +16,14 @@ end
 -- Function to draw the main generation button with styling
 function UI_Generation.drawMainGenerationButton()
     -- Apply styling for the main generation button
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_Button(), 0xFF4CAF50) -- Green button
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonHovered(), 0xFF66BB6A) -- Lighter green when hovered
-    reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonActive(), 0xFF43A047) -- Darker green when clicked
+    imgui.PushStyleColor(globals.ctx, imgui.Col_Button, 0xFF4CAF50) -- Green button
+    imgui.PushStyleColor(globals.ctx, imgui.Col_ButtonHovered, 0xFF66BB6A) -- Lighter green when hovered
+    imgui.PushStyleColor(globals.ctx, imgui.Col_ButtonActive, 0xFF43A047) -- Darker green when clicked
     
-    local buttonPressed = reaper.ImGui_Button(globals.ctx, "Create Ambiance", 150, 30)
+    local buttonPressed = imgui.Button(globals.ctx, "Create Ambiance", 150, 30)
     
     -- Pop styling colors to return to default
-    reaper.ImGui_PopStyleColor(globals.ctx, 3)
+    imgui.PopStyleColor(globals.ctx, 3)
     
     -- Execute generation if button was pressed
     if buttonPressed then
@@ -36,18 +36,18 @@ end
 -- Function to display time selection information
 function UI_Generation.drawTimeSelectionInfo()
     if globals.Utils.checkTimeSelection() then
-        reaper.ImGui_Text(globals.ctx, "Time Selection: " .. globals.Utils.formatTime(globals.startTime) .. 
+        imgui.Text(globals.ctx, "Time Selection: " .. globals.Utils.formatTime(globals.startTime) .. 
                                        " - " .. globals.Utils.formatTime(globals.endTime) .. 
                                        " | Length: " .. globals.Utils.formatTime(globals.endTime - globals.startTime))
     else
-        reaper.ImGui_TextColored(globals.ctx, 0xFF0000FF, "No time selection! Please create one.")
+        imgui.TextColored(globals.ctx, 0xFF0000FF, "No time selection! Please create one.")
     end
 end
 
 -- Function to draw regenerate button for a group
 function UI_Generation.drawGroupRegenerateButton(groupIndex)
     local groupId = "group" .. groupIndex
-    if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. groupId) then
+    if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
         globals.Generation.generateSingleGroup(groupIndex)
         return true
     end
@@ -58,7 +58,7 @@ end
 function UI_Generation.drawContainerRegenerateButton(groupIndex, containerIndex)
     local groupId = "group" .. groupIndex
     local containerId = groupId .. "_container" .. containerIndex
-    if reaper.ImGui_Button(globals.ctx, "Regenerate##" .. containerId) then
+    if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
         globals.Generation.generateSingleContainer(groupIndex, containerIndex)
         return true
     end
@@ -74,7 +74,7 @@ function UI_Generation.drawMultiRegenerateButton(width)
         table.insert(selectedContainers, {groupIndex = tonumber(t), containerIndex = tonumber(c)})
     end
     
-    if reaper.ImGui_Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
+    if imgui.Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
         for _, c in ipairs(selectedContainers) do
             globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end
@@ -85,35 +85,35 @@ end
 
 -- Function to display UI controls for global generation settings
 function UI_Generation.drawGlobalGenerationSettings()
-    if not reaper.ImGui_CollapsingHeader(globals.ctx, "Generation Settings") then
+    if not imgui.CollapsingHeader(globals.ctx, "Generation Settings") then
         return
     end
     
-    reaper.ImGui_Indent(globals.ctx, 10)
+    imgui.Indent(globals.ctx, 10)
     
     -- Global cross-fade settings
-    local rv, newCrossfadeEnabled = reaper.ImGui_Checkbox(globals.ctx, "Enable automatic crossfades", globals.enableCrossfades)
+    local rv, newCrossfadeEnabled = imgui.Checkbox(globals.ctx, "Enable automatic crossfades", globals.enableCrossfades)
     if rv then globals.enableCrossfades = newCrossfadeEnabled end
     
     if globals.enableCrossfades then
-        reaper.ImGui_PushItemWidth(globals.ctx, 200)
+        imgui.PushItemWidth(globals.ctx, 200)
         local crossfadeShapes = "Linear\0Slow start/end\0Fast start\0Fast end\0Sharp\0\0"
-        local rv, newShape = reaper.ImGui_Combo(globals.ctx, "Crossfade shape", globals.crossfadeShape, crossfadeShapes)
+        local rv, newShape = imgui.Combo(globals.ctx, "Crossfade shape", globals.crossfadeShape, crossfadeShapes)
         if rv then globals.crossfadeShape = newShape end
     end
     
     -- Random seed control
-    reaper.ImGui_Separator(globals.ctx)
-    local rv, newUseSeed = reaper.ImGui_Checkbox(globals.ctx, "Use fixed seed", globals.useRandomSeed)
+    imgui.Separator(globals.ctx)
+    local rv, newUseSeed = imgui.Checkbox(globals.ctx, "Use fixed seed", globals.useRandomSeed)
     if rv then globals.useRandomSeed = newUseSeed end
     
     if globals.useRandomSeed then
-        reaper.ImGui_PushItemWidth(globals.ctx, 200)
-        local rv, newSeed = reaper.ImGui_InputInt(globals.ctx, "Random seed", globals.randomSeed)
+        imgui.PushItemWidth(globals.ctx, 200)
+        local rv, newSeed = imgui.InputInt(globals.ctx, "Random seed", globals.randomSeed)
         if rv then globals.randomSeed = newSeed end
     end
     
-    reaper.ImGui_Unindent(globals.ctx, 10)
+    imgui.Unindent(globals.ctx, 10)
 end
 
 return UI_Generation

@@ -52,16 +52,12 @@ end
 
 -- Fonction PushStyle recommandée par le développeur
 function UI.PushStyle()
-    -- Si vous avez besoin d'appliquer des styles globaux, faites-le ici
-    -- Exemple:
-    -- globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
+    --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
 end
 
 -- Fonction PopStyle recommandée par le développeur
 function UI.PopStyle()
-    -- Annulez les styles appliqués dans PushStyle
-    -- Exemple:
-    -- globals.imgui.PopStyleVar(globals.ctx, 1)
+    --globals.imgui.PopStyleVar(globals.ctx, 1)
 end
 
 -- Function to clear all container selections
