@@ -44,107 +44,115 @@ function UI.initModule(g)
     UI_Groups.initModule(globals)
     UI_MultiSelection.initModule(globals)
     UI_Generation.initModule(globals)
-    UI_Group.initModule(globals) -- Initialisation du nouveau module
+    UI_Group.initModule(globals)
     
     -- Make UI_Groups accessible to the UI_Group module
     globals.UI_Groups = UI_Groups
 end
 
+-- Fonction PushStyle recommandée par le développeur
+function UI.PushStyle()
+    -- Si vous avez besoin d'appliquer des styles globaux, faites-le ici
+    -- Exemple:
+    -- globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
+end
+
+-- Fonction PopStyle recommandée par le développeur
+function UI.PopStyle()
+    -- Annulez les styles appliqués dans PushStyle
+    -- Exemple:
+    -- globals.imgui.PopStyleVar(globals.ctx, 1)
+end
 
 -- Function to clear all container selections
 local function clearContainerSelections()
-  globals.selectedContainers = {}
-  globals.inMultiSelectMode = false
-  
-  -- Also clear the shift anchor when clearing selections
-  globals.shiftAnchorGroupIndex = nil
-  globals.shiftAnchorContainerIndex = nil
+    globals.selectedContainers = {}
+    globals.inMultiSelectMode = false
+    -- Also clear the shift anchor when clearing selections
+    globals.shiftAnchorGroupIndex = nil
+    globals.shiftAnchorContainerIndex = nil
 end
-
 
 -- Function to check if a container is selected
 local function isContainerSelected(groupIndex, containerIndex)
-  return globals.selectedContainers[groupIndex .. "_" .. containerIndex] == true
+    return globals.selectedContainers[groupIndex .. "_" .. containerIndex] == true
 end
 
 -- Function to toggle container selection
 local function toggleContainerSelection(groupIndex, containerIndex)
-  local key = groupIndex .. "_" .. containerIndex
-  if globals.selectedContainers[key] then
-      globals.selectedContainers[key] = nil
-  else
-      globals.selectedContainers[key] = true
-  end
-  
-  -- Update primary selection for compatibility
-  globals.selectedGroupIndex = groupIndex
-  globals.selectedContainerIndex = containerIndex
+    local key = groupIndex .. "_" .. containerIndex
+    if globals.selectedContainers[key] then
+        globals.selectedContainers[key] = nil
+    else
+        globals.selectedContainers[key] = true
+    end
+    -- Update primary selection for compatibility
+    globals.selectedGroupIndex = groupIndex
+    globals.selectedContainerIndex = containerIndex
 end
 
 -- Function to select a range of containers between two points
 local function selectContainerRange(startGroupIndex, startContainerIndex, endGroupIndex, endContainerIndex)
-  -- Clear existing selection first if not in multi-select mode
-  if not (reaper.ImGui_GetKeyMods(globals.ctx) & reaper.ImGui_Mod_Ctrl() ~= 0) then
-      clearContainerSelections()
-  end
-  
-  -- Handle range selection within the same group
-  if startGroupIndex == endGroupIndex then
-      local group = globals.groups[startGroupIndex]
-      local startIdx = math.min(startContainerIndex, endContainerIndex)
-      local endIdx = math.max(startContainerIndex, endContainerIndex)
-      
-      for i = startIdx, endIdx do
-          if i <= #group.containers then
-              globals.selectedContainers[startGroupIndex .. "_" .. i] = true
-          end
-      end
-      return
-  end
-  
-  -- Handle range selection across different groups
-  local startGroup = math.min(startGroupIndex, endGroupIndex)
-  local endGroup = math.max(startGroupIndex, endGroupIndex)
-  
-  -- If selecting from higher group to lower group, reverse the container indices
-  local firstContainerIdx, lastContainerIdx
-  if startGroupIndex < endGroupIndex then
-      firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
-  else
-      firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
-  end
-  
-  -- Select all containers in the range
-  for t = startGroup, endGroup do
-      if globals.groups[t] then
-          if t == startGroup then
-              -- First group: select from firstContainerIdx to end
-              for c = firstContainerIdx, #globals.groups[t].containers do
-                  globals.selectedContainers[t .. "_" .. c] = true
-              end
-          elseif t == endGroup then
-              -- Last group: select from start to lastContainerIdx
-              for c = 1, lastContainerIdx do
-                  globals.selectedContainers[t .. "_" .. c] = true
-              end
-          else
-              -- Middle groups: select all containers
-              for c = 1, #globals.groups[t].containers do
-                  globals.selectedContainers[t .. "_" .. c] = true
-              end
-          end
-      end
-  end
-  
-  -- Update the multi-select mode flag
-  globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
+    -- Clear existing selection first if not in multi-select mode
+    if not (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Ctrl() ~= 0) then
+        clearContainerSelections()
+    end
+    
+    -- Handle range selection within the same group
+    if startGroupIndex == endGroupIndex then
+        local group = globals.groups[startGroupIndex]
+        local startIdx = math.min(startContainerIndex, endContainerIndex)
+        local endIdx = math.max(startContainerIndex, endContainerIndex)
+        for i = startIdx, endIdx do
+            if i <= #group.containers then
+                globals.selectedContainers[startGroupIndex .. "_" .. i] = true
+            end
+        end
+        return
+    end
+    
+    -- Handle range selection across different groups
+    local startGroup = math.min(startGroupIndex, endGroupIndex)
+    local endGroup = math.max(startGroupIndex, endGroupIndex)
+    
+    -- If selecting from higher group to lower group, reverse the container indices
+    local firstContainerIdx, lastContainerIdx
+    if startGroupIndex < endGroupIndex then
+        firstContainerIdx, lastContainerIdx = startContainerIndex, endContainerIndex
+    else
+        firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
+    end
+    
+    -- Select all containers in the range
+    for t = startGroup, endGroup do
+        if globals.groups[t] then
+            if t == startGroup then
+                -- First group: select from firstContainerIdx to end
+                for c = firstContainerIdx, #globals.groups[t].containers do
+                    globals.selectedContainers[t .. "_" .. c] = true
+                end
+            elseif t == endGroup then
+                -- Last group: select from start to lastContainerIdx
+                for c = 1, lastContainerIdx do
+                    globals.selectedContainers[t .. "_" .. c] = true
+                end
+            else
+                -- Middle groups: select all containers
+                for c = 1, #globals.groups[t].containers do
+                    globals.selectedContainers[t .. "_" .. c] = true
+                end
+            end
+        end
+    end
+    
+    -- Update the multi-select mode flag
+    globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
 
 -- Function to draw the left panel containing groups and containers list
 local function drawLeftPanel(width)
     UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
-
 
 -- Function to draw the right panel containing detailed settings for the selected container
 local function drawRightPanel(width)
@@ -162,75 +170,74 @@ local function drawRightPanel(width)
         UI_Group.displayGroupSettings(globals.selectedGroupIndex, width)
     else
         -- No selection
-        reaper.ImGui_TextColored(globals.ctx, 0xFFAA00FF, "Select a group or container to view and edit its settings.")
+        globals.imgui.TextColored(globals.ctx, 0xFFAA00FF, "Select a group or container to view and edit its settings.")
     end
 end
 
-
 -- Function to handle popup management and timeout
 local function handlePopups()
-  -- Check for any popup that might be stuck (safety measure)
-  for name, popup in pairs(globals.activePopups) do
-      if popup.active and reaper.time_precise() - popup.timeOpened > 5 then
-          -- Force close popups that have been open too long (5 seconds)
-          reaper.ImGui_CloseCurrentPopup(globals.ctx)
-          globals.activePopups[name] = nil
-      end
-  end
+    -- Check for any popup that might be stuck (safety measure)
+    for name, popup in pairs(globals.activePopups or {}) do
+        if popup.active and reaper.time_precise() - popup.timeOpened > 5 then
+            -- Force close popups that have been open too long (5 seconds)
+            globals.imgui.CloseCurrentPopup(globals.ctx)
+            globals.activePopups[name] = nil
+        end
+    end
 end
 
--- Main interface loop - this is called repeatedly to render the UI
-function UI.mainLoop()
-    -- Begin the main window
-    local visible, open = reaper.ImGui_Begin(globals.ctx, 'Ambiance Creator', true)
+-- Nouvelle fonction ShowMainWindow conformément aux recommandations du développeur
+function UI.ShowMainWindow(open)
+    local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open)
     
     if visible then
         -- Section with presets controls at the top
         UI_Preset.drawPresetControls()
         
-        -- Button to generate all groups and place items - moved to top, with custom styling
-        reaper.ImGui_SameLine(globals.ctx)
+        -- Button to generate all groups and place items
+        globals.imgui.SameLine(globals.ctx)
         UI_Generation.drawMainGenerationButton()
         
         -- Display time selection information
         UI_Generation.drawTimeSelectionInfo()
         
-        reaper.ImGui_Separator(globals.ctx)
+        globals.imgui.Separator(globals.ctx)
         
         -- Calculate dimensions for the split view layout
-        local windowWidth = reaper.ImGui_GetWindowWidth(globals.ctx)
+        local windowWidth = globals.imgui.GetWindowWidth(globals.ctx)
         local leftPanelWidth = windowWidth * 0.35
         local rightPanelWidth = windowWidth * 0.63
         
         -- Left panel (Groups & Containers list)
-        reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
+        globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
         drawLeftPanel(leftPanelWidth)
-        reaper.ImGui_EndChild(globals.ctx)
+        globals.imgui.EndChild(globals.ctx)
         
         -- Right panel (Container Settings)
-        reaper.ImGui_SameLine(globals.ctx)
-        reaper.ImGui_BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
+        globals.imgui.SameLine(globals.ctx)
+        globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
         drawRightPanel(rightPanelWidth)
-        reaper.ImGui_EndChild(globals.ctx)
-        
-        -- End the main window
-        reaper.ImGui_End(globals.ctx)
+        globals.imgui.EndChild(globals.ctx)
     end
+    
+    globals.imgui.End(globals.ctx)
     
     -- Handle popup management
     handlePopups()
     
-    -- Defer next UI refresh or destroy context if window is closed
+    return open
+end
+
+-- Fonction mainLoop pour compatibilité avec l'ancienne structure
+function UI.mainLoop()
+    UI.PushStyle()
+    local open = UI.ShowMainWindow(true)
+    UI.PopStyle()
+    
     if open then
         reaper.defer(UI.mainLoop)
-    else
-        if reaper.ImGui_DestroyContext then
-            reaper.ImGui_DestroyContext(globals.ctx)
-        else
-            -- Alternative pour éviter un crash
-            reaper.defer(function() end)
-        end
     end
+    -- Note: DestroyContext a été supprimé et n'est plus nécessaire
 end
 
 return UI

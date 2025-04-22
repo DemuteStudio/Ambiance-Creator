@@ -79,7 +79,6 @@ function UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
 end
 
 -- Function to display container settings in the right panel
--- Function to display container settings in the right panel
 function UI_Container.displayContainerSettings(groupIndex, containerIndex, width)
     local group = globals.groups[groupIndex]
     local container = group.containers[containerIndex]
@@ -260,7 +259,7 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
     else
         -- Si Override Parent n'est pas coché, afficher un message explicatif
         reaper.ImGui_TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent group")
-        reaper.ImGui_TextColored(globals.ctx, 0xAAAAAAFF, "Enable 'Override Parent Settings' to customize parameters")
+        --reaper.ImGui_TextColored(globals.ctx, 0xAAAAAAFF, "Enable 'Override Parent Settings' to customize parameters")
     end
 end
 

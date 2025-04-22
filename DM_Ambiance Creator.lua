@@ -4,16 +4,19 @@
 
 -- Checking if ReaImGui exists
 if not reaper.ImGui_CreateContext then
-  reaper.MB("This script requires ReaImGui. Please install the extension via ReaPack.", "Error", 0)
-  return
+    reaper.MB("This script requires ReaImGui. Please install the extension via ReaPack.", "Error", 0)
+    return
 end
+
+-- Initialisation correcte de ReaImGui selon les recommandations du développeur
+package.path = reaper.ImGui_GetBuiltinPath() .. '/?.lua'
+local imgui = require 'imgui' '0.9.3'
 
 -- Définir le chemin pour les modules
 local script_path = debug.getinfo(1, "S").source:match[[^@?(.*[\/])[^\/]-$]]
 package.path = script_path .. "modules/?.lua;" .. package.path
 
 -- Importation des modules
--- local ImGui = require 'imgui' '0.9.2'
 local Utils = require("DM_Ambiance_Utils")
 local Structures = require("DM_Ambiance_Structures")
 local Items = require("DM_Ambiance_Items")
@@ -21,82 +24,80 @@ local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 local UI = require("DM_Ambiance_UI")
 
--- Initialization
-local ctx = reaper.ImGui_CreateContext('Ambiance Creator')
-
--- Global variables
-local groups = {}
-local timeSelectionValid = false
-local startTime, endTime = 0, 0
-local timeSelectionLength = 0
-
--- Variables for preset management
-local currentPresetName = ""
-local presetsPath = ""
-
--- Variables for container and group preset management
-local selectedGroupPresetIndex = {}
-local selectedContainerPresetIndex = {}
-local currentSaveGroupIndex = nil
-local currentSaveContainerGroup = nil
-local currentSaveContainerIndex = nil
-local newGroupPresetName = ""
-local newContainerPresetName = ""
-
--- Variables for the interface
-local newPresetName = ""
-local selectedPresetIndex = -1
-
--- Variables to group active popups, avoid window flashing issues
-local activePopups = {}
-
--- Random number generator initialization
-math.randomseed(os.time())
-
--- Partage des variables globales avec les modules
+-- Variables globales
 local globals = {
-  ctx = ctx,
-  groups = groups,
-  timeSelectionValid = timeSelectionValid,
-  startTime = startTime,
-  endTime = endTime,
-  timeSelectionLength = timeSelectionLength,
-  currentPresetName = currentPresetName,
-  presetsPath = presetsPath,
-  selectedGroupPresetIndex = selectedGroupPresetIndex,
-  selectedContainerPresetIndex = selectedContainerPresetIndex,
-  currentSaveGroupIndex = currentSaveGroupIndex,
-  currentSaveContainerGroup = currentSaveContainerGroup,
-  currentSaveContainerIndex = currentSaveContainerIndex,
-  newGroupPresetName = newGroupPresetName,
-  newContainerPresetName = newContainerPresetName,
-  newPresetName = newPresetName,
-  selectedPresetIndex = selectedPresetIndex,
-  activePopups = activePopups,
-  
-  -- Ajout des modules dans l'objet globals
-  -- ImGui = ImGui,
-  Utils = Utils,
-  Structures = Structures,
-  Items = Items,
-  Presets = Presets,
-  Generation = Generation,
-  UI = UI
+    groups = {},
+    timeSelectionValid = false,
+    startTime = 0,
+    endTime = 0,
+    timeSelectionLength = 0,
+    currentPresetName = "",
+    presetsPath = "",
+    selectedGroupPresetIndex = {},
+    selectedContainerPresetIndex = {},
+    currentSaveGroupIndex = nil,
+    currentSaveContainerGroup = nil,
+    currentSaveContainerIndex = nil,
+    newGroupPresetName = "",
+    newContainerPresetName = "",
+    newPresetName = "",
+    selectedPresetIndex = -1,
+    activePopups = {}
 }
 
--- Partage des globals avec tous les modules
--- ImGui.initModule(globals)
-Utils.initModule(globals)
-Structures.initModule(globals)
-Items.initModule(globals)
-Presets.initModule(globals)
-Generation.initModule(globals)
-UI.initModule(globals)
+-- Fonction loop suivant les recommandations du développeur
+local function loop()
+    UI.PushStyle()
+    local open = UI.ShowMainWindow(true)
+    UI.PopStyle()
 
--- Initialize the presets path at startup
-presetsPath = ""  -- Reset to force proper folder creation
-Presets.getPresetsPath("Global")
-Presets.getPresetsPath("Groups")
+    if open then
+        reaper.defer(loop)
+    end
+    -- Note: DestroyContext n'est plus nécessaire dans les versions récentes de ReaImGui
+end
 
--- Start the main loop
-reaper.defer(UI.mainLoop)
+-- N'exécute le code que si le script est lancé directement
+if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2) then
+    -- Expose les variables pour le débogage
+    _G.globals = globals
+    _G.Utils = Utils
+    _G.Structures = Structures
+    _G.Items = Items
+    _G.Presets = Presets
+    _G.Generation = Generation
+    _G.UI = UI
+    _G.imgui = imgui
+    
+    -- Initialisation du générateur de nombres aléatoires
+    math.randomseed(os.time())
+    
+    -- Création du contexte ImGui selon les recommandations
+    local ctx = imgui.CreateContext('Ambiance Creator')
+    globals.ctx = ctx
+    globals.imgui = imgui
+    
+    -- Partage des modules avec globals
+    globals.Utils = Utils
+    globals.Structures = Structures
+    globals.Items = Items
+    globals.Presets = Presets
+    globals.Generation = Generation
+    globals.UI = UI
+    
+    -- Initialisation des modules
+    Utils.initModule(globals)
+    Structures.initModule(globals)
+    Items.initModule(globals)
+    Presets.initModule(globals)
+    Generation.initModule(globals)
+    UI.initModule(globals)
+    
+    -- Initialisation des chemins de presets
+    globals.presetsPath = "" -- Reset pour forcer la création du dossier
+    Presets.getPresetsPath("Global")
+    Presets.getPresetsPath("Groups")
+    
+    -- Démarrage de la boucle principale
+    reaper.defer(loop)
+end
