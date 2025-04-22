@@ -19,6 +19,7 @@ local UI_Preset = require("DM_Ambiance_UI_Preset")
 local UI_Container = require("DM_Ambiance_UI_Container")
 local UI_Tracks = require("DM_Ambiance_UI_Tracks")
 local UI_MultiSelection = require("DM_Ambiance_UI_MultiSelection")
+local UI_Generation = require("DM_Ambiance_UI_Generation")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
@@ -41,6 +42,7 @@ function UI.initModule(g)
     UI_Container.initModule(globals)
     UI_Tracks.initModule(globals)
     UI_MultiSelection.initModule(globals)
+    UI_Generation.initModule(globals)
 end
 
 -- Function to clear all container selections
@@ -134,7 +136,7 @@ end
 
 -- Function to draw the left panel containing tracks and containers list
 local function drawLeftPanel(width)
-  UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
+    UI_Tracks.drawTracksPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
 
 
@@ -175,64 +177,51 @@ end
 
 -- Main interface loop - this is called repeatedly to render the UI
 function UI.mainLoop()
-  -- Begin the main window
-  local visible, open = reaper.ImGui_Begin(globals.ctx, 'Sound Randomizer', true)
-  
-  if visible then
-      -- Section with presets controls at the top
-      UI_Preset.drawPresetControls()
-      
-      -- Button to generate all tracks and place items - moved to top, with custom styling
-      reaper.ImGui_SameLine(globals.ctx)
-      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_Button(), 0xFF4CAF50) -- Green button
-      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonHovered(), 0xFF66BB6A) -- Lighter green when hovered
-      reaper.ImGui_PushStyleColor(globals.ctx, reaper.ImGui_Col_ButtonActive(), 0xFF43A047) -- Darker green when clicked
-      
-      if reaper.ImGui_Button(globals.ctx, "Create Ambiance", 150, 30) then
-          Generation.generateTracks()
-      end
-      
-      -- Pop styling colors to return to default
-      reaper.ImGui_PopStyleColor(globals.ctx, 3)
-      
-      -- Display time selection information
-      if Utils.checkTimeSelection() then
-          reaper.ImGui_Text(globals.ctx, "Time Selection: " .. Utils.formatTime(globals.startTime) .. " - " .. Utils.formatTime(globals.endTime) .. " | Length: " .. Utils.formatTime(globals.endTime - globals.startTime))
-      else
-          reaper.ImGui_TextColored(globals.ctx, 0xFF0000FF, "No time selection! Please create one.")
-      end
-      
-      reaper.ImGui_Separator(globals.ctx)
-      
-      -- Calculate dimensions for the split view layout
-      local windowWidth = reaper.ImGui_GetWindowWidth(globals.ctx)
-      local leftPanelWidth = windowWidth * 0.35
-      local rightPanelWidth = windowWidth * 0.63
-      
-      -- Left panel (Tracks & Containers list)
-      reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
-      drawLeftPanel(leftPanelWidth)
-      reaper.ImGui_EndChild(globals.ctx)
-      
-      -- Right panel (Container Settings)
-      reaper.ImGui_SameLine(globals.ctx)
-      reaper.ImGui_BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
-      drawRightPanel(rightPanelWidth)
-      reaper.ImGui_EndChild(globals.ctx)
-      
-      -- End the main window
-      reaper.ImGui_End(globals.ctx)
-  end
-  
-  -- Handle popup management
-  handlePopups()
-  
-  -- Defer next UI refresh or destroy context if window is closed
-  if open then
-      reaper.defer(UI.mainLoop)
-  else
-      reaper.ImGui_DestroyContext(globals.ctx)
-  end
+    -- Begin the main window
+    local visible, open = reaper.ImGui_Begin(globals.ctx, 'Sound Randomizer', true)
+    
+    if visible then
+        -- Section with presets controls at the top
+        UI_Preset.drawPresetControls()
+        
+        -- Button to generate all tracks and place items - moved to top, with custom styling
+        reaper.ImGui_SameLine(globals.ctx)
+        UI_Generation.drawMainGenerationButton()
+        
+        -- Display time selection information
+        UI_Generation.drawTimeSelectionInfo()
+        
+        reaper.ImGui_Separator(globals.ctx)
+        
+        -- Calculate dimensions for the split view layout
+        local windowWidth = reaper.ImGui_GetWindowWidth(globals.ctx)
+        local leftPanelWidth = windowWidth * 0.35
+        local rightPanelWidth = windowWidth * 0.63
+        
+        -- Left panel (Tracks & Containers list)
+        reaper.ImGui_BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
+        drawLeftPanel(leftPanelWidth)
+        reaper.ImGui_EndChild(globals.ctx)
+        
+        -- Right panel (Container Settings)
+        reaper.ImGui_SameLine(globals.ctx)
+        reaper.ImGui_BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
+        drawRightPanel(rightPanelWidth)
+        reaper.ImGui_EndChild(globals.ctx)
+        
+        -- End the main window
+        reaper.ImGui_End(globals.ctx)
+    end
+    
+    -- Handle popup management
+    handlePopups()
+    
+    -- Defer next UI refresh or destroy context if window is closed
+    if open then
+        reaper.defer(UI.mainLoop)
+    else
+        reaper.ImGui_DestroyContext(globals.ctx)
+    end
 end
 
 return UI
