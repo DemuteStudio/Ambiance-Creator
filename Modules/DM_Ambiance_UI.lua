@@ -8,6 +8,12 @@ Uses ReaImGui for UI rendering
 local UI = {}
 local globals = {}
 
+local Utils = require("DM_Ambiance_Utils")
+local Structures = require("DM_Ambiance_Structures")
+local Items = require("DM_Ambiance_Items")
+local Presets = require("DM_Ambiance_Presets")
+local Generation = require("DM_Ambiance_Generation")
+
 -- Import UI modules
 local UI_Preset = require("DM_Ambiance_UI_Preset")
 local UI_Container = require("DM_Ambiance_UI_Container")
@@ -218,7 +224,12 @@ function UI.mainLoop()
     if open then
         reaper.defer(UI.mainLoop)
     else
-        reaper.ImGui_DestroyContext(globals.ctx)
+        if reaper.ImGui_DestroyContext then
+            reaper.ImGui_DestroyContext(globals.ctx)
+        else
+            -- Alternative pour éviter un crash
+            reaper.defer(function() end)
+        end
     end
 end
 
