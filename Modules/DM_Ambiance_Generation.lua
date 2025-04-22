@@ -355,45 +355,79 @@ end
 
 -- Function to regenerate a single container (updated to pass track parameter)
 function Generation.generateSingleContainer(trackIndex, containerIndex)
-    if not globals.timeSelectionValid then
-        reaper.MB("Please create a time selection before regenerating!", "Error", 0)
-        return
-    end
-    
-    local track = globals.tracks[trackIndex]
-    local container = track.containers[containerIndex]
-    if not track or not container then return end
-    
-    reaper.Undo_BeginBlock()
-    reaper.PreventUIRefresh(1)
-    
-    -- Get default crossfade shape from REAPER preferences
-    local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
-    
-    -- Find the existing parent track by its name
-    local parentTrack, parentTrackIdx = Utils.findTrackByName(track.name)
-    
-    if parentTrack then
-        -- Find the specific container track within the parent
-        local containerTrack, containerTrackIdx = Utils.findContainerTrack(parentTrackIdx, container.name)
-        
-        if containerTrack then
-            -- Clear items from this container track
-            Utils.clearTrackItems(containerTrack)
-            
-            -- Regenerate items for this container only
-            -- Pass track to enable inheritance
-            Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
-        else
-            reaper.MB("Container '" .. container.name .. "' not found in track '" .. track.name .. "'", "Error", 0)
-        end
-    else
-        reaper.MB("Track '" .. track.name .. "' not found", "Error", 0)
-    end
-    
-    reaper.PreventUIRefresh(-1)
-    reaper.UpdateArrange()
-    reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
+  if not globals.timeSelectionValid then
+      reaper.MB("Please create a time selection before regenerating!", "Error", 0)
+      return
+  end
+  
+  local track = globals.tracks[trackIndex]
+  local container = track.containers[containerIndex]
+  if not track or not container then return end
+  
+  reaper.Undo_BeginBlock()
+  reaper.PreventUIRefresh(1)
+  
+  -- Get default crossfade shape from REAPER preferences
+  local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
+  
+  -- Find the existing parent track by its name
+  local parentTrack, parentTrackIdx = Utils.findTrackByName(track.name)
+  
+  if parentTrack then
+      -- reaper.ShowConsoleMsg("Regenerating container for track '" .. track.name .. "' (index: " .. parentTrackIdx .. ")\n")
+      
+      -- Find the specific container track within the parent using the modified function
+      local containerTrack, containerTrackIdx = Utils.findContainerTrack(parentTrackIdx, container.name)
+      
+      if containerTrack then
+          -- Clear items from this container track
+          Utils.clearTrackItems(containerTrack)
+          
+          -- Regenerate items for this container only
+          Generation.placeItemsForContainer(track, container, containerTrack, xfadeshape)
+      else
+          -- Try a more exhaustive search if normal search fails
+          reaper.ShowConsoleMsg("Container not found with standard method, trying fallback search...\n")
+          
+          -- Fallback method: search all tracks that might be container children
+          local trackCount = reaper.CountTracks(0)
+          local folderDepth = 1
+          
+          for i = parentTrackIdx + 1, trackCount - 1 do
+              local childTrack = reaper.GetTrack(0, i)
+              local _, name = reaper.GetSetMediaTrackInfo_String(childTrack, "P_NAME", "", false)
+              
+              -- Very permissive matching (substring)
+              if string.find(string.lower(name), string.lower(container.name)) then
+                  reaper.ShowConsoleMsg("Found potential match: '" .. name .. "'\n")
+                  
+                  -- Use this track
+                  Utils.clearTrackItems(childTrack)
+                  Generation.placeItemsForContainer(track, container, childTrack, xfadeshape)
+                  
+                  reaper.PreventUIRefresh(-1)
+                  reaper.UpdateArrange()
+                  reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
+                  return
+              end
+              
+              -- Update folder depth
+              local depth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+              folderDepth = folderDepth + depth
+              if folderDepth <= 0 then break end
+          end
+          
+          -- If we reach here, no matching track was found even with fallback
+          reaper.MB("Container '" .. container.name .. "' not found in track '" .. track.name .. "'", "Error", 0)
+      end
+  else
+      reaper.MB("Track '" .. track.name .. "' not found", "Error", 0)
+  end
+  
+  reaper.PreventUIRefresh(-1)
+  reaper.UpdateArrange()
+  reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in track '" .. track.name .. "'", -1)
 end
+
 
 return Generation

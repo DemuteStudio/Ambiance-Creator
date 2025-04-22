@@ -19,29 +19,43 @@ end
 
 -- Function to find a container track within a parent track
 function Utils.findContainerTrack(parentTrackIdx, containerName)
-  if parentTrackIdx < 0 then return nil, -1 end
-  
   local trackCount = reaper.CountTracks(0)
-  local folderDepth = 1 -- Start with depth 1 (inside a folder)
+  local folderDepth = 1 -- Commencer avec profondeur 1 (à l'intérieur d'un dossier)
+  
+  -- Log for debugging purposes
+  -- reaper.ShowConsoleMsg("Searching for container: '" .. containerName .. "' starting from parent index " .. parentTrackIdx .. "\n")
   
   for i = parentTrackIdx + 1, trackCount - 1 do
-    local track = reaper.GetTrack(0, i)
-    local depth = reaper.GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH")
-    
-    -- Update folder depth
-    folderDepth = folderDepth + depth
-    
-    -- If we reach the end of the folder, stop searching
-    if folderDepth <= 0 then break end
-    
-    -- Check if this track is our container
-    local _, trackName = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
-    if trackName == containerName then
-      return track, i
-    end
+      local childTrack = reaper.GetTrack(0, i)
+      local _, name = reaper.GetSetMediaTrackInfo_String(childTrack, "P_NAME", "", false)
+      
+      -- Debug info
+      -- reaper.ShowConsoleMsg("  Checking track at index " .. i .. ": '" .. name .. "' (depth: " .. folderDepth .. ")\n")
+      
+      -- Compare names with trim to avoid whitespace issues
+      local containerNameTrimmed = string.gsub(containerName, "^%s*(.-)%s*$", "%1")
+      local trackNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
+      
+      -- Case insensitive comparison
+      if string.lower(trackNameTrimmed) == string.lower(containerNameTrimmed) then
+          -- reaper.ShowConsoleMsg("  Found container track at index " .. i .. "\n")
+          return childTrack, i
+      end
+      
+      -- Update folder depth based on this track's folder status
+      local depth = reaper.GetMediaTrackInfo_Value(childTrack, "I_FOLDERDEPTH")
+      folderDepth = folderDepth + depth
+      
+      -- If we reach the end of the folder, stop searching
+      if folderDepth <= 0 then 
+          -- reaper.ShowConsoleMsg("  Reached end of folder at index " .. i .. "\n")
+          break 
+      end
   end
   
-  return nil, -1
+  -- Not found
+  reaper.ShowConsoleMsg("  Container '" .. containerName .. "' not found in folder structure\n")
+  return nil, nil
 end
 
 -- Function to delete all media items from a track
