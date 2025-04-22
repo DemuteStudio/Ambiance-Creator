@@ -5,6 +5,16 @@ function Utils.initModule(g)
   globals = g
 end
 
+function Utils.HelpMarker(desc)
+  reaper.ImGui_TextDisabled(globals.ctx, '(?)')
+  if reaper.ImGui_BeginItemTooltip(globals.ctx) then
+    reaper.ImGui_PushTextWrapPos(globals.ctx, reaper.ImGui_GetFontSize(globals.ctx) * 35.0)
+    reaper.ImGui_Text(globals.ctx, desc)
+    reaper.ImGui_PopTextWrapPos(globals.ctx)
+    reaper.ImGui_EndTooltip(globals.ctx)
+  end
+end
+
 -- Function to find a group by its name
 function Utils.findGroupByName(name)
   for i = 0, reaper.CountGroups(0) - 1 do
