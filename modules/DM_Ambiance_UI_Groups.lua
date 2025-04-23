@@ -200,15 +200,27 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                             local containerId = groupId .. "_container" .. j
                             
                             -- TreeNode flags
-                            local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen + imgui.TreeNodeFlags_SpanTextWidth
+                            local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen
+
+                            containerFlags = containerFlags + imgui.TreeNodeFlags_SpanTextWidth
                             
                             if isContainerSelected(i, j) then
                                 containerFlags = containerFlags + imgui.TreeNodeFlags_Selected
                             end
                             
+                            -- Garde trace de la position initiale
+                            local startX = imgui.GetCursorPosX(globals.ctx)
+                            
                             -- Indent container items
                             imgui.Indent(globals.ctx, 20)
+                            
+                            -- Largeur réservée pour le nom du conteneur
+                            local nameWidth = width * 0.45
+                            
+                            -- Créer une zone limitée pour le nom du conteneur
+                            imgui.PushItemWidth(globals.ctx, nameWidth)
                             imgui.TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
+                            imgui.PopItemWidth(globals.ctx)
                             
                             -- Handle selection on click with multi-selection support
                             if imgui.IsItemClicked(globals.ctx) then
@@ -230,13 +242,19 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                                 end
                             end
                             
-                            -- Delete container button
+                            -- Position fixe pour les boutons, calculée à partir du début + indent + largeur du nom
+                            local buttonsX = startX + 20 + nameWidth + 10 -- 10px de marge
+                            
+                            -- Positionner les boutons à un emplacement fixe
                             imgui.SameLine(globals.ctx)
+                            imgui.SetCursorPosX(globals.ctx, buttonsX)
+                            
+                            -- Delete container button
                             if imgui.Button(globals.ctx, "Delete##" .. containerId) then
                                 containerToDelete = j
                             end
                             
-                            -- Regenerate container button
+                            -- Regenerate container button - continuera depuis la position actuelle
                             imgui.SameLine(globals.ctx)
                             if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
                                 globals.Generation.generateSingleContainer(i, j)
@@ -245,6 +263,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                             imgui.Unindent(globals.ctx, 20)
                         end)
                     end
+
                     
                     -- Delete the marked container if any
                     if containerToDelete then
