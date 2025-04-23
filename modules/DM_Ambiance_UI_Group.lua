@@ -62,7 +62,11 @@ function UI_Group.displayGroupSettings(groupIndex, width)
         
         local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. groupId, intervalMode, intervalModes)
         if rv then group.intervalMode = newIntervalMode end
-        
+        imgui.SameLine(globals.ctx)
+        globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
+        "Relative: Interval as percentage of time selection\n" ..
+        "Coverage: Percentage of time selection to be filled")
+
         -- Trigger rate label and slider range changes based on selected mode
         local triggerRateLabel = "Interval (sec)"
         local triggerRateMin = -10.0
