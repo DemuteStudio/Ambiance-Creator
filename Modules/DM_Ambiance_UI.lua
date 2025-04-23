@@ -203,20 +203,46 @@ end
 -- Function to toggle container selection
 local function toggleContainerSelection(groupIndex, containerIndex)
     local key = groupIndex .. "_" .. containerIndex
-    if globals.selectedContainers[key] then
-        globals.selectedContainers[key] = nil
-    else
-        globals.selectedContainers[key] = true
+    
+    -- Check if Shift key is pressed
+    local isShiftPressed = (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Shift ~= 0)
+    
+    -- If Shift is pressed and we have an anchor point, select range
+    if isShiftPressed and globals.shiftAnchorGroupIndex and globals.shiftAnchorContainerIndex then
+        -- Shift key: select range from anchor to current
+        selectContainerRange(globals.shiftAnchorGroupIndex, globals.shiftAnchorContainerIndex, groupIndex, containerIndex)
+    else 
+        -- Regular selection (without Shift)
+        if not (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Ctrl ~= 0) then
+            -- Clear previous selections if Ctrl is not pressed
+            clearContainerSelections()
+        end
+        
+        -- Toggle the current container selection
+        if globals.selectedContainers[key] then
+            globals.selectedContainers[key] = nil
+        else
+            globals.selectedContainers[key] = true
+        end
+        
+        -- Update anchor point for future Shift selections
+        globals.shiftAnchorGroupIndex = groupIndex
+        globals.shiftAnchorContainerIndex = containerIndex
     end
+    
     -- Update primary selection for compatibility
     globals.selectedGroupIndex = groupIndex
     globals.selectedContainerIndex = containerIndex
+    
+    -- Update multi-select mode flag
+    globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
+
 
 -- Function to select a range of containers between two points
 local function selectContainerRange(startGroupIndex, startContainerIndex, endGroupIndex, endContainerIndex)
     -- Clear existing selection first if not in multi-select mode
-    if not (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Ctrl() ~= 0) then
+    if not (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Ctrl ~= 0) then
         clearContainerSelections()
     end
     
