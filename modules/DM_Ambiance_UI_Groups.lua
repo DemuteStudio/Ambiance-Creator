@@ -129,7 +129,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             
             -- TreeNode flags - include selection flags if needed
             local groupFlags = group.expanded and imgui.TreeNodeFlags_DefaultOpen or 0
-            groupFlags = groupFlags + imgui.TreeNodeFlags_OpenOnArrow
+            groupFlags = groupFlags + imgui.TreeNodeFlags_OpenOnArrow + imgui.TreeNodeFlags_SpanTextWidth
             
             -- Add specific flags to indicate selection
             if globals.selectedGroupIndex == i and globals.selectedContainerIndex == nil then
@@ -200,7 +200,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                             local containerId = groupId .. "_container" .. j
                             
                             -- TreeNode flags
-                            local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen
+                            local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen + imgui.TreeNodeFlags_SpanTextWidth
                             
                             if isContainerSelected(i, j) then
                                 containerFlags = containerFlags + imgui.TreeNodeFlags_Selected

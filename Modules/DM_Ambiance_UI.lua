@@ -74,11 +74,17 @@ end
 
 function UI.PushStyle()
     --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_DisabledAlpha, 0.68)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 2)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding,  2)
 end
 
 -- PopStyle function recommended by the developer
 function UI.PopStyle()
     --globals.imgui.PopStyleVar(globals.ctx, 1)
+    imgui.PopStyleVar(globals.ctx, 3)
+
+
 end
 
 -- Function to clear all container selections
