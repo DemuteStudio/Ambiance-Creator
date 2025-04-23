@@ -75,8 +75,8 @@ end
 function UI.PushStyle()
     --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
     imgui.PushStyleVar(globals.ctx, imgui.StyleVar_DisabledAlpha, 0.68)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 2)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding,  2)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 3)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding,  3)
 end
 
 -- PopStyle function recommended by the developer
