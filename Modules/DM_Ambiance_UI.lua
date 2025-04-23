@@ -54,12 +54,14 @@ end
 
 -- PushStyle function recommended by the developer
 function UI.PushStyle()
-    --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_DisabledAlpha, 0.68)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 2)
+    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding,  2)
 end
 
 -- PopStyle function recommended by the developer
 function UI.PopStyle()
-    --globals.imgui.PopStyleVar(globals.ctx, 1)
+    imgui.PopStyleVar(globals.ctx, 3)
 end
 
 -- Function to clear all container selections
@@ -74,15 +76,26 @@ end
 -- Common function to draw trigger settings section
 -- dataObj must expose the fields intervalMode, triggerRate, triggerDrift, fadeIn, fadeOut
 -- callbacks must contain setIntervalMode, setTriggerRate, setTriggerDrift, setFadeIn, setFadeOut functions
--- Dessine la section « Trigger Settings » avec fade in/out
--- Dessine la section « Trigger Settings » avec fade in/out linéaires
-function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix, objId)
-    -- Séparateur et titre
+function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
+    -- Séparateur et titre de section
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Trigger Settings")
-
-    -- Mode d'intervalle
-    local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+    
+    -- VBox principale pour Trigger Settings
+    
+    -- Hauteur pour tous les contrôles
+    local controlHeight = 20
+    -- Largeur pour les contrôles
+    local controlWidth = width * 0.55
+    -- Largeur pour les labels
+    local labelWidth = width * 0.35
+    -- Padding pour l'alignement
+    local padding = 5
+    -- Largeur pour le visuel de fade
+    local fadeVisualSize = 15
+    
+    -- Boîte horizontale pour le mode d'intervalle
+    -- Espace info mode
     if dataObj.intervalMode == 0 then
         if dataObj.triggerRate < 0 then
             imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
@@ -94,86 +107,135 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix, o
     else
         imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
     end
-
-    local comboId = "Interval Mode"
-    if objId then comboId = comboId .. "##" .. objId end
-    imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local changed, newMode = imgui.Combo(globals.ctx, comboId, dataObj.intervalMode, intervalModes)
-    if changed then callbacks.setIntervalMode(newMode) end
-    imgui.SameLine(globals.ctx)
-    globals.Utils.HelpMarker(
-        "Absolute: Fixed interval in seconds\n" ..
-        "Relative: Interval as percentage of time selection\n" ..
-        "Coverage: Percentage of time selection to be filled"
-    )
-
-    -- Intervalle / couverture
-    local rateLabel, minRate, maxRate = "Interval (sec)", -10.0, 60.0
-    if dataObj.intervalMode == 1 then
-        rateLabel, minRate, maxRate = "Interval (%)", 0.1, 100.0
-    elseif dataObj.intervalMode == 2 then
-        rateLabel, minRate, maxRate = "Coverage (%)", 0.1, 100.0
-    end
-    local rateId = rateLabel
-    if objId then rateId = rateId .. "##" .. objId end
-    imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local ch2, newRate = imgui.SliderDouble(globals.ctx, rateId, dataObj.triggerRate, minRate, maxRate, "%.1f")
-    if ch2 then callbacks.setTriggerRate(newRate) end
-
-    -- Variation aléatoire
-    local driftId = "Random variation (%)"
-    if objId then driftId = driftId .. "##" .. objId end
-    imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local ch3, newDrift = imgui.SliderInt(globals.ctx, driftId, dataObj.triggerDrift, 0, 100, "%d")
-    if ch3 then callbacks.setTriggerDrift(newDrift) end
-
-    imgui.Separator(globals.ctx)
-    imgui.Text(globals.ctx, titlePrefix .. "Fades")
-
-    -- Fade in
-    local fadeInId = "Fade in (sec)"
-    if objId then fadeInId = fadeInId .. "##" .. objId end
-    imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local ch4, newFadeIn = imgui.InputDouble(globals.ctx, fadeInId, dataObj.fadeIn or 0.0, 0.01, 0.1, "%.3f")
-    if ch4 then callbacks.setFadeIn(math.max(0, newFadeIn)) end
-    imgui.SameLine(globals.ctx)
+    
+    -- Interval Mode - HBox
     do
+        -- VBox pour le contrôle à gauche
+        imgui.BeginGroup(globals.ctx)
+        imgui.PushItemWidth(globals.ctx, controlWidth)
+        local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+        local rv, newIntervalMode = imgui.Combo(globals.ctx, "##IntervalMode", dataObj.intervalMode, intervalModes)
+        if rv then callbacks.setIntervalMode(newIntervalMode) end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte à droite
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Interval Mode")
+        imgui.SameLine(globals.ctx)
+        globals.Utils.HelpMarker(
+            "Absolute: Fixed interval in seconds\n" ..
+            "Relative: Interval as percentage of time selection\n" ..
+            "Coverage: Percentage of time selection to be filled"
+        )
+    end
+    
+    -- Interval Seconds - HBox
+    do
+        -- Définir les propriétés du slider
+        local rateLabel = "Interval (sec)"
+        local rateMin = -10.0
+        local rateMax = 60.0
+        
+        if dataObj.intervalMode == 1 then
+            rateLabel = "Interval (%)"
+            rateMin = 0.1
+            rateMax = 100.0
+        elseif dataObj.intervalMode == 2 then
+            rateLabel = "Coverage (%)"
+            rateMin = 0.1
+            rateMax = 100.0
+        end
+        
+        -- VBox pour le contrôle à gauche
+        imgui.BeginGroup(globals.ctx)
+        imgui.PushItemWidth(globals.ctx, controlWidth)
+        local rv, newRate = imgui.SliderDouble(globals.ctx, "##TriggerRate", dataObj.triggerRate, rateMin, rateMax, "%.1f")
+        if rv then callbacks.setTriggerRate(newRate) end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte à droite
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, rateLabel)
+    end
+    
+    -- Random Variation - HBox
+    do
+        -- VBox pour le contrôle à gauche
+        imgui.BeginGroup(globals.ctx)
+        imgui.PushItemWidth(globals.ctx, controlWidth)
+        local rv, newDrift = imgui.SliderInt(globals.ctx, "##TriggerDrift", dataObj.triggerDrift, 0, 100, "%d")
+        if rv then callbacks.setTriggerDrift(newDrift) end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte à droite
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Random variation (%)")
+    end
+    
+    -- Fade In - HBox
+    do
+        -- VBox pour le contrôle et la visualisation
+        imgui.BeginGroup(globals.ctx)
+        -- Zone pour le contrôle (slider)
+        imgui.BeginGroup(globals.ctx)
+        local sliderWidth = controlWidth - fadeVisualSize - padding
+        imgui.PushItemWidth(globals.ctx, sliderWidth)
+        local rv, newFadeIn = imgui.DragDouble(globals.ctx, "##FadeIn", dataObj.fadeIn or 0.0, 0.01, 0, 0, "%.3f")
+        if rv then callbacks.setFadeIn(math.max(0, newFadeIn)) end
+        imgui.EndGroup(globals.ctx)
+        
+        -- Visualisation du fade
+        imgui.SameLine(globals.ctx)
+        imgui.BeginGroup(globals.ctx)
         local drawList = imgui.GetWindowDrawList(globals.ctx)
         local x, y = imgui.GetCursorScreenPos(globals.ctx)
-        local curveSize, curveHeight = 40, 15
-        
-        -- Dessin du fade in avec une ligne linéaire au lieu d'une courbe
         imgui.DrawList_AddLine(
             drawList,
-            x, y + curveHeight,              -- Point de départ (bas gauche)
-            x + curveSize, y,                -- Point d'arrivée (haut droite)
-            0xFFFFFFFF,                      -- Couleur (blanc)
-            1.5                              -- Épaisseur
+            x, y + fadeVisualSize,
+            x + fadeVisualSize, y,
+            0xFFFFFFFF,
+            1.5
         )
-        imgui.Dummy(globals.ctx, curveSize, curveHeight)
+        imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
+        imgui.EndGroup(globals.ctx)
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte à droite
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Fade in (sec)")
     end
-
-    -- Fade out
-    local fadeOutId = "Fade out (sec)"
-    if objId then fadeOutId = fadeOutId .. "##" .. objId end
-    imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local ch5, newFadeOut = imgui.InputDouble(globals.ctx, fadeOutId, dataObj.fadeOut or 0.0, 0.01, 0.1, "%.3f")
-    if ch5 then callbacks.setFadeOut(math.max(0, newFadeOut)) end
-    imgui.SameLine(globals.ctx)
+    
+    -- Fade Out - HBox
     do
+        -- VBox pour le contrôle et la visualisation
+        imgui.BeginGroup(globals.ctx)
+        -- Zone pour le contrôle (slider)
+        imgui.BeginGroup(globals.ctx)
+        local sliderWidth = controlWidth - fadeVisualSize - padding
+        imgui.PushItemWidth(globals.ctx, sliderWidth)
+        local rv, newFadeOut = imgui.DragDouble(globals.ctx, "##FadeOut", dataObj.fadeOut or 0.0, 0.01, 0, 0, "%.3f")
+        if rv then callbacks.setFadeOut(math.max(0, newFadeOut)) end
+        imgui.EndGroup(globals.ctx)
+        
+        -- Visualisation du fade
+        imgui.SameLine(globals.ctx)
+        imgui.BeginGroup(globals.ctx)
         local drawList = imgui.GetWindowDrawList(globals.ctx)
         local x, y = imgui.GetCursorScreenPos(globals.ctx)
-        local curveSize, curveHeight = 40, 15
-        
-        -- Dessin du fade out avec une ligne linéaire au lieu d'une courbe
         imgui.DrawList_AddLine(
             drawList,
-            x, y,                            -- Point de départ (haut gauche)
-            x + curveSize, y + curveHeight,  -- Point d'arrivée (bas droite)
-            0xFFFFFFFF,                      -- Couleur (blanc)
-            1.5                              -- Épaisseur
+            x, y,
+            x + fadeVisualSize, y + fadeVisualSize,
+            0xFFFFFFFF,
+            1.5
         )
-        imgui.Dummy(globals.ctx, curveSize, curveHeight)
+        imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
+        imgui.EndGroup(globals.ctx)
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte à droite
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Fade out (sec)")
     end
 end
 
@@ -181,23 +243,23 @@ end
 
 -- Function to display trigger and randomization settings
 function UI.displayTriggerSettings(obj, objId, width, isGroup)
-    -- Determine display text based on whether it's a group or container
+    -- Infos sur l'héritage
     local titlePrefix = isGroup and "Default " or ""
     local inheritText = isGroup and "These settings will be inherited by containers unless overridden" or ""
     
-    -- TRIGGER SETTINGS SECTION
+    -- Section TRIGGER SETTINGS
     if inheritText ~= "" then
         imgui.TextColored(globals.ctx, 0xFFAA00FF, inheritText)
     end
     
-    -- Initialize fade properties if they don't exist
+    -- Initialisation des propriétés de fade
     obj.fadeIn = obj.fadeIn or 0.0
     obj.fadeOut = obj.fadeOut or 0.0
     
-    -- Use the common trigger settings function
+    -- Appel à la fonction commune
     UI.drawTriggerSettingsSection(
-        obj, -- data object
-        { -- callbacks
+        obj,
+        {
             setIntervalMode = function(v) obj.intervalMode = v end,
             setTriggerRate = function(v) obj.triggerRate = v end,
             setTriggerDrift = function(v) obj.triggerDrift = v end,
@@ -205,65 +267,119 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
             setFadeOut = function(v) obj.fadeOut = math.max(0, v) end,
         },
         width,
-        titlePrefix,
-        objId
+        titlePrefix
     )
     
-    -- RANDOMIZATION PARAMETERS SECTION
+    -- Section RANDOMIZATION PARAMETERS
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Randomization parameters")
     
-    -- Pitch randomization checkbox
-    local randomizePitch = obj.randomizePitch
-    local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "Randomize Pitch##" .. objId, randomizePitch)
-    if rv then obj.randomizePitch = newRandomizePitch end
+    -- Largeurs pour les contrôles
+    local controlWidth = width * 0.55
+    local padding = 5
     
-    -- Only show pitch range if pitch randomization is enabled
+    -- Pitch randomization - HBox
+    do
+        -- VBox pour le contrôle (checkbox)
+        imgui.BeginGroup(globals.ctx)
+        local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
+        if rv then obj.randomizePitch = newRandomizePitch end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Randomize Pitch")
+    end
+    
+    -- Afficher la plage de pitch si la randomisation est activée
     if obj.randomizePitch then
-        local pitchMin = obj.pitchRange.min
-        local pitchMax = obj.pitchRange.max
-        imgui.PushItemWidth(globals.ctx, width * 0.7)
-        local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "Pitch Range (semitones)##" .. objId, pitchMin, pitchMax, 0.1, -48, 48)
-        if rv then
-            obj.pitchRange.min = newPitchMin
-            obj.pitchRange.max = newPitchMax
+        do
+            -- VBox pour le contrôle (range slider)
+            imgui.BeginGroup(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, controlWidth)
+            local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "##PitchRange", 
+                obj.pitchRange.min, obj.pitchRange.max, 0.1, -48, 48)
+            if rv then
+                obj.pitchRange.min = newPitchMin
+                obj.pitchRange.max = newPitchMax
+            end
+            imgui.EndGroup(globals.ctx)
+            
+            -- VBox pour le texte
+            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.Text(globals.ctx, "Pitch Range (semitones)")
         end
     end
     
-    -- Volume randomization checkbox
-    local randomizeVolume = obj.randomizeVolume
-    local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "Randomize Volume##" .. objId, randomizeVolume)
-    if rv then obj.randomizeVolume = newRandomizeVolume end
+    -- Volume randomization - HBox
+    do
+        -- VBox pour le contrôle (checkbox)
+        imgui.BeginGroup(globals.ctx)
+        local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
+        if rv then obj.randomizeVolume = newRandomizeVolume end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Randomize Volume")
+    end
     
-    -- Only show volume range if volume randomization is enabled
+    -- Afficher la plage de volume si la randomisation est activée
     if obj.randomizeVolume then
-        local volumeMin = obj.volumeRange.min
-        local volumeMax = obj.volumeRange.max
-        imgui.PushItemWidth(globals.ctx, width * 0.7)
-        local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "Volume Range (dB)##" .. objId, volumeMin, volumeMax, 0.1, -24, 24)
-        if rv then
-            obj.volumeRange.min = newVolumeMin
-            obj.volumeRange.max = newVolumeMax
+        do
+            -- VBox pour le contrôle (range slider)
+            imgui.BeginGroup(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, controlWidth)
+            local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "##VolumeRange", 
+                obj.volumeRange.min, obj.volumeRange.max, 0.1, -24, 24)
+            if rv then
+                obj.volumeRange.min = newVolumeMin
+                obj.volumeRange.max = newVolumeMax
+            end
+            imgui.EndGroup(globals.ctx)
+            
+            -- VBox pour le texte
+            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.Text(globals.ctx, "Volume Range (dB)")
         end
     end
     
-    -- Pan randomization checkbox
-    local randomizePan = obj.randomizePan
-    local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "Randomize Pan##" .. objId, randomizePan)
-    if rv then obj.randomizePan = newRandomizePan end
+    -- Pan randomization - HBox
+    do
+        -- VBox pour le contrôle (checkbox)
+        imgui.BeginGroup(globals.ctx)
+        local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
+        if rv then obj.randomizePan = newRandomizePan end
+        imgui.EndGroup(globals.ctx)
+        
+        -- VBox pour le texte
+        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.Text(globals.ctx, "Randomize Pan")
+    end
     
-    -- Only show pan range if pan randomization is enabled
+    -- Afficher la plage de pan si la randomisation est activée
     if obj.randomizePan then
-        local panMin = obj.panRange.min
-        local panMax = obj.panRange.max
-        imgui.PushItemWidth(globals.ctx, width * 0.7)
-        local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "Pan Range (-100/+100)##" .. objId, panMin, panMax, 1, -100, 100)
-        if rv then
-            obj.panRange.min = newPanMin
-            obj.panRange.max = newPanMax
+        do
+            -- VBox pour le contrôle (range slider)
+            imgui.BeginGroup(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, controlWidth)
+            local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "##PanRange", 
+                obj.panRange.min, obj.panRange.max, 1, -100, 100)
+            if rv then
+                obj.panRange.min = newPanMin
+                obj.panRange.max = newPanMax
+            end
+            imgui.EndGroup(globals.ctx)
+            
+            -- VBox pour le texte
+            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.Text(globals.ctx, "Pan Range (-100/+100)")
         end
     end
 end
+
+
+    
 
 -- Function to check if a container is selected
 local function isContainerSelected(groupIndex, containerIndex)
