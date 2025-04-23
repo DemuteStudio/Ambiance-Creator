@@ -53,7 +53,7 @@ function UI_Groups.drawGroupPresetControls(i)
         globals.newGroupPresetName = globals.groups[i].name
         globals.currentSaveGroupIndex = i
         globals.Utils.safeOpenPopup("Save Group Preset##" .. groupId)
-    end
+    end    
     
     -- Group save dialog popup
     if imgui.BeginPopupModal(globals.ctx, "Save Group Preset##" .. groupId, nil, imgui.WindowFlags_AlwaysAutoResize) then
@@ -75,18 +75,18 @@ end
 
 -- Function to draw the left panel containing groups list
 function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
-    -- Wrapper de sécurité pour les fonctions ImGui qui peuvent échouer
+    -- Safety wrapper for ImGui functions that may fail
     local function safeImGui(func, ...)
         local success, result = pcall(func, ...)
         if not success then
-            -- Optionnel: logger l'erreur
+            -- Optional: log the error
             -- reaper.ShowConsoleMsg("ImGui error: " .. tostring(result) .. "\n")
             return false
         end
         return result
     end
     
-    -- Vérification de base - protéger contre les fenêtres trop petites
+    -- Basic check - protect against windows that are too small
     local availableHeight = imgui.GetWindowHeight(globals.ctx)
     local availableWidth = imgui.GetWindowWidth(globals.ctx)
     
@@ -122,7 +122,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
     -- Variable to track which group to delete (if any)
     local groupToDelete = nil
     
-    -- Parcourir les groupes avec pcall
+    -- Loop through groups with error protection
     for i, group in ipairs(globals.groups) do
         local success = pcall(function()
             local groupId = "group" .. i
@@ -165,9 +165,9 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                 globals.Generation.generateSingleGroup(i)
             end
             
-            -- Si le groupe est ouvert, afficher son contenu
+            -- If the group is open, display its content
             if groupOpen then
-                -- Protéger l'affichage du contenu du groupe
+                -- Protect the display of group content
                 local contentSuccess = pcall(function()
                     -- Group name input field
                     local groupName = group.name
@@ -186,7 +186,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                     -- Variable to track which container to delete (if any)
                     local containerToDelete = nil
                     
-                    -- Parcourir les containers avec pcall
+                    -- Loop through containers with error protection
                     for j, container in ipairs(group.containers) do
                         pcall(function()
                             local containerId = groupId .. "_container" .. j
@@ -251,6 +251,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                                 globals.selectedContainerIndex = globals.selectedContainerIndex - 1
                             end
                             
+                            -- Update selection indices for containers after the deleted one
                             for k = containerToDelete + 1, #group.containers + 1 do
                                 if globals.selectedContainers[i .. "_" .. k] then
                                     globals.selectedContainers[i .. "_" .. (k-1)] = true
@@ -260,24 +261,24 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                         end)
                     end
                     
-                    -- TreePop doit être appelé uniquement si le TreeNode est ouvert
+                    -- TreePop must only be called if the TreeNode is open
                     imgui.TreePop(globals.ctx)
                 end)
                 
                 if not contentSuccess then
-                    -- Gérer l'erreur de rendu du contenu
+                    -- Handle error in rendering content
                     pcall(imgui.Text, globals.ctx, "Error rendering group content")
                 end
             end
         end)
         
         if not success then
-            -- Gérer les erreurs de rendu du groupe
+            -- Handle errors in rendering the group
             pcall(imgui.Text, globals.ctx, "Error rendering group " .. i)
         end
     end
     
-    -- Delete the marked group if any (en mode protégé)
+    -- Delete the marked group if any (in protected mode)
     if groupToDelete then
         pcall(function()
             -- Remove any selected containers from this group
@@ -312,7 +313,6 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
     -- Update the multi-select mode flag
     globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
-
 
 -- Get count of selected containers
 function UI_Groups.getSelectedContainersCount()

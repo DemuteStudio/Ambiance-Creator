@@ -137,13 +137,13 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
     end
     
     if container.overrideParent then
-        -- Afficher le message qui explique que les paramètres propres sont utilisés
+        -- Display message explaining that container's own settings are being used
         imgui.TextColored(globals.ctx, 0x00AA00FF, "Using container's own settings")
         
         -- TRIGGER SETTINGS SECTION
         globals.UI.displayTriggerSettings(container, containerId, width, false)
     else
-        -- Si Override Parent n'est pas coché, afficher un message explicatif
+        -- If Override Parent is not checked, display an explanatory message
         imgui.TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent group")
         --imgui.TextColored(globals.ctx, 0xAAAAAAFF, "Enable 'Override Parent Settings' to customize parameters")
     end

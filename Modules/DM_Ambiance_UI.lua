@@ -25,7 +25,6 @@ local UI_Group = require("DM_Ambiance_UI_Group")
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
     globals = g
-    
     -- Initialize selection grouping variables for two-panel layout
     globals.selectedGroupIndex = nil
     globals.selectedContainerIndex = nil
@@ -50,12 +49,12 @@ function UI.initModule(g)
     globals.UI_Groups = UI_Groups
 end
 
--- Fonction PushStyle recommandée par le développeur
+-- PushStyle function recommended by the developer
 function UI.PushStyle()
     --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
 end
 
--- Fonction PopStyle recommandée par le développeur
+-- PopStyle function recommended by the developer
 function UI.PopStyle()
     --globals.imgui.PopStyleVar(globals.ctx, 1)
 end
@@ -69,7 +68,6 @@ local function clearContainerSelections()
     globals.shiftAnchorContainerIndex = nil
 end
 
--- Function to display trigger settings section
 -- Function to display trigger and randomization settings
 function UI.displayTriggerSettings(obj, objId, width, isGroup)
     -- Determine display text based on whether it's a group or container
@@ -102,8 +100,11 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
         imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
     end
     
+    -- Interval mode combo box with tooltip
     local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. objId, intervalMode, intervalModes)
     if rv then obj.intervalMode = newIntervalMode end
+    
+    -- Tooltip
     imgui.SameLine(globals.ctx)
     globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
     "Relative: Interval as percentage of time selection\n" ..
@@ -272,13 +273,13 @@ end
 
 -- Function to draw the left panel containing groups and containers list
 local function drawLeftPanel(width)
-    -- Vérifier si l'espace disponible est suffisant
+    -- Check if available space is sufficient
     local availHeight = globals.imgui.GetWindowHeight(globals.ctx)
-    if availHeight < 100 then -- Hauteur minimale raisonnable
+    if availHeight < 100 then -- Reasonable minimum height
         globals.imgui.TextColored(globals.ctx, 0xFF0000FF, "Window too small")
         return
     end
-    -- Appeler la fonction normale quand l'espace est suffisant
+    -- Call the normal function when space is sufficient
     UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
 
@@ -314,31 +315,31 @@ local function handlePopups()
     end
 end
 
--- Nouvelle fonction ShowMainWindow conformément aux recommandations du développeur
+-- Show the main window
 function UI.ShowMainWindow(open)
     globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
     local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open)
     
     if visible then
-        -- Section avec les contrôles presets en haut
+        -- Section with preset controls at the top
         UI_Preset.drawPresetControls()
         globals.imgui.SameLine(globals.ctx)
         UI_Generation.drawMainGenerationButton()
         UI_Generation.drawTimeSelectionInfo()
         globals.imgui.Separator(globals.ctx)
         
-        -- Calcul des dimensions pour la mise en page en deux panneaux
+        -- Calculate dimensions for two-panel layout
         local windowWidth = globals.imgui.GetWindowWidth(globals.ctx)
         local leftPanelWidth = windowWidth * 0.35
         local rightPanelWidth = windowWidth * 0.63
         
-        -- Panneau de gauche (Groupes & liste des Containers)
+        -- Left panel (Groups & Containers list)
         if globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0) then
             drawLeftPanel(leftPanelWidth)
             globals.imgui.EndChild(globals.ctx)
         end
         
-        -- Panneau de droite (Paramètres du Container)
+        -- Right panel (Container settings)
         globals.imgui.SameLine(globals.ctx)
         if globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0) then
             drawRightPanel(rightPanelWidth)
@@ -353,16 +354,15 @@ function UI.ShowMainWindow(open)
 end
 
 
--- Fonction mainLoop pour compatibilité avec l'ancienne structure
-function UI.mainLoop()
-    UI.PushStyle()
-    local open = UI.ShowMainWindow(true)
-    UI.PopStyle()
+-- -- mainLoop function for compatibility with old structure
+-- function UI.mainLoop()
+--     UI.PushStyle()
+--     local open = UI.ShowMainWindow(true)
+--     UI.PopStyle()
     
-    if open then
-        reaper.defer(UI.mainLoop)
-    end
-    -- Note: DestroyContext a été supprimé et n'est plus nécessaire
-end
+--     if open then
+--         reaper.defer(UI.mainLoop)
+--     end
+-- end
 
 return UI
