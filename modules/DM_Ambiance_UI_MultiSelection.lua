@@ -55,9 +55,69 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     
     imgui.Separator(globals.ctx)
     
+    -- Collect info about override parent status
+    local anyOverrideParent = false
+    local allOverrideParent = true
+
+    -- Check all containers for override parent setting
+    for _, c in ipairs(containers) do
+        local groupIndex = c.groupIndex
+        local containerIndex = c.containerIndex
+        local container = globals.groups[groupIndex].containers[containerIndex]
+        
+        -- Override parent status
+        if container.overrideParent then 
+            anyOverrideParent = true 
+        else 
+            allOverrideParent = false 
+        end
+    end
+
+    -- Override Parent checkbox (three-state checkbox for mixed values)
+    local overrideState = allOverrideParent and 1 or (anyOverrideParent and 2 or 0)
+    local overrideText = "Override Parent Settings"
+
+    if overrideState == 2 then -- Mixed values
+        overrideText = overrideText .. " (Mixed)"
+    end
+
+    -- Custom drawing of the three-state checkbox
+    local overrideParent = false
+    if overrideState == 1 then
+        overrideParent = true
+    end
+
+    local rv, newOverrideParent = imgui.Checkbox(globals.ctx, overrideText, overrideParent)
+    imgui.SameLine(globals.ctx)
+    globals.Utils.HelpMarker("Enable 'Override Parent Settings' to customize parameters")
+
+    if rv then
+        -- Apply to all selected containers
+        for _, c in ipairs(containers) do
+            globals.groups[c.groupIndex].containers[c.containerIndex].overrideParent = newOverrideParent
+        end
+        
+        -- Update state for UI refresh
+        if newOverrideParent then
+            anyOverrideParent = true
+            allOverrideParent = true
+        else
+            anyOverrideParent = false
+            allOverrideParent = false
+        end
+    end
+
+    -- Conditionally display a message based on override status
+    if allOverrideParent then
+        imgui.TextColored(globals.ctx, 0x00AA00FF, "Using containers' own settings")
+    elseif not anyOverrideParent then
+        imgui.TextColored(globals.ctx, 0x0088FFFF, "All containers inherit settings from parent groups")
+    else
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Mixed inheritance settings")
+    end
+
+
     -- Collect info about selected containers for initial values
-    local anyUseRepetition = false
-    local allUseRepetition = true
     local anyRandomizePitch = false
     local allRandomizePitch = true
     local anyRandomizeVolume = false
@@ -78,10 +138,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         local groupIndex = c.groupIndex
         local containerIndex = c.containerIndex
         local container = globals.groups[groupIndex].containers[containerIndex]
-        
-        -- Repetition settings
-        if container.useRepetition then anyUseRepetition = true else allUseRepetition = false end
-        
+                
         -- Randomization settings
         if container.randomizePitch then anyRandomizePitch = true else allRandomizePitch = false end
         if container.randomizeVolume then anyRandomizeVolume = true else allRandomizeVolume = false end
@@ -136,172 +193,138 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     
     -- TRIGGER SETTINGS SECTION
     imgui.Text(globals.ctx, "Trigger Settings")
+           
+    -- Interval Mode dropdown - different modes for triggering sounds
+    local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+    local intervalMode = commonIntervalMode
     
-    -- Repetition activation checkbox (three-state checkbox for mixed values)
-    local repetitionState = allUseRepetition and 1 or (anyUseRepetition and 2 or 0)
-    local repetitionText = "Use trigger rate"
-    
-    if repetitionState == 2 then -- Mixed values
-        repetitionText = repetitionText .. " (Mixed)"
+    if intervalMode == -1 then
+        -- Mixed values - use a placeholder
+        imgui.Text(globals.ctx, "Interval Mode:")
+        imgui.SameLine(globals.ctx)
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
+        
+        -- Add a dropdown to set all values to the same value
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newIntervalMode = imgui.Combo(globals.ctx, "Set all to##IntervalMode", 0, intervalModes)
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
+            end
+            
+            -- Update state for UI refresh
+            commonIntervalMode = newIntervalMode
+        end
+    else
+        -- All containers have the same value - normal edit
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode", intervalMode, intervalModes)
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
+            end
+            
+            -- Update state for UI refresh
+            commonIntervalMode = newIntervalMode
+        end
     end
     
-    -- Custom drawing of the three-state checkbox
-    local useRep = false
-    if repetitionState == 1 then
-        useRep = true
+    -- Trigger rate label and slider range changes based on selected mode
+    local triggerRateLabel = "Interval (sec)"
+    local triggerRateMin = -10.0
+    local triggerRateMax = 60.0
+    
+    if commonIntervalMode == 1 then
+        triggerRateLabel = "Interval (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
+    elseif commonIntervalMode == 2 then
+        triggerRateLabel = "Coverage (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
     end
     
-    local rv, newUseRep = imgui.Checkbox(globals.ctx, repetitionText, useRep)
-    if rv then
-        -- Apply to all selected containers
-        for _, c in ipairs(containers) do
-            globals.groups[c.groupIndex].containers[c.containerIndex].useRepetition = newUseRep
-        end
+    -- Trigger rate slider
+    if commonTriggerRate == -999 then
+        -- Mixed values - show a text indicator and editable field
+        imgui.Text(globals.ctx, triggerRateLabel .. ":")
+        showMixedValues()
         
-        -- Update state for UI refresh
-        if newUseRep then
-            anyUseRepetition = true
-            allUseRepetition = true
-        else
-            anyUseRepetition = false
-            allUseRepetition = false
+        -- Add a slider to set all values to the same value
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, "Set all to##TriggerRate",
+            0, triggerRateMin, triggerRateMax, "%.1f")
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
+            end
+            
+            -- Update state for UI refresh
+            commonTriggerRate = newTriggerRate
+        end
+    else
+        -- All containers have the same value - normal edit
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel,
+            commonTriggerRate, triggerRateMin, triggerRateMax, "%.1f")
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
+            end
+            
+            -- Update state for UI refresh
+            commonTriggerRate = newTriggerRate
         end
     end
     
-    -- Only show trigger settings if any container uses repetition
-    if anyUseRepetition then
-        -- Interval Mode dropdown - different modes for triggering sounds
-        local intervalModes = "Absolute\0Relative\0Coverage\0\0"
-        local intervalMode = commonIntervalMode
-        
-        if intervalMode == -1 then
-            -- Mixed values - use a placeholder
-            imgui.Text(globals.ctx, "Interval Mode:")
-            imgui.SameLine(globals.ctx)
-            imgui.TextColored(globals.ctx, 0xFFAA00FF, "(Mixed values)")
-            
-            -- Add a dropdown to set all values to the same value
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newIntervalMode = imgui.Combo(globals.ctx, "Set all to##IntervalMode", 0, intervalModes)
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
-                end
-                
-                -- Update state for UI refresh
-                commonIntervalMode = newIntervalMode
-            end
+    -- Help text explaining the selected mode
+    if commonIntervalMode == 0 then
+        if commonTriggerRate < 0 then
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
         else
-            -- All containers have the same value - normal edit
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode", intervalMode, intervalModes)
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].intervalMode = newIntervalMode
-                end
-                
-                -- Update state for UI refresh
-                commonIntervalMode = newIntervalMode
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+        end
+    elseif commonIntervalMode == 1 then
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+    elseif commonIntervalMode == 2 then
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+    end
+    
+    -- Trigger drift slider (randomness in timing)
+    if commonTriggerDrift == -1 then
+        -- Mixed values - show a text indicator and editable field
+        imgui.Text(globals.ctx, "Random variation (%):")
+        showMixedValues()
+        
+        -- Add a slider to set all values to the same value
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Set all to##TriggerDrift", 0, 0, 100, "%d")
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
             end
-        end
-        
-        -- Trigger rate label and slider range changes based on selected mode
-        local triggerRateLabel = "Interval (sec)"
-        local triggerRateMin = -10.0
-        local triggerRateMax = 60.0
-        
-        if commonIntervalMode == 1 then
-            triggerRateLabel = "Interval (%)"
-            triggerRateMin = 0.1
-            triggerRateMax = 100.0
-        elseif commonIntervalMode == 2 then
-            triggerRateLabel = "Coverage (%)"
-            triggerRateMin = 0.1
-            triggerRateMax = 100.0
-        end
-        
-        -- Trigger rate slider
-        if commonTriggerRate == -999 then
-            -- Mixed values - show a text indicator and editable field
-            imgui.Text(globals.ctx, triggerRateLabel .. ":")
-            showMixedValues()
             
-            -- Add a slider to set all values to the same value
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, "Set all to##TriggerRate",
-                0, triggerRateMin, triggerRateMax, "%.1f")
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
-                end
-                
-                -- Update state for UI refresh
-                commonTriggerRate = newTriggerRate
-            end
-        else
-            -- All containers have the same value - normal edit
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel,
-                commonTriggerRate, triggerRateMin, triggerRateMax, "%.1f")
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerRate = newTriggerRate
-                end
-                
-                -- Update state for UI refresh
-                commonTriggerRate = newTriggerRate
-            end
+            -- Update state for UI refresh
+            commonTriggerDrift = newTriggerDrift
         end
-        
-        -- Help text explaining the selected mode
-        if commonIntervalMode == 0 then
-            if commonTriggerRate < 0 then
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-            else
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+    else
+        -- All containers have the same value - normal edit
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)",
+            commonTriggerDrift, 0, 100, "%d")
+        if rv then
+            -- Apply to all selected containers
+            for _, c in ipairs(containers) do
+                globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
             end
-        elseif commonIntervalMode == 1 then
-            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
-        elseif commonIntervalMode == 2 then
-            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
-        end
-        
-        -- Trigger drift slider (randomness in timing)
-        if commonTriggerDrift == -1 then
-            -- Mixed values - show a text indicator and editable field
-            imgui.Text(globals.ctx, "Random variation (%):")
-            showMixedValues()
             
-            -- Add a slider to set all values to the same value
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Set all to##TriggerDrift", 0, 0, 100, "%d")
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
-                end
-                
-                -- Update state for UI refresh
-                commonTriggerDrift = newTriggerDrift
-            end
-        else
-            -- All containers have the same value - normal edit
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)",
-                commonTriggerDrift, 0, 100, "%d")
-            if rv then
-                -- Apply to all selected containers
-                for _, c in ipairs(containers) do
-                    globals.groups[c.groupIndex].containers[c.containerIndex].triggerDrift = newTriggerDrift
-                end
-                
-                -- Update state for UI refresh
-                commonTriggerDrift = newTriggerDrift
-            end
+            -- Update state for UI refresh
+            commonTriggerDrift = newTriggerDrift
         end
     end
     
