@@ -75,213 +75,244 @@ end
 
 -- Function to draw the left panel containing groups list
 function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
+    -- Wrapper de sécurité pour les fonctions ImGui qui peuvent échouer
+    local function safeImGui(func, ...)
+        local success, result = pcall(func, ...)
+        if not success then
+            -- Optionnel: logger l'erreur
+            -- reaper.ShowConsoleMsg("ImGui error: " .. tostring(result) .. "\n")
+            return false
+        end
+        return result
+    end
+    
+    -- Vérification de base - protéger contre les fenêtres trop petites
+    local availableHeight = imgui.GetWindowHeight(globals.ctx)
+    local availableWidth = imgui.GetWindowWidth(globals.ctx)
+    
+    if availableHeight < 100 or availableWidth < 200 then
+        imgui.TextColored(globals.ctx, 0xFF0000FF, "Window too small")
+        return
+    end
+    
     -- Title for the left panel
-    imgui.Text(globals.ctx, "Groups & Containers")
+    safeImGui(imgui.Text, globals.ctx, "Groups & Containers")
     
     -- Multi-selection mode toggle and info
     local selectedCount = UI_Groups.getSelectedContainersCount()
     if selectedCount > 1 then
-        imgui.SameLine(globals.ctx)
-        imgui.TextColored(globals.ctx, 0xFF4CAF50, "(" .. selectedCount .. " selected)")
-        imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Clear Selection") then
+        safeImGui(imgui.SameLine, globals.ctx)
+        safeImGui(imgui.TextColored, globals.ctx, 0xFF4CAF50, "(" .. selectedCount .. " selected)")
+        safeImGui(imgui.SameLine, globals.ctx)
+        if safeImGui(imgui.Button, globals.ctx, "Clear Selection") then
             clearContainerSelections()
         end
     end
     
     -- Button to add a new group
-    if imgui.Button(globals.ctx, "Add Group") then
+    if safeImGui(imgui.Button, globals.ctx, "Add Group") then
         table.insert(globals.groups, globals.Structures.createGroup())
     end
     
-    imgui.Separator(globals.ctx)
+    safeImGui(imgui.Separator, globals.ctx)
     
     -- Check if Ctrl key is pressed for multi-selection mode
-    local ctrlPressed = imgui.GetKeyMods(globals.ctx) & imgui.Mod_Ctrl ~= 0
+    local ctrlPressed = safeImGui(imgui.GetKeyMods, globals.ctx) & imgui.Mod_Ctrl ~= 0
     
-    -- Variable to group which group to delete (if any)
+    -- Variable to track which group to delete (if any)
     local groupToDelete = nil
     
-    -- Loop through all groups
+    -- Parcourir les groupes avec pcall
     for i, group in ipairs(globals.groups) do
-        local groupId = "group" .. i
-        
-        -- TreeNode flags - include selection flags if needed
-        local groupFlags = group.expanded and imgui.TreeNodeFlags_DefaultOpen or 0
-        groupFlags = groupFlags + imgui.TreeNodeFlags_OpenOnArrow
-
-        -- Add specific flags to indicate selection
-        if globals.selectedGroupIndex == i and globals.selectedContainerIndex == nil then
-            groupFlags = groupFlags + imgui.TreeNodeFlags_Selected
-        end
-        
-        -- Create tree node for the group
-        local groupOpen = imgui.TreeNodeEx(globals.ctx, groupId, group.name, groupFlags)
-
-        -- Update the expanded state in our data structure
-        group.expanded = groupOpen
-        
-        -- Handle selection on click
-        if imgui.IsItemClicked(globals.ctx) then
-            globals.selectedGroupIndex = i
-            globals.selectedContainerIndex = nil
+        local success = pcall(function()
+            local groupId = "group" .. i
             
-            -- Clear multi-selection if not holding Ctrl
-            if not ctrlPressed then
-                clearContainerSelections()
-            end
-        end
-        
-        -- Delete group button
-        imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Delete##" .. groupId) then
-            groupToDelete = i
-        end
-        
-        -- Regenerate group button
-        imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
-            globals.Generation.generateSingleGroup(i)
-        end
-        
-        -- If the group node is open, display its contents
-        if groupOpen then
-            -- Group name input field
-            local groupName = group.name
-            imgui.PushItemWidth(globals.ctx, width * 0.8)
-            local rv, newGroupName = imgui.InputText(globals.ctx, "Name##" .. groupId, groupName)
-            if rv then group.name = newGroupName end
+            -- TreeNode flags - include selection flags if needed
+            local groupFlags = group.expanded and imgui.TreeNodeFlags_DefaultOpen or 0
+            groupFlags = groupFlags + imgui.TreeNodeFlags_OpenOnArrow
             
-            -- Group preset controls
-            UI_Groups.drawGroupPresetControls(i)
-            
-            -- Button to add a container to this group
-            if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
-                table.insert(group.containers, globals.Structures.createContainer())
+            -- Add specific flags to indicate selection
+            if globals.selectedGroupIndex == i and globals.selectedContainerIndex == nil then
+                groupFlags = groupFlags + imgui.TreeNodeFlags_Selected
             end
             
-            -- Variable to group which container to delete (if any)
-            local containerToDelete = nil
+            -- Create tree node for the group
+            local groupOpen = imgui.TreeNodeEx(globals.ctx, groupId, group.name, groupFlags)
             
-            -- Loop through all containers in this group
-            for j, container in ipairs(group.containers) do
-                local containerId = groupId .. "_container" .. j
+            -- Update the expanded state in our data structure
+            group.expanded = groupOpen
+            
+            -- Handle selection on click
+            if imgui.IsItemClicked(globals.ctx) then
+                globals.selectedGroupIndex = i
+                globals.selectedContainerIndex = nil
                 
-                -- TreeNode flags - leaf nodes for containers with selection support
-                local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen
-                
-                -- Add specific flags to indicate selection
-                if isContainerSelected(i, j) then
-                    containerFlags = containerFlags + imgui.TreeNodeFlags_Selected
+                -- Clear multi-selection if not holding Ctrl
+                if not ctrlPressed then
+                    clearContainerSelections()
                 end
-                
-                -- Indent container items for better visual hierarchy
-                imgui.Indent(globals.ctx, 20)
-                imgui.TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
-                
-                -- Handle selection on click with multi-selection support
-                if imgui.IsItemClicked(globals.ctx) then
-                    -- Check if Shift is pressed for range selection
-                    local shiftPressed = imgui.GetKeyMods(globals.ctx) & imgui.Mod_Shift ~= 0
+            end
+            
+            -- Delete group button
+            imgui.SameLine(globals.ctx)
+            if imgui.Button(globals.ctx, "Delete##" .. groupId) then
+                groupToDelete = i
+            end
+            
+            -- Regenerate group button
+            imgui.SameLine(globals.ctx)
+            if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
+                globals.Generation.generateSingleGroup(i)
+            end
+            
+            -- Si le groupe est ouvert, afficher son contenu
+            if groupOpen then
+                -- Protéger l'affichage du contenu du groupe
+                local contentSuccess = pcall(function()
+                    -- Group name input field
+                    local groupName = group.name
+                    imgui.PushItemWidth(globals.ctx, width * 0.8)
+                    local rv, newGroupName = imgui.InputText(globals.ctx, "Name##" .. groupId, groupName)
+                    if rv then group.name = newGroupName end
                     
-                    -- If Ctrl is pressed, toggle this container in multi-selection
-                    if ctrlPressed then
-                        toggleContainerSelection(i, j)
-                        globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
-                        
-                        -- Update anchor point for Shift+Click
-                        globals.shiftAnchorGroupIndex = i
-                        globals.shiftAnchorContainerIndex = j
-                        
-                    -- If Shift is pressed, select range from last anchor to this container
-                    elseif shiftPressed and globals.shiftAnchorGroupIndex then
-                        selectContainerRange(globals.shiftAnchorGroupIndex, globals.shiftAnchorContainerIndex, i, j)
-                    else
-                        -- Otherwise, select only this container and update anchor
-                        clearContainerSelections()
-                        toggleContainerSelection(i, j)
-                        globals.inMultiSelectMode = false
-                        
-                        -- Set new anchor point for Shift+Click
-                        globals.shiftAnchorGroupIndex = i
-                        globals.shiftAnchorContainerIndex = j
+                    -- Group preset controls
+                    UI_Groups.drawGroupPresetControls(i)
+                    
+                    -- Button to add a container to this group
+                    if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
+                        table.insert(group.containers, globals.Structures.createContainer())
                     end
-                end
-                
-                -- Delete container button
-                imgui.SameLine(globals.ctx)
-                if imgui.Button(globals.ctx, "Delete##" .. containerId) then
-                    containerToDelete = j
-                end
-                
-                -- Regenerate container button
-                imgui.SameLine(globals.ctx)
-                if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
-                    globals.Generation.generateSingleContainer(i, j)
-                end
-                
-                imgui.Unindent(globals.ctx, 20)
-            end
-            
-            -- Delete the marked container if any
-            if containerToDelete then
-                -- Remove from selected containers if it was selected
-                globals.selectedContainers[i .. "_" .. containerToDelete] = nil
-                table.remove(group.containers, containerToDelete)
-                
-                -- Update primary selection if necessary
-                if globals.selectedGroupIndex == i and globals.selectedContainerIndex == containerToDelete then
-                    globals.selectedContainerIndex = nil
-                elseif globals.selectedGroupIndex == i and globals.selectedContainerIndex > containerToDelete then
-                    globals.selectedContainerIndex = globals.selectedContainerIndex - 1
-                end
-                
-                -- Update multi-selection references for containers after the deleted one
-                for k = containerToDelete + 1, #group.containers + 1 do -- +1 because we just deleted one
-                    if globals.selectedContainers[i .. "_" .. k] then
-                        globals.selectedContainers[i .. "_" .. (k-1)] = true
-                        globals.selectedContainers[i .. "_" .. k] = nil
+                    
+                    -- Variable to track which container to delete (if any)
+                    local containerToDelete = nil
+                    
+                    -- Parcourir les containers avec pcall
+                    for j, container in ipairs(group.containers) do
+                        pcall(function()
+                            local containerId = groupId .. "_container" .. j
+                            
+                            -- TreeNode flags
+                            local containerFlags = imgui.TreeNodeFlags_Leaf + imgui.TreeNodeFlags_NoTreePushOnOpen
+                            
+                            if isContainerSelected(i, j) then
+                                containerFlags = containerFlags + imgui.TreeNodeFlags_Selected
+                            end
+                            
+                            -- Indent container items
+                            imgui.Indent(globals.ctx, 20)
+                            imgui.TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
+                            
+                            -- Handle selection on click with multi-selection support
+                            if imgui.IsItemClicked(globals.ctx) then
+                                local shiftPressed = imgui.GetKeyMods(globals.ctx) & imgui.Mod_Shift ~= 0
+                                
+                                if ctrlPressed then
+                                    toggleContainerSelection(i, j)
+                                    globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
+                                    globals.shiftAnchorGroupIndex = i
+                                    globals.shiftAnchorContainerIndex = j
+                                elseif shiftPressed and globals.shiftAnchorGroupIndex then
+                                    selectContainerRange(globals.shiftAnchorGroupIndex, globals.shiftAnchorContainerIndex, i, j)
+                                else
+                                    clearContainerSelections()
+                                    toggleContainerSelection(i, j)
+                                    globals.inMultiSelectMode = false
+                                    globals.shiftAnchorGroupIndex = i
+                                    globals.shiftAnchorContainerIndex = j
+                                end
+                            end
+                            
+                            -- Delete container button
+                            imgui.SameLine(globals.ctx)
+                            if imgui.Button(globals.ctx, "Delete##" .. containerId) then
+                                containerToDelete = j
+                            end
+                            
+                            -- Regenerate container button
+                            imgui.SameLine(globals.ctx)
+                            if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
+                                globals.Generation.generateSingleContainer(i, j)
+                            end
+                            
+                            imgui.Unindent(globals.ctx, 20)
+                        end)
                     end
+                    
+                    -- Delete the marked container if any
+                    if containerToDelete then
+                        -- Clean-up code for container deletion
+                        pcall(function()
+                            globals.selectedContainers[i .. "_" .. containerToDelete] = nil
+                            table.remove(group.containers, containerToDelete)
+                            
+                            if globals.selectedGroupIndex == i and globals.selectedContainerIndex == containerToDelete then
+                                globals.selectedContainerIndex = nil
+                            elseif globals.selectedGroupIndex == i and globals.selectedContainerIndex > containerToDelete then
+                                globals.selectedContainerIndex = globals.selectedContainerIndex - 1
+                            end
+                            
+                            for k = containerToDelete + 1, #group.containers + 1 do
+                                if globals.selectedContainers[i .. "_" .. k] then
+                                    globals.selectedContainers[i .. "_" .. (k-1)] = true
+                                    globals.selectedContainers[i .. "_" .. k] = nil
+                                end
+                            end
+                        end)
+                    end
+                    
+                    -- TreePop doit être appelé uniquement si le TreeNode est ouvert
+                    imgui.TreePop(globals.ctx)
+                end)
+                
+                if not contentSuccess then
+                    -- Gérer l'erreur de rendu du contenu
+                    pcall(imgui.Text, globals.ctx, "Error rendering group content")
                 end
             end
-            
-            imgui.TreePop(globals.ctx)
+        end)
+        
+        if not success then
+            -- Gérer les erreurs de rendu du groupe
+            pcall(imgui.Text, globals.ctx, "Error rendering group " .. i)
         end
     end
     
-    -- Delete the marked group if any
+    -- Delete the marked group if any (en mode protégé)
     if groupToDelete then
-        -- Remove any selected containers from this group
-        for key in pairs(globals.selectedContainers) do
-            local t, c = key:match("(%d+)_(%d+)")
-            if tonumber(t) == groupToDelete then
-                globals.selectedContainers[key] = nil
+        pcall(function()
+            -- Remove any selected containers from this group
+            for key in pairs(globals.selectedContainers) do
+                local t, c = key:match("(%d+)_(%d+)")
+                if tonumber(t) == groupToDelete then
+                    globals.selectedContainers[key] = nil
+                end
             end
-        end
-        
-        table.remove(globals.groups, groupToDelete)
-        
-        -- Update primary selection if necessary
-        if globals.selectedGroupIndex == groupToDelete then
-            globals.selectedGroupIndex = nil
-            globals.selectedContainerIndex = nil
-        elseif globals.selectedGroupIndex and globals.selectedGroupIndex > groupToDelete then
-            globals.selectedGroupIndex = globals.selectedGroupIndex - 1
-        end
-        
-        -- Update multi-selection references for groups after the deleted one
-        for key in pairs(globals.selectedContainers) do
-            local t, c = key:match("(%d+)_(%d+)")
-            if tonumber(t) > groupToDelete then
-                globals.selectedContainers[(tonumber(t)-1) .. "_" .. c] = true
-                globals.selectedContainers[key] = nil
+            
+            table.remove(globals.groups, groupToDelete)
+            
+            -- Update primary selection if necessary
+            if globals.selectedGroupIndex == groupToDelete then
+                globals.selectedGroupIndex = nil
+                globals.selectedContainerIndex = nil
+            elseif globals.selectedGroupIndex and globals.selectedGroupIndex > groupToDelete then
+                globals.selectedGroupIndex = globals.selectedGroupIndex - 1
             end
-        end
+            
+            -- Update multi-selection references for groups after the deleted one
+            for key in pairs(globals.selectedContainers) do
+                local t, c = key:match("(%d+)_(%d+)")
+                if tonumber(t) > groupToDelete then
+                    globals.selectedContainers[(tonumber(t)-1) .. "_" .. c] = true
+                    globals.selectedContainers[key] = nil
+                end
+            end
+        end)
     end
     
     -- Update the multi-select mode flag
     globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
+
 
 -- Get count of selected containers
 function UI_Groups.getSelectedContainersCount()

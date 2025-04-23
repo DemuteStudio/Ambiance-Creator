@@ -2,21 +2,21 @@
 -- Allows creating groups and containers to organize audio samples with advanced preset management
 -- Features selective regeneration of individual groups and containers
 
--- Checking if ReaImGui exists
+-- Check if ReaImGui exists
 if not reaper.ImGui_CreateContext then
     reaper.MB("This script requires ReaImGui. Please install the extension via ReaPack.", "Error", 0)
     return
 end
 
--- Initialisation correcte de ReaImGui selon les recommandations du développeur
+-- Proper initialization of ReaImGui as recommended by the developer
 package.path = reaper.ImGui_GetBuiltinPath() .. '/?.lua'
 local imgui = require 'imgui' '0.9.3'
 
--- Définir le chemin pour les modules
+-- Define path for modules
 local script_path = debug.getinfo(1, "S").source:match[[^@?(.*[\/])[^\/]-$]]
 package.path = script_path .. "modules/?.lua;" .. package.path
 
--- Importation des modules
+-- Import modules
 local Utils = require("DM_Ambiance_Utils")
 local Structures = require("DM_Ambiance_Structures")
 local Items = require("DM_Ambiance_Items")
@@ -24,28 +24,28 @@ local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 local UI = require("DM_Ambiance_UI")
 
--- Variables globales
+-- Global variables
 local globals = {
-    groups = {},
-    timeSelectionValid = false,
-    startTime = 0,
-    endTime = 0,
-    timeSelectionLength = 0,
-    currentPresetName = "",
-    presetsPath = "",
-    selectedGroupPresetIndex = {},
-    selectedContainerPresetIndex = {},
-    currentSaveGroupIndex = nil,
-    currentSaveContainerGroup = nil,
-    currentSaveContainerIndex = nil,
-    newGroupPresetName = "",
-    newContainerPresetName = "",
-    newPresetName = "",
-    selectedPresetIndex = -1,
-    activePopups = {}
+    groups = {},                      -- Stores all defined groups
+    timeSelectionValid = false,       -- Indicates if a valid time selection exists
+    startTime = 0,                    -- Start time of selection
+    endTime = 0,                      -- End time of selection
+    timeSelectionLength = 0,          -- Length of the time selection
+    currentPresetName = "",           -- Currently loaded preset name
+    presetsPath = "",                 -- Path to presets directory
+    selectedGroupPresetIndex = {},    -- Indices of selected group presets
+    selectedContainerPresetIndex = {},-- Indices of selected container presets
+    currentSaveGroupIndex = nil,      -- Group index for saving
+    currentSaveContainerGroup = nil,  -- Container group for saving
+    currentSaveContainerIndex = nil,  -- Container index for saving
+    newGroupPresetName = "",          -- New group preset name input
+    newContainerPresetName = "",      -- New container preset name input
+    newPresetName = "",               -- New global preset name input
+    selectedPresetIndex = -1,         -- Index of selected preset
+    activePopups = {}                 -- Tracking active popup windows
 }
 
--- Fonction loop suivant les recommandations du développeur
+-- Main loop function for the GUI
 local function loop()
     UI.PushStyle()
     local open = UI.ShowMainWindow(true)
@@ -54,12 +54,11 @@ local function loop()
     if open then
         reaper.defer(loop)
     end
-    -- Note: DestroyContext n'est plus nécessaire dans les versions récentes de ReaImGui
 end
 
--- N'exécute le code que si le script est lancé directement
+-- Script entry point when run directly
 if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2) then
-    -- Expose les variables pour le débogage
+    -- Expose variables for debugging
     _G.globals = globals
     _G.Utils = Utils
     _G.Structures = Structures
@@ -69,15 +68,14 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     _G.UI = UI
     _G.imgui = imgui
     
-    -- Initialisation du générateur de nombres aléatoires
     math.randomseed(os.time())
     
-    -- Création du contexte ImGui selon les recommandations
+    -- Create ImGui context
     local ctx = imgui.CreateContext('Ambiance Creator')
     globals.ctx = ctx
     globals.imgui = imgui
     
-    -- Partage des modules avec globals
+    -- Share modules with globals for access across the application
     globals.Utils = Utils
     globals.Structures = Structures
     globals.Items = Items
@@ -85,7 +83,7 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     globals.Generation = Generation
     globals.UI = UI
     
-    -- Initialisation des modules
+    -- Initialize modules
     Utils.initModule(globals)
     Structures.initModule(globals)
     Items.initModule(globals)
@@ -93,11 +91,11 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     Generation.initModule(globals)
     UI.initModule(globals)
     
-    -- Initialisation des chemins de presets
-    globals.presetsPath = "" -- Reset pour forcer la création du dossier
+    -- Initialize preset paths
+    globals.presetsPath = "" -- Reset to force directory creation
     Presets.getPresetsPath("Global")
     Presets.getPresetsPath("Groups")
     
-    -- Démarrage de la boucle principale
+    -- Start the main loop
     reaper.defer(loop)
 end

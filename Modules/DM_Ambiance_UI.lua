@@ -147,6 +147,13 @@ end
 
 -- Function to draw the left panel containing groups and containers list
 local function drawLeftPanel(width)
+    -- Vérifier si l'espace disponible est suffisant
+    local availHeight = globals.imgui.GetWindowHeight(globals.ctx)
+    if availHeight < 100 then -- Hauteur minimale raisonnable
+        globals.imgui.TextColored(globals.ctx, 0xFF0000FF, "Window too small")
+        return
+    end
+    -- Appeler la fonction normale quand l'espace est suffisant
     UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
 
@@ -184,45 +191,42 @@ end
 
 -- Nouvelle fonction ShowMainWindow conformément aux recommandations du développeur
 function UI.ShowMainWindow(open)
+    globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
     local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open)
     
     if visible then
-        -- Section with presets controls at the top
+        -- Section avec les contrôles presets en haut
         UI_Preset.drawPresetControls()
-        
-        -- Button to generate all groups and place items
         globals.imgui.SameLine(globals.ctx)
         UI_Generation.drawMainGenerationButton()
-        
-        -- Display time selection information
         UI_Generation.drawTimeSelectionInfo()
-        
         globals.imgui.Separator(globals.ctx)
         
-        -- Calculate dimensions for the split view layout
+        -- Calcul des dimensions pour la mise en page en deux panneaux
         local windowWidth = globals.imgui.GetWindowWidth(globals.ctx)
         local leftPanelWidth = windowWidth * 0.35
         local rightPanelWidth = windowWidth * 0.63
         
-        -- Left panel (Groups & Containers list)
-        globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
-        drawLeftPanel(leftPanelWidth)
-        globals.imgui.EndChild(globals.ctx)
+        -- Panneau de gauche (Groupes & liste des Containers)
+        if globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0) then
+            drawLeftPanel(leftPanelWidth)
+            globals.imgui.EndChild(globals.ctx)
+        end
         
-        -- Right panel (Container Settings)
+        -- Panneau de droite (Paramètres du Container)
         globals.imgui.SameLine(globals.ctx)
-        globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
-        drawRightPanel(rightPanelWidth)
-        globals.imgui.EndChild(globals.ctx)
+        if globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0) then
+            drawRightPanel(rightPanelWidth)
+            globals.imgui.EndChild(globals.ctx)
+        end
     end
     
     globals.imgui.End(globals.ctx)
-    
-    -- Handle popup management
     handlePopups()
     
     return open
 end
+
 
 -- Fonction mainLoop pour compatibilité avec l'ancienne structure
 function UI.mainLoop()
