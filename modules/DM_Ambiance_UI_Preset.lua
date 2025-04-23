@@ -64,7 +64,7 @@ function UI_Preset.drawPresetControls()
     
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Open Preset Directory") then
-        globals.Utils.openPresetsFolder("Global")
+        globals.Utils.openPresetsFolder("Presets")
     end
     
     -- Save preset popup modal
