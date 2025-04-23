@@ -60,60 +60,82 @@ end
 function Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
     -- Get effective parameters considering inheritance from parent group
     local effectiveParams = globals.Structures.getEffectiveContainerParams(group, container)
-    
+
     if effectiveParams.items and #effectiveParams.items > 0 then
-        -- Placement based on trigger rate with drift
-        local lastItemEnd = globals.startTime -- Start at beginning of time selection
-        local lastItemRef = nil -- Reference to the last item created
+        -- Calculate interval based on the selected mode
+        local interval = effectiveParams.triggerRate -- Default (Absolute mode)
+        
+        if effectiveParams.intervalMode == 1 then
+            -- Relative mode: Interval is a percentage of time selection length
+            interval = (globals.timeSelectionLength * effectiveParams.triggerRate) / 100
+        elseif effectiveParams.intervalMode == 2 then
+            -- Coverage mode: Calculate interval based on average item length and desired coverage
+            local totalItemLength = 0
+            local itemCount = #effectiveParams.items
+            
+            if itemCount > 0 then
+                for _, item in ipairs(effectiveParams.items) do
+                    totalItemLength = totalItemLength + item.length
+                end
+                
+                local averageItemLength = totalItemLength / itemCount
+                local desiredCoverage = effectiveParams.triggerRate / 100 -- Convert percentage to ratio
+                local totalNumberOfItems = (globals.timeSelectionLength * desiredCoverage) / averageItemLength
+                
+                if totalNumberOfItems > 0 then
+                    interval = globals.timeSelectionLength / totalNumberOfItems
+                else
+                    interval = globals.timeSelectionLength -- Fallback
+                end
+            end
+        end
+        
+        -- Référence pour le dernier item créé
+        local lastItemRef = nil
+        -- Flag pour savoir si nous plaçons le premier item
+        local isFirstItem = true
+        -- Position du dernier item
+        local lastItemEnd = globals.startTime
         
         while lastItemEnd < globals.endTime do
             -- Select a random item from the container
             local randomItemIndex = math.random(1, #effectiveParams.items)
             local itemData = effectiveParams.items[randomItemIndex]
+
+            local position
+            local maxDrift
+            local drift
             
-            -- Calculate interval based on the selected mode
-            local interval = effectiveParams.triggerRate -- Default (Absolute mode)
-            if effectiveParams.intervalMode == 1 then
-                -- Relative mode: Interval is a percentage of time selection length
-                interval = (globals.timeSelectionLength * effectiveParams.triggerRate) / 100
-            elseif effectiveParams.intervalMode == 2 then
-                -- Coverage mode: Calculate interval based on average item length and desired coverage
-                local totalItemLength = 0
-                local itemCount = #effectiveParams.items
-                if itemCount > 0 then
-                    for _, item in ipairs(effectiveParams.items) do
-                        totalItemLength = totalItemLength + item.length
-                    end
-                    local averageItemLength = totalItemLength / itemCount
-                    local desiredCoverage = effectiveParams.triggerRate / 100 -- Convert percentage to ratio
-                    local totalNumberOfItems = (globals.timeSelectionLength * desiredCoverage) / averageItemLength
-                    if totalNumberOfItems > 0 then
-                        interval = globals.timeSelectionLength / totalNumberOfItems
-                    else
-                        interval = globals.timeSelectionLength -- Fallback
-                    end
+            -- Placement spécial pour le premier item avec intervalle > 0
+            if isFirstItem and interval > 0 then
+                -- Placer directement entre startTime et startTime+interval
+                position = globals.startTime + math.random() * interval
+                isFirstItem = false
+            else
+                -- Calcul standard de position pour les items suivants
+                if effectiveParams.intervalMode == 0 and interval < 0 then
+                    -- Negative spacing creates overlap with the last item
+                    maxDrift = math.abs(interval) * (effectiveParams.triggerDrift / 100)
+                    drift = Utils.randomInRange(-maxDrift/2, maxDrift/2)
+                    position = lastItemEnd + interval + drift
+                else
+                    -- Regular spacing from the end of the last item
+                    maxDrift = interval * (effectiveParams.triggerDrift / 100)
+                    drift = Utils.randomInRange(-maxDrift/2, maxDrift/2)
+                    position = lastItemEnd + interval + drift
+                end
+                
+                -- Ensure no item starts before time selection
+                if position < globals.startTime then
+                    position = globals.startTime
                 end
             end
-            
-            -- Calculate position for the new item
-            local position
-            if effectiveParams.intervalMode == 0 and interval < 0 then
-                -- Negative spacing creates overlap with the last item (only applicable in Absolute mode)
-                local maxDrift = math.abs(interval) * (effectiveParams.triggerDrift / 100)
-                local drift = Utils.randomInRange(-maxDrift/2, maxDrift/2)
-                position = lastItemEnd + interval + drift
-            else
-                -- Regular spacing from the end of the last item
-                local maxDrift = interval * (effectiveParams.triggerDrift / 100)
-                local drift = Utils.randomInRange(-maxDrift/2, maxDrift/2)
-                position = lastItemEnd + interval + drift
-            end
-            
-            -- Stop if we'd place an item completely past the end time
+
+            -- Stop if the item would start beyond the end of the time selection
             if position >= globals.endTime then
                 break
             end
-            
+
             -- Create and configure the new item
             local newItem = reaper.AddMediaItemToTrack(containerGroup)
             local newTake = reaper.AddTakeToMediaItem(newItem)
@@ -122,10 +144,15 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
             local PCM_source = reaper.PCM_Source_CreateFromFile(itemData.filePath)
             reaper.SetMediaItemTake_Source(newTake, PCM_source)
             reaper.SetMediaItemTakeInfo_Value(newTake, "D_STARTOFFS", itemData.startOffset)
-            reaper.SetMediaItemInfo_Value(newItem, "D_POSITION", position)
-            reaper.SetMediaItemInfo_Value(newItem, "D_LENGTH", itemData.length)
-            reaper.GetSetMediaItemTakeInfo_String(newTake, "P_NAME", itemData.name, true)
             
+            -- Trim item so it never exceeds the selection end
+            local maxLen = globals.endTime - position
+            local actualLen = math.min(itemData.length, maxLen)
+            
+            reaper.SetMediaItemInfo_Value(newItem, "D_POSITION", position)
+            reaper.SetMediaItemInfo_Value(newItem, "D_LENGTH", actualLen)
+            reaper.GetSetMediaItemTakeInfo_String(newTake, "P_NAME", itemData.name, true)
+
             -- Apply randomizations using effective parameters
             if effectiveParams.randomizePitch then
                 local randomPitch = itemData.originalPitch + Utils.randomInRange(effectiveParams.pitchRange.min, effectiveParams.pitchRange.max)
@@ -133,33 +160,34 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
             else
                 reaper.SetMediaItemTakeInfo_Value(newTake, "D_PITCH", itemData.originalPitch)
             end
-            
+
             if effectiveParams.randomizeVolume then
                 local randomVolume = itemData.originalVolume * 10^(Utils.randomInRange(effectiveParams.volumeRange.min, effectiveParams.volumeRange.max) / 20)
                 reaper.SetMediaItemTakeInfo_Value(newTake, "D_VOL", randomVolume)
             else
                 reaper.SetMediaItemTakeInfo_Value(newTake, "D_VOL", itemData.originalVolume)
             end
-            
+
             if effectiveParams.randomizePan then
                 local randomPan = itemData.originalPan + Utils.randomInRange(effectiveParams.panRange.min, effectiveParams.panRange.max) / 100
                 randomPan = math.max(-1, math.min(1, randomPan))
                 -- Use envelope instead of directly modifying the property
                 Items.createTakePanEnvelope(newTake, randomPan)
             end
-            
+
             -- Create crossfade if items overlap (negative triggerRate)
             if lastItemRef and position < lastItemEnd then
                 Utils.createCrossfade(lastItemRef, newItem, xfadeshape)
             end
-            
-            -- Update the last item end position and reference
-            lastItemEnd = position + itemData.length
+
+            -- Update the last item end position and reference using the trimmed length
+            lastItemEnd = position + actualLen
             lastItemRef = newItem
         end
-       
     end
 end
+
+
 
 -- Update all functions that call placeItemsForContainer to pass group parameter
 
