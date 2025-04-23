@@ -69,6 +69,131 @@ local function clearContainerSelections()
     globals.shiftAnchorContainerIndex = nil
 end
 
+-- Function to display trigger settings section
+-- Function to display trigger and randomization settings
+function UI.displayTriggerSettings(obj, objId, width, isGroup)
+    -- Determine display text based on whether it's a group or container
+    local titlePrefix = isGroup and "Default " or ""
+    local inheritText = isGroup and "These settings will be inherited by containers unless overridden" or ""
+    
+    -- TRIGGER SETTINGS SECTION
+    imgui.Separator(globals.ctx)
+    imgui.Text(globals.ctx, titlePrefix .. "Trigger Settings")
+    
+    if inheritText ~= "" then
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, inheritText)
+    end
+    
+    -- Interval Mode dropdown - different modes for triggering sounds
+    local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+    local intervalMode = obj.intervalMode
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    
+    -- Help text explaining the selected mode
+    if obj.intervalMode == 0 then
+        if obj.triggerRate < 0 then
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
+        else
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
+        end
+    elseif obj.intervalMode == 1 then
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+    else
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+    end
+    
+    local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. objId, intervalMode, intervalModes)
+    if rv then obj.intervalMode = newIntervalMode end
+    imgui.SameLine(globals.ctx)
+    globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
+    "Relative: Interval as percentage of time selection\n" ..
+    "Coverage: Percentage of time selection to be filled")
+
+    -- Trigger rate label and slider range changes based on selected mode
+    local triggerRateLabel = "Interval (sec)"
+    local triggerRateMin = -10.0
+    local triggerRateMax = 60.0
+    
+    if obj.intervalMode == 1 then
+        triggerRateLabel = "Interval (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
+    elseif obj.intervalMode == 2 then
+        triggerRateLabel = "Coverage (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
+    end
+    
+    -- Trigger rate slider
+    local triggerRate = obj.triggerRate
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel .. "##" .. objId,
+        triggerRate, triggerRateMin, triggerRateMax, "%.1f")
+    if rv then obj.triggerRate = newTriggerRate end
+    
+    -- Trigger drift slider (randomness in timing)
+    local triggerDrift = obj.triggerDrift
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)##" .. objId, triggerDrift, 0, 100, "%d")
+    if rv then obj.triggerDrift = newTriggerDrift end
+    
+    -- RANDOMIZATION PARAMETERS SECTION
+    imgui.Separator(globals.ctx)
+    imgui.Text(globals.ctx, titlePrefix .. "Randomization parameters")
+    
+    -- Pitch randomization checkbox
+    local randomizePitch = obj.randomizePitch
+    local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "Randomize Pitch##" .. objId, randomizePitch)
+    if rv then obj.randomizePitch = newRandomizePitch end
+    
+    -- Only show pitch range if pitch randomization is enabled
+    if obj.randomizePitch then
+        local pitchMin = obj.pitchRange.min
+        local pitchMax = obj.pitchRange.max
+        imgui.PushItemWidth(globals.ctx, width * 0.7)
+        local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "Pitch Range (semitones)##" .. objId, pitchMin, pitchMax, 0.1, -48, 48)
+        if rv then
+            obj.pitchRange.min = newPitchMin
+            obj.pitchRange.max = newPitchMax
+        end
+    end
+    
+    -- Volume randomization checkbox
+    local randomizeVolume = obj.randomizeVolume
+    local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "Randomize Volume##" .. objId, randomizeVolume)
+    if rv then obj.randomizeVolume = newRandomizeVolume end
+    
+    -- Only show volume range if volume randomization is enabled
+    if obj.randomizeVolume then
+        local volumeMin = obj.volumeRange.min
+        local volumeMax = obj.volumeRange.max
+        imgui.PushItemWidth(globals.ctx, width * 0.7)
+        local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "Volume Range (dB)##" .. objId, volumeMin, volumeMax, 0.1, -24, 24)
+        if rv then
+            obj.volumeRange.min = newVolumeMin
+            obj.volumeRange.max = newVolumeMax
+        end
+    end
+    
+    -- Pan randomization checkbox
+    local randomizePan = obj.randomizePan
+    local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "Randomize Pan##" .. objId, randomizePan)
+    if rv then obj.randomizePan = newRandomizePan end
+    
+    -- Only show pan range if pan randomization is enabled
+    if obj.randomizePan then
+        local panMin = obj.panRange.min
+        local panMax = obj.panRange.max
+        imgui.PushItemWidth(globals.ctx, width * 0.7)
+        local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "Pan Range (-100/+100)##" .. objId, panMin, panMax, 1, -100, 100)
+        if rv then
+            obj.panRange.min = newPanMin
+            obj.panRange.max = newPanMax
+        end
+    end
+end
+
+
 -- Function to check if a container is selected
 local function isContainerSelected(groupIndex, containerIndex)
     return globals.selectedContainers[groupIndex .. "_" .. containerIndex] == true
