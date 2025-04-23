@@ -144,67 +144,59 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
         imgui.Separator(globals.ctx)
         imgui.Text(globals.ctx, "Trigger Settings")
         
-        -- Repetition activation checkbox
-        local useRepetition = container.useRepetition
-        local rv, newUseRepetition = imgui.Checkbox(globals.ctx, "Use trigger rate##" .. containerId, useRepetition)
-        if rv then container.useRepetition = newUseRepetition end
+        -- Interval Mode dropdown - different modes for triggering sounds
+        local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+        local intervalMode = container.intervalMode
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
         
-        -- Only show trigger settings if repetition is enabled
-        if container.useRepetition then
-            -- Interval Mode dropdown - different modes for triggering sounds
-            local intervalModes = "Absolute\0Relative\0Coverage\0\0"
-            local intervalMode = container.intervalMode
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            
-            -- Help text explaining the selected mode
-            if container.intervalMode == 0 then
-                if container.triggerRate < 0 then
-                    imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-                else
-                    imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
-                end
-            elseif container.intervalMode == 1 then
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+        -- Help text explaining the selected mode
+        if container.intervalMode == 0 then
+            if container.triggerRate < 0 then
+                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
             else
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
             end
-            
-            local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. containerId, intervalMode, intervalModes)
-            if rv then container.intervalMode = newIntervalMode end
-            imgui.SameLine(globals.ctx)
-            globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
-            "Relative: Interval as percentage of time selection\n" ..
-            "Coverage: Percentage of time selection to be filled")
-            
-            -- Trigger rate label and slider range changes based on selected mode
-            local triggerRateLabel = "Interval (sec)"
-            local triggerRateMin = -10.0
-            local triggerRateMax = 60.0
-            
-            if container.intervalMode == 1 then
-                triggerRateLabel = "Interval (%)"
-                triggerRateMin = 0.1
-                triggerRateMax = 100.0
-            elseif container.intervalMode == 2 then
-                triggerRateLabel = "Coverage (%)"
-                triggerRateMin = 0.1
-                triggerRateMax = 100.0
-            end
-            
-            -- Trigger rate slider
-            local triggerRate = container.triggerRate
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel .. "##" .. containerId,
-                triggerRate, triggerRateMin, triggerRateMax, "%.1f")
-            if rv then container.triggerRate = newTriggerRate end
-            
-            
-            -- Trigger drift slider (randomness in timing)
-            local triggerDrift = container.triggerDrift
-            imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)##" .. containerId, triggerDrift, 0, 100, "%d")
-            if rv then container.triggerDrift = newTriggerDrift end
+        elseif container.intervalMode == 1 then
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+        else
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
         end
+        
+        local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. containerId, intervalMode, intervalModes)
+        if rv then container.intervalMode = newIntervalMode end
+        imgui.SameLine(globals.ctx)
+        globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
+        "Relative: Interval as percentage of time selection\n" ..
+        "Coverage: Percentage of time selection to be filled")
+        
+        -- Trigger rate label and slider range changes based on selected mode
+        local triggerRateLabel = "Interval (sec)"
+        local triggerRateMin = -10.0
+        local triggerRateMax = 60.0
+        
+        if container.intervalMode == 1 then
+            triggerRateLabel = "Interval (%)"
+            triggerRateMin = 0.1
+            triggerRateMax = 100.0
+        elseif container.intervalMode == 2 then
+            triggerRateLabel = "Coverage (%)"
+            triggerRateMin = 0.1
+            triggerRateMax = 100.0
+        end
+        
+        -- Trigger rate slider
+        local triggerRate = container.triggerRate
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel .. "##" .. containerId,
+            triggerRate, triggerRateMin, triggerRateMax, "%.1f")
+        if rv then container.triggerRate = newTriggerRate end
+        
+        
+        -- Trigger drift slider (randomness in timing)
+        local triggerDrift = container.triggerDrift
+        imgui.PushItemWidth(globals.ctx, width * 0.5)
+        local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)##" .. containerId, triggerDrift, 0, 100, "%d")
+        if rv then container.triggerDrift = newTriggerDrift end
         
         -- RANDOMIZATION PARAMETERS SECTION
         imgui.Separator(globals.ctx)

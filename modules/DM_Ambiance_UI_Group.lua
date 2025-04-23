@@ -35,67 +35,60 @@ function UI_Group.displayGroupSettings(groupIndex, width)
     imgui.Text(globals.ctx, "Default Trigger Settings")
     imgui.TextColored(globals.ctx, 0xFFAA00FF, "These settings will be inherited by containers unless overridden")
     
-    -- Repetition activation checkbox
-    local useRepetition = group.useRepetition
-    local rv, newUseRepetition = imgui.Checkbox(globals.ctx, "Use trigger rate##" .. groupId, useRepetition)
-    if rv then group.useRepetition = newUseRepetition end
-    
-    -- Only show trigger settings if repetition is enabled
-    if group.useRepetition then
-        -- Interval Mode dropdown - different modes for triggering sounds
-        local intervalModes = "Absolute\0Relative\0Coverage\0\0"
-        local intervalMode = group.intervalMode
-        imgui.PushItemWidth(globals.ctx, width * 0.5)
+    -- Interval Mode dropdown - different modes for triggering sounds
+    local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+    local intervalMode = group.intervalMode
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
 
-        -- Help text explaining the selected mode
-        if group.intervalMode == 0 then
-            if group.triggerRate < 0 then
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
-            else
-                imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
-            end
-        elseif group.intervalMode == 1 then
-            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+    -- Help text explaining the selected mode
+    if group.intervalMode == 0 then
+        if group.triggerRate < 0 then
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
         else
-            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+            imgui.TextColored(globals.ctx, 0xFFAA00FF, "Absolute: Fixed interval in seconds")
         end
-        
-        local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. groupId, intervalMode, intervalModes)
-        if rv then group.intervalMode = newIntervalMode end
-        imgui.SameLine(globals.ctx)
-        globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
-        "Relative: Interval as percentage of time selection\n" ..
-        "Coverage: Percentage of time selection to be filled")
-
-        -- Trigger rate label and slider range changes based on selected mode
-        local triggerRateLabel = "Interval (sec)"
-        local triggerRateMin = -10.0
-        local triggerRateMax = 60.0
-        
-        if group.intervalMode == 1 then
-            triggerRateLabel = "Interval (%)"
-            triggerRateMin = 0.1
-            triggerRateMax = 100.0
-        elseif group.intervalMode == 2 then
-            triggerRateLabel = "Coverage (%)"
-            triggerRateMin = 0.1
-            triggerRateMax = 100.0
-        end
-        
-        -- Trigger rate slider
-        local triggerRate = group.triggerRate
-        imgui.PushItemWidth(globals.ctx, width * 0.5)
-        local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel .. "##" .. groupId,
-            triggerRate, triggerRateMin, triggerRateMax, "%.1f")
-        if rv then group.triggerRate = newTriggerRate end
-        
-        
-        -- Trigger drift slider (randomness in timing)
-        local triggerDrift = group.triggerDrift
-        imgui.PushItemWidth(globals.ctx, width * 0.5)
-        local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)##" .. groupId, triggerDrift, 0, 100, "%d")
-        if rv then group.triggerDrift = newTriggerDrift end
+    elseif group.intervalMode == 1 then
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
+    else
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
     end
+    
+    local rv, newIntervalMode = imgui.Combo(globals.ctx, "Interval Mode##" .. groupId, intervalMode, intervalModes)
+    if rv then group.intervalMode = newIntervalMode end
+    imgui.SameLine(globals.ctx)
+    globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
+    "Relative: Interval as percentage of time selection\n" ..
+    "Coverage: Percentage of time selection to be filled")
+
+    -- Trigger rate label and slider range changes based on selected mode
+    local triggerRateLabel = "Interval (sec)"
+    local triggerRateMin = -10.0
+    local triggerRateMax = 60.0
+    
+    if group.intervalMode == 1 then
+        triggerRateLabel = "Interval (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
+    elseif group.intervalMode == 2 then
+        triggerRateLabel = "Coverage (%)"
+        triggerRateMin = 0.1
+        triggerRateMax = 100.0
+    end
+    
+    -- Trigger rate slider
+    local triggerRate = group.triggerRate
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, triggerRateLabel .. "##" .. groupId,
+        triggerRate, triggerRateMin, triggerRateMax, "%.1f")
+    if rv then group.triggerRate = newTriggerRate end
+    
+    
+    -- Trigger drift slider (randomness in timing)
+    local triggerDrift = group.triggerDrift
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, "Random variation (%)##" .. groupId, triggerDrift, 0, 100, "%d")
+    if rv then group.triggerDrift = newTriggerDrift end
+
     
     -- RANDOMIZATION PARAMETERS SECTION
     imgui.Separator(globals.ctx)
