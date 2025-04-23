@@ -48,29 +48,38 @@ function Items.createTakePanEnvelope(take, panValue)
   
   -- If the envelope doesn't exist, create it manually
   if not env then
-    -- Select the item to be able to use the command
-    reaper.SetMediaItemSelected(item, true)
-    -- Use the native REAPER command to create the pan envelope
-    reaper.Main_OnCommand(40694, 0)
-    -- Get the created envelope
-    env = reaper.GetTakeEnvelopeByName(take, "Pan")
+      -- Remember the original selection state
+      local wasSelected = reaper.IsMediaItemSelected(item)
+      
+      -- Select the item to be able to use the command
+      reaper.SetMediaItemSelected(item, true)
+      
+      -- Use the native REAPER command to create the pan envelope
+      reaper.Main_OnCommand(40694, 0)
+      
+      -- Get the created envelope
+      env = reaper.GetTakeEnvelopeByName(take, "Pan")
+      
+      -- Restore the original selection state
+      reaper.SetMediaItemSelected(item, wasSelected)
   end
   
   if env then
-    -- Calculate time for envelope points
-    local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-    local playRate = reaper.GetMediaItemTakeInfo_Value(take, "D_PLAYRATE")
-    
-    -- Delete all existing points
-    reaper.DeleteEnvelopePointRange(env, 0, itemLength * playRate)
-    
-    -- Add points at the beginning and end with the same value
-    reaper.InsertEnvelopePoint(env, 0, panValue, 0, 0, false, true)
-    reaper.InsertEnvelopePoint(env, itemLength * playRate, panValue, 0, 0, false, true)
-    
-    -- Sorting is necessary after adding points with noSort = true
-    reaper.Envelope_SortPoints(env)
+      -- Calculate time for envelope points
+      local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+      local playRate = reaper.GetMediaItemTakeInfo_Value(take, "D_PLAYRATE")
+      
+      -- Delete all existing points
+      reaper.DeleteEnvelopePointRange(env, 0, itemLength * playRate)
+      
+      -- Add points at the beginning and end with the same value
+      reaper.InsertEnvelopePoint(env, 0, panValue, 0, 0, false, true)
+      reaper.InsertEnvelopePoint(env, itemLength * playRate, panValue, 0, 0, false, true)
+      
+      -- Sorting is necessary after adding points with noSort = true
+      reaper.Envelope_SortPoints(env)
   end
 end
+
 
 return Items

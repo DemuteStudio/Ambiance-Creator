@@ -20,7 +20,6 @@ function Structures.createGroup(name)
         randomizePitch = true,
         randomizeVolume = true,
         randomizePan = true,
-        useRepetition = true,
         triggerRate = 10.0,
         triggerDrift = 30,
         intervalMode = 0 -- 0 = Absolute, 1 = Relative, 2 = Coverage
@@ -39,7 +38,6 @@ function Structures.createContainer(name)
         randomizePitch = true,
         randomizeVolume = true,
         randomizePan = true,
-        useRepetition = true,
         triggerRate = 10.0, -- Can be negative for overlaps
         triggerDrift = 30,
         intervalMode = 0, -- 0 = Absolute, 1 = Relative, 2 = Coverage
