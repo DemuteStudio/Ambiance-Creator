@@ -182,7 +182,15 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                     if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
                         table.insert(group.containers, globals.Structures.createContainer())
                     end
-                    
+
+                    -- Tooltip
+                    imgui.SameLine(globals.ctx)
+                    globals.Utils.HelpMarker("Select multiple containers using 'Shift' or 'Ctrl' keys:\n\n" ..
+                    "- Hold 'Shift' to select a continuous range of items\n" ..
+                    "- Hold 'Ctrl' to add or remove individual items from selection\n\n" ..
+                    "Any changes made while multiple containers are selected will be applied to all of them simultaneously.")
+
+
                     -- Variable to track which container to delete (if any)
                     local containerToDelete = nil
                     
