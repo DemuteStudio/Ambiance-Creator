@@ -284,11 +284,9 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
         imgui.BeginGroup(globals.ctx)
         local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
         if rv then obj.randomizePitch = newRandomizePitch end
-        imgui.EndGroup(globals.ctx)
-        
-        -- VBox pour le texte
-        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.SameLine(globals.ctx)
         imgui.Text(globals.ctx, "Randomize Pitch")
+        imgui.EndGroup(globals.ctx)
     end
     
     -- Afficher la plage de pitch si la randomisation est activée
@@ -303,11 +301,9 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
                 obj.pitchRange.min = newPitchMin
                 obj.pitchRange.max = newPitchMax
             end
-            imgui.EndGroup(globals.ctx)
-            
-            -- VBox pour le texte
-            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.SameLine(globals.ctx)
             imgui.Text(globals.ctx, "Pitch Range (semitones)")
+            imgui.EndGroup(globals.ctx)
         end
     end
     
@@ -317,11 +313,9 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
         imgui.BeginGroup(globals.ctx)
         local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
         if rv then obj.randomizeVolume = newRandomizeVolume end
-        imgui.EndGroup(globals.ctx)
-        
-        -- VBox pour le texte
-        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.SameLine(globals.ctx)
         imgui.Text(globals.ctx, "Randomize Volume")
+        imgui.EndGroup(globals.ctx)
     end
     
     -- Afficher la plage de volume si la randomisation est activée
@@ -350,11 +344,9 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
         imgui.BeginGroup(globals.ctx)
         local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
         if rv then obj.randomizePan = newRandomizePan end
-        imgui.EndGroup(globals.ctx)
-        
-        -- VBox pour le texte
-        imgui.SameLine(globals.ctx, controlWidth + padding)
+        imgui.SameLine(globals.ctx)
         imgui.Text(globals.ctx, "Randomize Pan")
+        imgui.EndGroup(globals.ctx)
     end
     
     -- Afficher la plage de pan si la randomisation est activée
