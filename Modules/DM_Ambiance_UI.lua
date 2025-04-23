@@ -1,60 +1,42 @@
 --[[
-
 Sound Randomizer for REAPER
-
 This script provides a GUI interface for creating randomized ambient sounds
-
 It allows creating groups with containers of audio items that can be randomized by pitch, volume, and pan
-
 Uses ReaImGui for UI rendering
-
 ]]
 
 local UI = {}
-
 local globals = {}
-
 local Utils = require("DM_Ambiance_Utils")
-
 local Structures = require("DM_Ambiance_Structures")
-
 local Items = require("DM_Ambiance_Items")
-
 local Presets = require("DM_Ambiance_Presets")
-
 local Generation = require("DM_Ambiance_Generation")
 
 -- Import UI modules
-
 local UI_Preset = require("DM_Ambiance_UI_Preset")
-
 local UI_Container = require("DM_Ambiance_UI_Container")
-
 local UI_Groups = require("DM_Ambiance_UI_Groups")
-
 local UI_MultiSelection = require("DM_Ambiance_UI_MultiSelection")
-
 local UI_Generation = require("DM_Ambiance_UI_Generation")
-
 local UI_Group = require("DM_Ambiance_UI_Group")
 
 -- Initialize the module with global variables from the main script
-
 function UI.initModule(g)
     globals = g
-
+    
     -- Initialize selection grouping variables for two-panel layout
     globals.selectedGroupIndex = nil
     globals.selectedContainerIndex = nil
-
+    
     -- Initialize structure for multi-selection
     globals.selectedContainers = {} -- Format: {[groupIndex_containerIndex] = true}
     globals.inMultiSelectMode = false
-
+    
     -- Initialize variables for Shift multi-selection
     globals.shiftAnchorGroupIndex = nil
     globals.shiftAnchorContainerIndex = nil
-
+    
     -- Initialize UI sub-modules
     UI_Preset.initModule(globals)
     UI_Container.initModule(globals)
@@ -62,7 +44,7 @@ function UI.initModule(g)
     UI_MultiSelection.initModule(globals)
     UI_Generation.initModule(globals)
     UI_Group.initModule(globals)
-
+    
     -- Make UI_Groups accessible to the UI_Group module
     globals.UI_Groups = UI_Groups
     
@@ -71,44 +53,36 @@ function UI.initModule(g)
 end
 
 -- PushStyle function recommended by the developer
-
 function UI.PushStyle()
     --globals.imgui.PushStyleVar(globals.ctx, globals.imgui.StyleVar_WindowPadding(), 10, 10)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_DisabledAlpha, 0.68)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 3)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding,  3)
 end
 
 -- PopStyle function recommended by the developer
 function UI.PopStyle()
     --globals.imgui.PopStyleVar(globals.ctx, 1)
-    imgui.PopStyleVar(globals.ctx, 3)
-
-
 end
 
 -- Function to clear all container selections
-
 local function clearContainerSelections()
     globals.selectedContainers = {}
     globals.inMultiSelectMode = false
-
     -- Also clear the shift anchor when clearing selections
     globals.shiftAnchorGroupIndex = nil
     globals.shiftAnchorContainerIndex = nil
 end
 
 -- Common function to draw trigger settings section
--- dataObj must expose the fields intervalMode, triggerRate, triggerDrift
--- callbacks must contain setIntervalMode, setTriggerRate, setTriggerDrift functions
+-- dataObj must expose the fields intervalMode, triggerRate, triggerDrift, fadeIn, fadeOut
+-- callbacks must contain setIntervalMode, setTriggerRate, setTriggerDrift, setFadeIn, setFadeOut functions
+-- Dessine la section « Trigger Settings » avec fade in/out
+-- Dessine la section « Trigger Settings » avec fade in/out linéaires
 function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix, objId)
+    -- Séparateur et titre
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Trigger Settings")
-    
-    -- Interval Mode dropdown - different modes for triggering sounds
+
+    -- Mode d'intervalle
     local intervalModes = "Absolute\0Relative\0Coverage\0\0"
-    
-    -- Help text explaining the selected mode
     if dataObj.intervalMode == 0 then
         if dataObj.triggerRate < 0 then
             imgui.TextColored(globals.ctx, 0xFFAA00FF, "Negative interval: Items will overlap and crossfade")
@@ -120,90 +94,130 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix, o
     else
         imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
     end
-    
-    -- Create control ID with suffix if provided
+
     local comboId = "Interval Mode"
     if objId then comboId = comboId .. "##" .. objId end
-    
     imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local rv, newIntervalMode = imgui.Combo(globals.ctx, comboId, dataObj.intervalMode, intervalModes)
-    if rv then callbacks.setIntervalMode(newIntervalMode) end
-    
-    -- Tooltip
+    local changed, newMode = imgui.Combo(globals.ctx, comboId, dataObj.intervalMode, intervalModes)
+    if changed then callbacks.setIntervalMode(newMode) end
     imgui.SameLine(globals.ctx)
-    globals.Utils.HelpMarker("Absolute: Fixed interval in seconds\n" ..
-                           "Relative: Interval as percentage of time selection\n" ..
-                           "Coverage: Percentage of time selection to be filled")
+    globals.Utils.HelpMarker(
+        "Absolute: Fixed interval in seconds\n" ..
+        "Relative: Interval as percentage of time selection\n" ..
+        "Coverage: Percentage of time selection to be filled"
+    )
 
-    -- Trigger rate label and slider range changes based on selected mode
-    local triggerRateLabel = "Interval (sec)"
-    local triggerRateMin = -10.0
-    local triggerRateMax = 60.0
-    
+    -- Intervalle / couverture
+    local rateLabel, minRate, maxRate = "Interval (sec)", -10.0, 60.0
     if dataObj.intervalMode == 1 then
-        triggerRateLabel = "Interval (%)"
-        triggerRateMin = 0.1
-        triggerRateMax = 100.0
+        rateLabel, minRate, maxRate = "Interval (%)", 0.1, 100.0
     elseif dataObj.intervalMode == 2 then
-        triggerRateLabel = "Coverage (%)"
-        triggerRateMin = 0.1
-        triggerRateMax = 100.0
+        rateLabel, minRate, maxRate = "Coverage (%)", 0.1, 100.0
     end
-    
-    -- Create control ID with suffix if provided
-    local rateId = triggerRateLabel
+    local rateId = rateLabel
     if objId then rateId = rateId .. "##" .. objId end
-    
-    -- Trigger rate slider
     imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local rv, newTriggerRate = imgui.SliderDouble(globals.ctx, rateId, 
-                                                dataObj.triggerRate, triggerRateMin, triggerRateMax, "%.1f")
-    if rv then callbacks.setTriggerRate(newTriggerRate) end
-    
-    -- Create control ID with suffix if provided
+    local ch2, newRate = imgui.SliderDouble(globals.ctx, rateId, dataObj.triggerRate, minRate, maxRate, "%.1f")
+    if ch2 then callbacks.setTriggerRate(newRate) end
+
+    -- Variation aléatoire
     local driftId = "Random variation (%)"
     if objId then driftId = driftId .. "##" .. objId end
-    
-    -- Trigger drift slider (randomness in timing)
     imgui.PushItemWidth(globals.ctx, width * 0.5)
-    local rv, newTriggerDrift = imgui.SliderInt(globals.ctx, driftId, dataObj.triggerDrift, 0, 100, "%d")
-    if rv then callbacks.setTriggerDrift(newTriggerDrift) end
+    local ch3, newDrift = imgui.SliderInt(globals.ctx, driftId, dataObj.triggerDrift, 0, 100, "%d")
+    if ch3 then callbacks.setTriggerDrift(newDrift) end
+
+    imgui.Separator(globals.ctx)
+    imgui.Text(globals.ctx, titlePrefix .. "Fades")
+
+    -- Fade in
+    local fadeInId = "Fade in (sec)"
+    if objId then fadeInId = fadeInId .. "##" .. objId end
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local ch4, newFadeIn = imgui.InputDouble(globals.ctx, fadeInId, dataObj.fadeIn or 0.0, 0.01, 0.1, "%.3f")
+    if ch4 then callbacks.setFadeIn(math.max(0, newFadeIn)) end
+    imgui.SameLine(globals.ctx)
+    do
+        local drawList = imgui.GetWindowDrawList(globals.ctx)
+        local x, y = imgui.GetCursorScreenPos(globals.ctx)
+        local curveSize, curveHeight = 40, 15
+        
+        -- Dessin du fade in avec une ligne linéaire au lieu d'une courbe
+        imgui.DrawList_AddLine(
+            drawList,
+            x, y + curveHeight,              -- Point de départ (bas gauche)
+            x + curveSize, y,                -- Point d'arrivée (haut droite)
+            0xFFFFFFFF,                      -- Couleur (blanc)
+            1.5                              -- Épaisseur
+        )
+        imgui.Dummy(globals.ctx, curveSize, curveHeight)
+    end
+
+    -- Fade out
+    local fadeOutId = "Fade out (sec)"
+    if objId then fadeOutId = fadeOutId .. "##" .. objId end
+    imgui.PushItemWidth(globals.ctx, width * 0.5)
+    local ch5, newFadeOut = imgui.InputDouble(globals.ctx, fadeOutId, dataObj.fadeOut or 0.0, 0.01, 0.1, "%.3f")
+    if ch5 then callbacks.setFadeOut(math.max(0, newFadeOut)) end
+    imgui.SameLine(globals.ctx)
+    do
+        local drawList = imgui.GetWindowDrawList(globals.ctx)
+        local x, y = imgui.GetCursorScreenPos(globals.ctx)
+        local curveSize, curveHeight = 40, 15
+        
+        -- Dessin du fade out avec une ligne linéaire au lieu d'une courbe
+        imgui.DrawList_AddLine(
+            drawList,
+            x, y,                            -- Point de départ (haut gauche)
+            x + curveSize, y + curveHeight,  -- Point d'arrivée (bas droite)
+            0xFFFFFFFF,                      -- Couleur (blanc)
+            1.5                              -- Épaisseur
+        )
+        imgui.Dummy(globals.ctx, curveSize, curveHeight)
+    end
 end
 
--- Function to display trigger and randomization settings
 
+
+-- Function to display trigger and randomization settings
 function UI.displayTriggerSettings(obj, objId, width, isGroup)
     -- Determine display text based on whether it's a group or container
     local titlePrefix = isGroup and "Default " or ""
     local inheritText = isGroup and "These settings will be inherited by containers unless overridden" or ""
-
+    
     -- TRIGGER SETTINGS SECTION
     if inheritText ~= "" then
         imgui.TextColored(globals.ctx, 0xFFAA00FF, inheritText)
     end
-
+    
+    -- Initialize fade properties if they don't exist
+    obj.fadeIn = obj.fadeIn or 0.0
+    obj.fadeOut = obj.fadeOut or 0.0
+    
     -- Use the common trigger settings function
     UI.drawTriggerSettingsSection(
         obj, -- data object
-        {    -- callbacks
+        { -- callbacks
             setIntervalMode = function(v) obj.intervalMode = v end,
             setTriggerRate = function(v) obj.triggerRate = v end,
             setTriggerDrift = function(v) obj.triggerDrift = v end,
+            setFadeIn = function(v) obj.fadeIn = math.max(0, v) end,
+            setFadeOut = function(v) obj.fadeOut = math.max(0, v) end,
         },
         width,
         titlePrefix,
         objId
     )
-
+    
     -- RANDOMIZATION PARAMETERS SECTION
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Randomization parameters")
-
+    
     -- Pitch randomization checkbox
     local randomizePitch = obj.randomizePitch
     local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "Randomize Pitch##" .. objId, randomizePitch)
     if rv then obj.randomizePitch = newRandomizePitch end
-
+    
     -- Only show pitch range if pitch randomization is enabled
     if obj.randomizePitch then
         local pitchMin = obj.pitchRange.min
@@ -215,12 +229,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
             obj.pitchRange.max = newPitchMax
         end
     end
-
+    
     -- Volume randomization checkbox
     local randomizeVolume = obj.randomizeVolume
     local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "Randomize Volume##" .. objId, randomizeVolume)
     if rv then obj.randomizeVolume = newRandomizeVolume end
-
+    
     -- Only show volume range if volume randomization is enabled
     if obj.randomizeVolume then
         local volumeMin = obj.volumeRange.min
@@ -232,12 +246,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
             obj.volumeRange.max = newVolumeMax
         end
     end
-
+    
     -- Pan randomization checkbox
     local randomizePan = obj.randomizePan
     local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "Randomize Pan##" .. objId, randomizePan)
     if rv then obj.randomizePan = newRandomizePan end
-
+    
     -- Only show pan range if pan randomization is enabled
     if obj.randomizePan then
         local panMin = obj.panRange.min
@@ -259,10 +273,10 @@ end
 -- Function to toggle container selection
 local function toggleContainerSelection(groupIndex, containerIndex)
     local key = groupIndex .. "_" .. containerIndex
-
+    
     -- Check if Shift key is pressed
     local isShiftPressed = (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Shift ~= 0)
-
+    
     -- If Shift is pressed and we have an anchor point, select range
     if isShiftPressed and globals.shiftAnchorGroupIndex and globals.shiftAnchorContainerIndex then
         -- Shift key: select range from anchor to current
@@ -273,23 +287,23 @@ local function toggleContainerSelection(groupIndex, containerIndex)
             -- Clear previous selections if Ctrl is not pressed
             clearContainerSelections()
         end
-
+        
         -- Toggle the current container selection
         if globals.selectedContainers[key] then
             globals.selectedContainers[key] = nil
         else
             globals.selectedContainers[key] = true
         end
-
+        
         -- Update anchor point for future Shift selections
         globals.shiftAnchorGroupIndex = groupIndex
         globals.shiftAnchorContainerIndex = containerIndex
     end
-
+    
     -- Update primary selection for compatibility
     globals.selectedGroupIndex = groupIndex
     globals.selectedContainerIndex = containerIndex
-
+    
     -- Update multi-select mode flag
     globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
@@ -300,7 +314,7 @@ local function selectContainerRange(startGroupIndex, startContainerIndex, endGro
     if not (globals.imgui.GetKeyMods(globals.ctx) & globals.imgui.Mod_Ctrl ~= 0) then
         clearContainerSelections()
     end
-
+    
     -- Handle range selection within the same group
     if startGroupIndex == endGroupIndex then
         local group = globals.groups[startGroupIndex]
@@ -314,11 +328,11 @@ local function selectContainerRange(startGroupIndex, startContainerIndex, endGro
         end
         return
     end
-
+    
     -- Handle range selection across different groups
     local startGroup = math.min(startGroupIndex, endGroupIndex)
     local endGroup = math.max(startGroupIndex, endGroupIndex)
-
+    
     -- If selecting from higher group to lower group, reverse the container indices
     local firstContainerIdx, lastContainerIdx
     if startGroupIndex < endGroupIndex then
@@ -326,7 +340,7 @@ local function selectContainerRange(startGroupIndex, startContainerIndex, endGro
     else
         firstContainerIdx, lastContainerIdx = endContainerIndex, startContainerIndex
     end
-
+    
     -- Select all containers in the range
     for t = startGroup, endGroup do
         if globals.groups[t] then
@@ -348,7 +362,7 @@ local function selectContainerRange(startGroupIndex, startContainerIndex, endGro
             end
         end
     end
-
+    
     -- Update the multi-select mode flag
     globals.inMultiSelectMode = UI_Groups.getSelectedContainersCount() > 1
 end
@@ -361,7 +375,7 @@ local function drawLeftPanel(width)
         globals.imgui.TextColored(globals.ctx, 0xFF0000FF, "Window too small")
         return
     end
-
+    
     -- Call the normal function when space is sufficient
     UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
 end
@@ -373,7 +387,7 @@ local function drawRightPanel(width)
         UI_MultiSelection.drawMultiSelectionPanel(width)
         return
     end
-
+    
     -- Show container details if a container is selected
     if globals.selectedGroupIndex and globals.selectedContainerIndex then
         UI_Container.displayContainerSettings(globals.selectedGroupIndex, globals.selectedContainerIndex, width)
@@ -402,7 +416,7 @@ end
 function UI.ShowMainWindow(open)
     globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
     local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open)
-
+    
     if visible then
         -- Section with preset controls at the top
         UI_Preset.drawPresetControls()
@@ -410,18 +424,18 @@ function UI.ShowMainWindow(open)
         UI_Generation.drawMainGenerationButton()
         UI_Generation.drawTimeSelectionInfo()
         globals.imgui.Separator(globals.ctx)
-
+        
         -- Calculate dimensions for two-panel layout
         local windowWidth = globals.imgui.GetWindowWidth(globals.ctx)
         local leftPanelWidth = windowWidth * 0.35
         local rightPanelWidth = windowWidth * 0.63
-
+        
         -- Left panel (Groups & Containers list)
         if globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0) then
             drawLeftPanel(leftPanelWidth)
             globals.imgui.EndChild(globals.ctx)
         end
-
+        
         -- Right panel (Container settings)
         globals.imgui.SameLine(globals.ctx)
         if globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0) then
@@ -429,7 +443,7 @@ function UI.ShowMainWindow(open)
             globals.imgui.EndChild(globals.ctx)
         end
     end
-
+    
     globals.imgui.End(globals.ctx)
     handlePopups()
     return open
