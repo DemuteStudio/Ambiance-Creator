@@ -169,14 +169,17 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             if groupOpen then
                 -- Protect the display of group content
                 local contentSuccess = pcall(function()
+
+                    -- Removed Name and Presets from left panel since it's already there inthe right when group is selected.
+
                     -- Group name input field
-                    local groupName = group.name
-                    imgui.PushItemWidth(globals.ctx, width * 0.8)
-                    local rv, newGroupName = imgui.InputText(globals.ctx, "Name##" .. groupId, groupName)
-                    if rv then group.name = newGroupName end
+                    -- local groupName = group.name
+                    -- imgui.PushItemWidth(globals.ctx, width * 0.8)
+                    -- local rv, newGroupName = imgui.InputText(globals.ctx, "Name##" .. groupId, groupName)
+                    -- if rv then group.name = newGroupName end
                     
                     -- Group preset controls
-                    UI_Groups.drawGroupPresetControls(i)
+                    -- UI_Groups.drawGroupPresetControls(i)
                     
                     -- Button to add a container to this group
                     if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
