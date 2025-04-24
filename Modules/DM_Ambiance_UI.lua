@@ -172,71 +172,71 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
         imgui.Text(globals.ctx, "Random variation (%)")
     end
     
-    -- Fade In - HBox
-    do
-        -- VBox pour le contrôle et la visualisation
-        imgui.BeginGroup(globals.ctx)
-        -- Zone pour le contrôle (slider)
-        imgui.BeginGroup(globals.ctx)
-        local sliderWidth = controlWidth - fadeVisualSize - padding
-        imgui.PushItemWidth(globals.ctx, sliderWidth)
-        local rv, newFadeIn = imgui.DragDouble(globals.ctx, "##FadeIn", dataObj.fadeIn or 0.0, 0.01, 0, 0, "%.3f")
-        if rv then callbacks.setFadeIn(math.max(0, newFadeIn)) end
-        imgui.EndGroup(globals.ctx)
+    -- -- Fade In - HBox
+    -- do
+    --     -- VBox pour le contrôle et la visualisation
+    --     imgui.BeginGroup(globals.ctx)
+    --     -- Zone pour le contrôle (slider)
+    --     imgui.BeginGroup(globals.ctx)
+    --     local sliderWidth = controlWidth - fadeVisualSize - padding
+    --     imgui.PushItemWidth(globals.ctx, sliderWidth)
+    --     local rv, newFadeIn = imgui.DragDouble(globals.ctx, "##FadeIn", dataObj.fadeIn or 0.0, 0.01, 0, 0, "%.3f")
+    --     if rv then callbacks.setFadeIn(math.max(0, newFadeIn)) end
+    --     imgui.EndGroup(globals.ctx)
         
-        -- Visualisation du fade
-        imgui.SameLine(globals.ctx)
-        imgui.BeginGroup(globals.ctx)
-        local drawList = imgui.GetWindowDrawList(globals.ctx)
-        local x, y = imgui.GetCursorScreenPos(globals.ctx)
-        imgui.DrawList_AddLine(
-            drawList,
-            x, y + fadeVisualSize,
-            x + fadeVisualSize, y,
-            0xFFFFFFFF,
-            1.5
-        )
-        imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
-        imgui.EndGroup(globals.ctx)
-        imgui.EndGroup(globals.ctx)
+    --     -- Visualisation du fade
+    --     imgui.SameLine(globals.ctx)
+    --     imgui.BeginGroup(globals.ctx)
+    --     local drawList = imgui.GetWindowDrawList(globals.ctx)
+    --     local x, y = imgui.GetCursorScreenPos(globals.ctx)
+    --     imgui.DrawList_AddLine(
+    --         drawList,
+    --         x, y + fadeVisualSize,
+    --         x + fadeVisualSize, y,
+    --         0xFFFFFFFF,
+    --         1.5
+    --     )
+    --     imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
+    --     imgui.EndGroup(globals.ctx)
+    --     imgui.EndGroup(globals.ctx)
         
-        -- VBox pour le texte à droite
-        imgui.SameLine(globals.ctx, controlWidth + padding)
-        imgui.Text(globals.ctx, "Fade in (sec)")
-    end
+    --     -- VBox pour le texte à droite
+    --     imgui.SameLine(globals.ctx, controlWidth + padding)
+    --     imgui.Text(globals.ctx, "Fade in (sec)")
+    -- end
     
-    -- Fade Out - HBox
-    do
-        -- VBox pour le contrôle et la visualisation
-        imgui.BeginGroup(globals.ctx)
-        -- Zone pour le contrôle (slider)
-        imgui.BeginGroup(globals.ctx)
-        local sliderWidth = controlWidth - fadeVisualSize - padding
-        imgui.PushItemWidth(globals.ctx, sliderWidth)
-        local rv, newFadeOut = imgui.DragDouble(globals.ctx, "##FadeOut", dataObj.fadeOut or 0.0, 0.01, 0, 0, "%.3f")
-        if rv then callbacks.setFadeOut(math.max(0, newFadeOut)) end
-        imgui.EndGroup(globals.ctx)
+    -- -- Fade Out - HBox
+    -- do
+    --     -- VBox pour le contrôle et la visualisation
+    --     imgui.BeginGroup(globals.ctx)
+    --     -- Zone pour le contrôle (slider)
+    --     imgui.BeginGroup(globals.ctx)
+    --     local sliderWidth = controlWidth - fadeVisualSize - padding
+    --     imgui.PushItemWidth(globals.ctx, sliderWidth)
+    --     local rv, newFadeOut = imgui.DragDouble(globals.ctx, "##FadeOut", dataObj.fadeOut or 0.0, 0.01, 0, 0, "%.3f")
+    --     if rv then callbacks.setFadeOut(math.max(0, newFadeOut)) end
+    --     imgui.EndGroup(globals.ctx)
         
-        -- Visualisation du fade
-        imgui.SameLine(globals.ctx)
-        imgui.BeginGroup(globals.ctx)
-        local drawList = imgui.GetWindowDrawList(globals.ctx)
-        local x, y = imgui.GetCursorScreenPos(globals.ctx)
-        imgui.DrawList_AddLine(
-            drawList,
-            x, y,
-            x + fadeVisualSize, y + fadeVisualSize,
-            0xFFFFFFFF,
-            1.5
-        )
-        imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
-        imgui.EndGroup(globals.ctx)
-        imgui.EndGroup(globals.ctx)
+    --     -- Visualisation du fade
+    --     imgui.SameLine(globals.ctx)
+    --     imgui.BeginGroup(globals.ctx)
+    --     local drawList = imgui.GetWindowDrawList(globals.ctx)
+    --     local x, y = imgui.GetCursorScreenPos(globals.ctx)
+    --     imgui.DrawList_AddLine(
+    --         drawList,
+    --         x, y,
+    --         x + fadeVisualSize, y + fadeVisualSize,
+    --         0xFFFFFFFF,
+    --         1.5
+    --     )
+    --     imgui.Dummy(globals.ctx, fadeVisualSize, fadeVisualSize)
+    --     imgui.EndGroup(globals.ctx)
+    --     imgui.EndGroup(globals.ctx)
         
-        -- VBox pour le texte à droite
-        imgui.SameLine(globals.ctx, controlWidth + padding)
-        imgui.Text(globals.ctx, "Fade out (sec)")
-    end
+    --     -- VBox pour le texte à droite
+    --     imgui.SameLine(globals.ctx, controlWidth + padding)
+    --     imgui.Text(globals.ctx, "Fade out (sec)")
+    -- end
 end
 
 
