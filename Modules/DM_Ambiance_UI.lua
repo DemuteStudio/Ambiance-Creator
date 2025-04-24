@@ -530,6 +530,10 @@ function UI.ShowMainWindow(open)
         UI_Preset.drawPresetControls()
         globals.imgui.SameLine(globals.ctx)
         UI_Generation.drawMainGenerationButton()
+        globals.imgui.SameLine(globals.ctx)
+        if globals.imgui.Button(globals.ctx, "Settings") then
+            globals.showSettingsWindow = true
+        end
         UI_Generation.drawTimeSelectionInfo()
         globals.imgui.Separator(globals.ctx)
         
@@ -553,6 +557,11 @@ function UI.ShowMainWindow(open)
     end
     
     globals.imgui.End(globals.ctx)
+
+    if globals.showSettingsWindow then
+        globals.showSettingsWindow = globals.Settings.showSettingsWindow(true)
+    end
+
     handlePopups()
     return open
 end

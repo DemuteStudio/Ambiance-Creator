@@ -94,6 +94,27 @@ function Utils.openPresetsFolder(type, groupName)
   end
 end
 
+-- Fonction pour ouvrir un dossier dans l'explorateur de fichiers
+function Utils.openFolder(path)
+  if not path or path == "" then
+      return
+  end
+  
+  local OS = reaper.GetOS()
+  local command
+  
+  if OS:match("^Win") then
+      command = 'explorer "'
+  elseif OS:match("^macOS") or OS:match("^OSX") then
+      command = 'open "'
+  else -- Linux
+      command = 'xdg-open "'
+  end
+  
+  os.execute(command .. path .. '"')
+end
+
+
 -- Safe popup management to avoid flashing issues
 function Utils.safeOpenPopup(popupName)
   if not globals.activePopups[popupName] then

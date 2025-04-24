@@ -23,6 +23,7 @@ local Items = require("DM_Ambiance_Items")
 local Presets = require("DM_Ambiance_Presets")
 local Generation = require("DM_Ambiance_Generation")
 local UI = require("DM_Ambiance_UI")
+local Settings = require("DM_AmbianceCreator_Settings")
 
 -- Global variables
 local globals = {
@@ -66,6 +67,7 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     _G.Presets = Presets
     _G.Generation = Generation
     _G.UI = UI
+    _G.Settings = Settings
     _G.imgui = imgui
     
     math.randomseed(os.time())
@@ -82,6 +84,7 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     globals.Presets = Presets
     globals.Generation = Generation
     globals.UI = UI
+    globals.Settings = Settings
     
     -- Initialize modules
     Utils.initModule(globals)
@@ -90,6 +93,7 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     Presets.initModule(globals)
     Generation.initModule(globals)
     UI.initModule(globals)
+    Settings.initModule(globals)
     
     -- Initialize preset paths
     globals.presetsPath = "" -- Reset to force directory creation

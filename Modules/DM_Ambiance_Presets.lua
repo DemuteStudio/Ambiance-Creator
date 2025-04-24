@@ -173,7 +173,15 @@ end
 -- Function to save a global preset
 function Presets.savePreset(name)
   if name == "" then return false end
-  
+
+  if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
+    for _, group in ipairs(globals.groups) do
+        for _, container in ipairs(group.containers) do
+            globals.Settings.processContainerMedia(container)
+        end
+    end
+  end
+
   local path = Presets.getPresetsPath("Global") .. name .. ".lua"
   local file = io.open(path, "w")
   
@@ -235,6 +243,13 @@ end
 function Presets.saveGroupPreset(name, groupIndex)
   if name == "" then return false end
   
+  if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
+    local group = globals.groups[groupIndex]
+    for _, container in ipairs(group.containers) do
+        globals.Settings.processContainerMedia(container)
+    end
+  end
+
   local group = globals.groups[groupIndex]
   local path = Presets.getPresetsPath("Groups") .. name .. ".lua"
   local file = io.open(path, "w")
@@ -273,6 +288,11 @@ end
 function Presets.saveContainerPreset(name, groupIndex, containerIndex)
   if name == "" then return false end
   
+  if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
+    local container = globals.groups[groupIndex].containers[containerIndex]
+    globals.Settings.processContainerMedia(container)
+  end
+
   -- Suppression de la référence au nom de la piste
   local container = globals.groups[groupIndex].containers[containerIndex]
   local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
