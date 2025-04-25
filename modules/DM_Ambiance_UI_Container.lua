@@ -54,10 +54,16 @@ function UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
     -- Save preset button
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Save Container##" .. containerId) then
-        globals.newContainerPresetName = globals.groups[groupIndex].containers[containerIndex].name
-        globals.currentSaveContainerGroup = groupIndex
-        globals.currentSaveContainerIndex = containerIndex
-        globals.Utils.safeOpenPopup("Save Container Preset##" .. containerId)
+        -- Vérifier si un répertoire média est configuré
+        if not globals.Utils.isMediaDirectoryConfigured() then
+            -- Définir le flag pour afficher l'avertissement
+            globals.showMediaDirWarning = true
+        else
+            -- Continuer avec le popup de sauvegarde normal
+            globals.newContainerPresetName = globals.containers[i].name
+            globals.currentSaveGroupIndex = i
+            globals.Utils.safeOpenPopup("Save Container Preset##" .. containerId)
+        end
     end
     
     -- Container save dialog popup

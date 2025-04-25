@@ -43,19 +43,29 @@ local globals = {
     newContainerPresetName = "",      -- New container preset name input
     newPresetName = "",               -- New global preset name input
     selectedPresetIndex = -1,         -- Index of selected preset
-    activePopups = {}                 -- Tracking active popup windows
+    activePopups = {},                -- Tracking active popup windows
+    showMediaDirWarning = false,      -- Ajoutez cette ligne
+    mediaWarningShown = false         -- Ajoutez celle-ci aussi
 }
 
 -- Main loop function for the GUI
 local function loop()
     UI.PushStyle()
+    
+    -- Afficher le popup d'avertissement SEULEMENT si nécessaire
+    if globals.showMediaDirWarning then
+        Utils.showDirectoryWarningPopup()
+    end
+    
     local open = UI.ShowMainWindow(true)
     UI.PopStyle()
-
+    
     if open then
         reaper.defer(loop)
     end
 end
+
+
 
 -- Script entry point when run directly
 if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2) then

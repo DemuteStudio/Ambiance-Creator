@@ -53,8 +53,16 @@ function UI_Preset.drawPresetControls()
     
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Save") then
-        globals.Utils.safeOpenPopup("Save Preset")
-        globals.newPresetName = globals.currentPresetName
+        
+        -- Vérifier si le répertoire média est configuré avant d'ouvrir le popup de sauvegarde
+        if not globals.Utils.isMediaDirectoryConfigured() then
+            -- Définir le flag pour afficher l'avertissement
+            globals.showMediaDirWarning = true
+        else
+            -- Continuer avec le popup de sauvegarde normal
+            globals.Utils.safeOpenPopup("Save Preset")
+            globals.newPresetName = globals.currentPresetName
+        end
     end
     
     imgui.SameLine(globals.ctx)
@@ -77,6 +85,7 @@ end
 -- Function to handle the save preset popup
 function UI_Preset.handleSavePresetPopup(presetList)
     if imgui.BeginPopupModal(globals.ctx, "Save Preset", nil, imgui.WindowFlags_AlwaysAutoResize) then
+        
         imgui.Text(globals.ctx, "Preset name:")
         local rv, value = imgui.InputText(globals.ctx, "##PresetName", globals.newPresetName)
         if rv then globals.newPresetName = value end

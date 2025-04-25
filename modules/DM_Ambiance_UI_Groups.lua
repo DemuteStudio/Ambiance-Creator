@@ -50,10 +50,17 @@ function UI_Groups.drawGroupPresetControls(i)
     -- Save preset button
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Save Group##" .. groupId) then
-        globals.newGroupPresetName = globals.groups[i].name
-        globals.currentSaveGroupIndex = i
-        globals.Utils.safeOpenPopup("Save Group Preset##" .. groupId)
-    end    
+        -- Vérifier si un répertoire média est configuré
+        if not globals.Utils.isMediaDirectoryConfigured() then
+            -- Définir le flag pour afficher l'avertissement
+            globals.showMediaDirWarning = true
+        else
+            -- Continuer avec le popup de sauvegarde normal
+            globals.newGroupPresetName = globals.groups[i].name
+            globals.currentSaveGroupIndex = i
+            globals.Utils.safeOpenPopup("Save Group Preset##" .. groupId)
+        end
+    end
     
     -- Group save dialog popup
     if imgui.BeginPopupModal(globals.ctx, "Save Group Preset##" .. groupId, nil, imgui.WindowFlags_AlwaysAutoResize) then
