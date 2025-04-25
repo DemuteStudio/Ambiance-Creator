@@ -11,6 +11,7 @@ local defaultSettings = {
     backgroundColor = 0x2E2E2EFF, -- Dark gray background
     textColor = 0xD5D5D5FF,   -- White text
     uiRounding = 2.0,         -- Default rounding for UI elements
+    itemSpacing = 8,          -- Default item spacing
 }
 
 -- Initialize the module with global references and load settings
@@ -171,7 +172,7 @@ function Settings.showSettingsWindow(open)
         imgui.Separator(ctx)
         
         -- Add the color settings section
-        Settings.showColorSettings()
+        Settings.showAppearanceSettings()
         
         -- Control buttons at the bottom
         if imgui.Button(ctx, "Save & Close", 120, 0) then
@@ -419,7 +420,7 @@ function Settings.colorPicker(label, colorKey)
 end
 
 -- Add the color settings section to the main settings window
-function Settings.showColorSettings()
+function Settings.showAppearanceSettings()
     local ctx = globals.ctx
     local imgui = globals.imgui
     
@@ -439,7 +440,19 @@ function Settings.showColorSettings()
     imgui.SameLine(ctx)
     globals.Utils.HelpMarker("Controls the roundness of UI elements like buttons, frames, and sliders. Higher values create more rounded corners.")
     
-    imgui.Separator(ctx)
+
+    -- UI Item Spacing
+    local currentSpacing = Settings.getSetting("itemSpacing")
+    imgui.PushItemWidth(ctx, 200)
+    local rv, newSpacing = imgui.SliderInt(ctx, "UI Spacing", currentSpacing, 0.0, 20.0, "%d")
+    imgui.PopItemWidth(ctx)
+    
+    if rv then
+        Settings.setSetting("itemSpacing", newSpacing)
+    end
+
+    imgui.SameLine(ctx)
+    globals.Utils.HelpMarker("Controls the space between UI elements.")
     
     -- Add color pickers for the three color settings
     Settings.colorPicker("Button Color", "buttonColor")

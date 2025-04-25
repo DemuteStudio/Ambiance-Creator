@@ -59,10 +59,16 @@ function UI.PushStyle()
     local settings = globals.Settings
     local utils = globals.Utils
     
-    -- Get the user-defined rounding value
+    -- Item Spacing
+    local itemSpacing = settings.getSetting("itemSpacing")
+    imgui.PushStyleVar(ctx, imgui.StyleVar_ItemSpacing, itemSpacing, itemSpacing)
+    
+
+
+    -- Round Style for buttons and frames
     local rounding = settings.getSetting("uiRounding")
     
-    -- Round Style for buttons and frames
+    -- Apply the user-defined rounding value
     imgui.PushStyleVar(ctx, imgui.StyleVar_DisabledAlpha, 0.68)
     imgui.PushStyleVar(ctx, imgui.StyleVar_FrameRounding, rounding)
     imgui.PushStyleVar(ctx, imgui.StyleVar_GrabRounding, rounding)
@@ -76,8 +82,21 @@ function UI.PushStyle()
     imgui.PushStyleColor(ctx, imgui.Col_Button, buttonColor)
     imgui.PushStyleColor(ctx, imgui.Col_ButtonHovered, utils.brightenColor(buttonColor, 0.1))
     imgui.PushStyleColor(ctx, imgui.Col_ButtonActive, utils.brightenColor(buttonColor, -0.1))
+    -- Apply scroll bars
+    imgui.PushStyleColor(ctx, imgui.Col_ScrollbarGrab, buttonColor)
+    imgui.PushStyleColor(ctx, imgui.Col_ScrollbarGrabHovered, utils.brightenColor(buttonColor, 0.1))
+    imgui.PushStyleColor(ctx, imgui.Col_ScrollbarGrabActive, utils.brightenColor(buttonColor, -0.1))
+    -- Apply sliders
+    imgui.PushStyleColor(ctx, imgui.Col_SliderGrab, buttonColor)
+    imgui.PushStyleColor(ctx, imgui.Col_SliderGrabActive, buttonColor)
+    -- Apply check marks
+    imgui.PushStyleColor(ctx, imgui.Col_CheckMark, buttonColor)
     
     -- Apply background colors
+    imgui.PushStyleColor(ctx, imgui.Col_Header, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_HeaderActive, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_HeaderHovered, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_TitleBgActive, utils.brightenColor(backgroundColor, -0.01))
     imgui.PushStyleColor(ctx, imgui.Col_WindowBg, backgroundColor)
     imgui.PushStyleColor(ctx, imgui.Col_PopupBg, utils.brightenColor(backgroundColor, 0.05))
     imgui.PushStyleColor(ctx, imgui.Col_FrameBg, utils.brightenColor(backgroundColor, 0.1))
@@ -94,11 +113,11 @@ end
 function UI.PopStyle()
     local ctx = globals.ctx
     
-    -- Pop 10 style colors (matching the number of PushStyleColor calls)
-    imgui.PopStyleColor(ctx, 10)
+    -- Increase the number for PushStyleColor
+    imgui.PopStyleColor(ctx, 20)
     
-    -- Pop 3 style variables (matching the number of PushStyleVar calls)
-    imgui.PopStyleVar(ctx, 3)
+    -- Increase the number for PushStyleVar
+    imgui.PopStyleVar(ctx, 4)
 end
 
 
