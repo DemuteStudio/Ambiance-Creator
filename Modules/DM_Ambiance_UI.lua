@@ -398,8 +398,9 @@ end
 
 -- Main window rendering function
 function UI.ShowMainWindow(open)
-    globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
-    local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open)
+    -- globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
+    local windowFlags = imgui.WindowFlags_None
+    local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open, windowFlags)
 
     if visible then
         -- Top section: preset controls and generation button
