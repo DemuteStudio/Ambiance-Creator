@@ -10,6 +10,7 @@ local defaultSettings = {
     buttonColor = 0x008491FF, -- Default blue color for buttons
     backgroundColor = 0x2E2E2EFF, -- Dark gray background
     textColor = 0xD5D5D5FF,   -- White text
+    uiRounding = 2.0,         -- Default rounding for UI elements
 }
 
 -- Initialize the module with global references and load settings
@@ -363,7 +364,7 @@ function Settings.processContainerMedia(container)
 end
 
 -------
---- Color
+--- Style
 -------
 
 -- Converts a hex color (0xRRGGBBAA) to individual RGB components (0-1 for ImGui)
@@ -422,7 +423,22 @@ function Settings.showColorSettings()
     local ctx = globals.ctx
     local imgui = globals.imgui
     
-    imgui.TextColored(ctx, 0xFFAA00FF, "Color Settings")
+    imgui.TextColored(ctx, 0xFFAA00FF, "UI Appearance Settings")
+    imgui.Separator(ctx)
+    
+    -- UI Rounding slider
+    local currentRounding = Settings.getSetting("uiRounding")
+    imgui.PushItemWidth(ctx, 200)
+    local rv, newRounding = imgui.SliderDouble(ctx, "UI Rounding", currentRounding, 0.0, 12.0, "%.1f")
+    imgui.PopItemWidth(ctx)
+    
+    if rv then
+        Settings.setSetting("uiRounding", newRounding)
+    end
+    
+    imgui.SameLine(ctx)
+    globals.Utils.HelpMarker("Controls the roundness of UI elements like buttons, frames, and sliders. Higher values create more rounded corners.")
+    
     imgui.Separator(ctx)
     
     -- Add color pickers for the three color settings
@@ -432,5 +448,6 @@ function Settings.showColorSettings()
     
     imgui.Separator(ctx)
 end
+
 
 return Settings

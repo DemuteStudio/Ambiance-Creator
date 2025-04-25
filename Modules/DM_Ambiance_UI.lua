@@ -59,11 +59,14 @@ function UI.PushStyle()
     local settings = globals.Settings
     local utils = globals.Utils
     
+    -- Get the user-defined rounding value
+    local rounding = settings.getSetting("uiRounding")
+    
     -- Round Style for buttons and frames
     imgui.PushStyleVar(ctx, imgui.StyleVar_DisabledAlpha, 0.68)
-    imgui.PushStyleVar(ctx, imgui.StyleVar_FrameRounding, 2)
-    imgui.PushStyleVar(ctx, imgui.StyleVar_GrabRounding, 2)
-
+    imgui.PushStyleVar(ctx, imgui.StyleVar_FrameRounding, rounding)
+    imgui.PushStyleVar(ctx, imgui.StyleVar_GrabRounding, rounding)
+    
     -- Colors
     local buttonColor = settings.getSetting("buttonColor")
     local backgroundColor = settings.getSetting("backgroundColor")
@@ -85,6 +88,7 @@ function UI.PushStyle()
     imgui.PushStyleColor(ctx, imgui.Col_Text, textColor)
     imgui.PushStyleColor(ctx, imgui.Col_CheckMark, textColor)
 end
+
 
 -- Pop custom style variables
 function UI.PopStyle()
