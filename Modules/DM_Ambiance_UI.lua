@@ -463,12 +463,15 @@ function UI.ShowMainWindow(open)
         -- Top section: preset controls and generation button
         UI_Preset.drawPresetControls()
         globals.imgui.SameLine(globals.ctx)
-        UI_Generation.drawMainGenerationButton()
         globals.imgui.SameLine(globals.ctx)
         if globals.imgui.Button(globals.ctx, "Settings") then
             globals.showSettingsWindow = true
         end
-        UI_Generation.drawTimeSelectionInfo()
+        if globals.Utils.checkTimeSelection() then
+            UI_Generation.drawMainGenerationButton()
+        else
+            UI_Generation.drawTimeSelectionInfo()
+        end
         globals.imgui.Separator(globals.ctx)
 
         -- Two-panel layout dimensions
