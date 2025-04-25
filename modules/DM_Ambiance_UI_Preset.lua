@@ -16,12 +16,12 @@ function UI_Preset.drawPresetControls()
     -- Display section title with a specific color (orange)
     imgui.TextColored(globals.ctx, 0xFFAA00FF, "Global Presets")
     
-    -- Place the next item on the same line as the title
-    imgui.SameLine(globals.ctx)
-    -- Button to refresh the list of presets
-    if imgui.Button(globals.ctx, "Refresh") then
-        globals.Presets.listPresets("Global", nil, true) -- Refresh the global presets list forcibly
-    end
+    -- -- Place the next item on the same line as the title
+    -- imgui.SameLine(globals.ctx)
+    -- -- Button to refresh the list of presets
+    -- if imgui.Button(globals.ctx, "Refresh") then
+    --     globals.Presets.listPresets("Global", nil, true) -- Refresh the global presets list forcibly
+    -- end
     
     imgui.SameLine(globals.ctx)
     
