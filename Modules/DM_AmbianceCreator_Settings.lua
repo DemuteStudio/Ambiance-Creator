@@ -1,21 +1,24 @@
 -- DM_AmbianceCreator_Settings.lua
+
 local Settings = {}
 
 local globals = {}
+-- Default settings for the module
 local defaultSettings = {
-    mediaItemDirectory = "",  -- Chemin vers le répertoire des médias
-    autoImportMedia = true,   -- Copier automatiquement les médias
+    mediaItemDirectory = "",  -- Path to the media directory
+    autoImportMedia = true,   -- Automatically copy media files
 }
 
+-- Initialize the module with global references and load settings
 function Settings.initModule(g)
     globals = g
     
-    -- Charger les paramètres
+    -- Load settings from file or defaults
     Settings.loadSettings()
     
-    -- Vérifier le répertoire média à l'initialisation
+    -- Check if the media directory is configured at startup
     if Settings.getSetting("mediaItemDirectory") == "" then
-        -- Si aucun répertoire configuré et qu'on est en exécution normale
+        -- If no directory is set and the script is running normally (not as a module)
         if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2) then
             reaper.defer(function() 
                 globals.showSettingsWindow = true
@@ -24,17 +27,17 @@ function Settings.initModule(g)
     end
 end
 
--- Obtient le chemin de base pour les paramètres (même niveau que le dossier Presets)
+-- Returns the base path for settings (same level as the Presets folder)
 function Settings.getSettingsBasePath()
     local basePath = globals.Presets.getPresetsPath("Global"):match("(.+)Global[/\\]")
     return basePath or ""
 end
 
--- Fonction pour vérifier si un répertoire existe de manière fiable
+-- Checks reliably if a directory exists
 function Settings.directoryExists(path)
     if not path or path == "" then return false end
     
-    -- Méthode simple et fiable - essaie de créer/ouvrir un fichier temporaire
+    -- Reliable method: try to create/open a temporary file in the directory
     local testFile = path .. "/.test_access"
     local file = io.open(testFile, "w")
     if file then
@@ -45,7 +48,7 @@ function Settings.directoryExists(path)
     return false
 end
 
--- Fonction pour charger les paramètres depuis le fichier
+-- Load settings from the configuration file
 function Settings.loadSettings()
     local settingsFile = Settings.getSettingsBasePath() .. "settings.cfg"
     local file = io.open(settingsFile, "r")
@@ -55,7 +58,7 @@ function Settings.loadSettings()
         for line in file:lines() do
             local key, value = line:match("([^=]+)=(.+)")
             if key and value then
-                -- Conversion des valeurs booléennes
+                -- Convert boolean values from string to boolean
                 if value == "true" then value = true
                 elseif value == "false" then value = false
                 end
@@ -64,7 +67,7 @@ function Settings.loadSettings()
         end
         file:close()
         
-        -- Fusionner avec les paramètres par défaut
+        -- Merge loaded settings with defaults
         globals.settings = {}
         for k, v in pairs(defaultSettings) do
             globals.settings[k] = settings[k] ~= nil and settings[k] or v
@@ -74,7 +77,7 @@ function Settings.loadSettings()
     end
 end
 
--- Fonction pour sauvegarder les paramètres
+-- Save the current settings to the configuration file
 function Settings.saveSettings()
     local settingsFile = Settings.getSettingsBasePath() .. "settings.cfg"
     local file = io.open(settingsFile, "w")
@@ -89,70 +92,70 @@ function Settings.saveSettings()
     return false
 end
 
--- Accesseurs pour les paramètres
+-- Accessor to get a specific setting value
 function Settings.getSetting(key)
     return globals.settings[key]
 end
 
+-- Mutator to set a specific setting value and save immediately
 function Settings.setSetting(key, value)
     globals.settings[key] = value
     Settings.saveSettings()
 end
 
--- Fonction pour configurer le répertoire média
+-- Opens a dialog to configure the media directory, using the most reliable method available
 function Settings.setupMediaDirectory()
     local retval, dirPath
     
-    -- Essayer avec JS_ReaScriptAPI (méthode la plus fiable)
+    -- Prefer JS_ReaScriptAPI if available (most reliable method)
     if reaper.JS_Dialog_BrowseForFolder then
-        retval, dirPath = reaper.JS_Dialog_BrowseForFolder("Sélectionner le répertoire pour les médias", "")
+        retval, dirPath = reaper.JS_Dialog_BrowseForFolder("Select the directory for media files", "")
         
         if retval and dirPath and dirPath ~= "" then
-            -- Test d'accès au répertoire sans essayer de le créer
+            -- Test directory access without attempting to create it
             if Settings.directoryExists(dirPath) then
                 Settings.setSetting("mediaItemDirectory", dirPath)
                 return true
             else
-                reaper.ShowMessageBox("Impossible d'accéder à ce répertoire. Vérifiez les permissions.", "Erreur d'accès", 0)
+                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
             end
         end
         return false
     end
     
-    -- Alternative avec l'extension SWS
+    -- Alternative: Use SWS extension if available
     if reaper.BR_Win32_BrowseForDirectory then
-        retval, dirPath = reaper.BR_Win32_BrowseForDirectory(reaper.GetResourcePath(), "Sélectionner le répertoire pour les médias")
+        retval, dirPath = reaper.BR_Win32_BrowseForDirectory(reaper.GetResourcePath(), "Select the directory for media files")
         
         if retval and dirPath and dirPath ~= "" then
             if Settings.directoryExists(dirPath) then
                 Settings.setSetting("mediaItemDirectory", dirPath)
                 return true
             else
-                reaper.ShowMessageBox("Impossible d'accéder à ce répertoire. Vérifiez les permissions.", "Erreur d'accès", 0)
+                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
             end
         end
         return false
     end
     
-    -- Fallback: méthode manuelle avec GetUserInputs
-    reaper.ShowMessageBox("Veuillez installer l'extension JS_ReaScriptAPI via ReaPack pour une meilleure expérience.", "Extensions recommandées", 0)
+    -- Fallback: Manual entry with GetUserInputs
+    reaper.ShowMessageBox("Please install the JS_ReaScriptAPI extension via ReaPack for best experience.", "Recommended Extensions", 0)
     
-    retval, dirPath = reaper.GetUserInputs("Sélectionner le répertoire pour les médias", 1, 
-                                     "Chemin complet:,extrawidth=300", reaper.GetResourcePath() .. "/Scripts")
+    retval, dirPath = reaper.GetUserInputs("Select the directory for media files", 1, "Full path:,extrawidth=300", reaper.GetResourcePath() .. "/Scripts")
     
     if retval and dirPath and dirPath ~= "" then
         if Settings.directoryExists(dirPath) then
             Settings.setSetting("mediaItemDirectory", dirPath)
             return true
         else
-            reaper.ShowMessageBox("Le répertoire spécifié n'existe pas ou n'est pas accessible.", "Erreur", 0)
+            reaper.ShowMessageBox("The specified directory does not exist or is not accessible.", "Error", 0)
         end
     end
     
     return false
 end
 
--- Fenêtre des paramètres principale
+-- Main settings window for the user interface
 function Settings.showSettingsWindow(open)
     local ctx = globals.ctx
     local imgui = globals.imgui
@@ -164,41 +167,40 @@ function Settings.showSettingsWindow(open)
         imgui.TextColored(ctx, 0xFFAA00FF, "Media Management Settings")
         imgui.Separator(ctx)
         
-        -- Répertoire des médias
+        -- Media directory section
         imgui.Text(ctx, "Media Item Directory")
-        
         local mediaDir = Settings.getSetting("mediaItemDirectory")
         if mediaDir == "" then
             mediaDir = "No directory selected"
             imgui.TextColored(ctx, 0xFF0000FF, "Warning: No media directory configured")
         end
         
-        -- Afficher le chemin actuel (non éditable)
+        -- Show current directory path (read-only)
         imgui.PushItemWidth(ctx, 350)
         imgui.InputText(ctx, "##MediaDir", mediaDir, imgui.InputTextFlags_ReadOnly)
         
-        -- Bouton pour changer de répertoire
+        -- Button to change the directory
         imgui.SameLine(ctx)
         if imgui.Button(ctx, "Browse") then
             Settings.setupMediaDirectory()
         end
         
-        -- Paramètres d'importation automatique
+        -- Option to automatically import media files
         local rv, autoImport = imgui.Checkbox(ctx, "Automatically import media files when saving presets", 
                                              Settings.getSetting("autoImportMedia"))
         if rv then
             Settings.setSetting("autoImportMedia", autoImport)
         end
 
-        --Tooltip
+        -- Tooltip explaining the auto-import option
         imgui.SameLine(globals.ctx)
         globals.Utils.HelpMarker("- Enabled: Automatically copies all media files referenced in your presets to the central media directory when saving. This ensures your presets remain functional even if original files are moved or deleted.\n\n"..
                                  "- Disabled: Presets will maintain references to the original file locations without creating copies, which saves disk space but makes presets dependent on the original file locations.")
         
-        -- Bouton pour ouvrir le répertoire
+        -- Button to open the media directory in the system file explorer
         if mediaDir ~= "No directory selected" then
             if imgui.Button(ctx, "Open Media Directory") then
-                -- Utiliser os.execute directement pour éviter les dépendances
+                -- Use os.execute directly to avoid dependencies
                 local OS = reaper.GetOS()
                 local command
                 
@@ -216,7 +218,7 @@ function Settings.showSettingsWindow(open)
         
         imgui.Separator(ctx)
         
-        -- Boutons de contrôle
+        -- Control buttons at the bottom
         if imgui.Button(ctx, "Save & Close", 120, 0) then
             Settings.saveSettings()
             open = false
@@ -225,32 +227,32 @@ function Settings.showSettingsWindow(open)
     
     imgui.End(ctx)
     
-    -- Gérer le popup de configuration du répertoire
+    -- Handle the popup for configuring the media directory if needed
     Settings.handleSetupMediaDirectoryPopup()
     
     return open
 end
 
--- Popup pour configurer le répertoire des médias
+-- Popup modal for configuring the media directory
 function Settings.handleSetupMediaDirectoryPopup()
     local ctx = globals.ctx
     local imgui = globals.imgui
     
     if imgui.BeginPopupModal(ctx, "Setup Media Directory", nil, imgui.WindowFlags_AlwaysAutoResize) then
-        imgui.Text(ctx, "Vous devez configurer un répertoire pour vos fichiers média")
-        imgui.TextWrapped(ctx, "Ce répertoire sera utilisé pour stocker les copies de tous les médias utilisés dans vos presets.")
+        imgui.Text(ctx, "You need to configure a directory for your media files")
+        imgui.TextWrapped(ctx, "This directory will be used to store copies of all media files used in your presets.")
         
-        -- Afficher le chemin actuel
+        -- Show the current directory if set
         local mediaDir = Settings.getSetting("mediaItemDirectory") or ""
         if mediaDir ~= "" then
-            imgui.Text(ctx, "Répertoire actuel:")
+            imgui.Text(ctx, "Current directory:")
             imgui.PushStyleColor(ctx, imgui.Col_Text, 0x00AA00FF)
             imgui.Text(ctx, mediaDir)
             imgui.PopStyleColor(ctx)
         end
         
-        -- Bouton pour ouvrir le sélecteur
-        if imgui.Button(ctx, "Sélectionner un répertoire...", 200, 0) then
+        -- Button to open the directory selector
+        if imgui.Button(ctx, "Select a directory...", 200, 0) then
             local success = Settings.setupMediaDirectory()
             if success then
                 imgui.CloseCurrentPopup(ctx)
@@ -258,7 +260,7 @@ function Settings.handleSetupMediaDirectoryPopup()
         end
         
         imgui.SameLine(ctx)
-        if imgui.Button(ctx, "Annuler", 120, 0) then
+        if imgui.Button(ctx, "Cancel", 120, 0) then
             imgui.CloseCurrentPopup(ctx)
         end
         
@@ -266,7 +268,7 @@ function Settings.handleSetupMediaDirectoryPopup()
     end
 end
 
--- Vérifier si un fichier existe
+-- Check if a file exists at the given path
 function Settings.fileExists(path)
     local file = io.open(path, "r")
     if file then
@@ -276,19 +278,19 @@ function Settings.fileExists(path)
     return false
 end
 
--- Copier un fichier
+-- Copy a file from source to destination
 function Settings.copyFile(source, dest)
-    -- Ouvrir le fichier source
+    -- Open the source file for reading
     local sourceFile = io.open(source, "rb")
     if not sourceFile then
         return false
     end
     
-    -- Lire le contenu
+    -- Read the entire content
     local content = sourceFile:read("*all")
     sourceFile:close()
     
-    -- Écrire dans le fichier de destination
+    -- Write to the destination file
     local destFile = io.open(dest, "wb")
     if not destFile then
         return false
@@ -300,44 +302,44 @@ function Settings.copyFile(source, dest)
     return true
 end
 
--- Fonction pour copier un fichier média vers le répertoire configuré
+-- Copy a media file to the configured directory, returns the new path and success status
 function Settings.copyMediaFile(sourcePath)
     local mediaDir = Settings.getSetting("mediaItemDirectory")
     if mediaDir == "" or not sourcePath or sourcePath == "" then
         return sourcePath, false
     end
     
-    -- Extraire le nom du fichier
+    -- Extract the file name from the source path
     local fileName = sourcePath:match("([^/\\]+)$")
     if not fileName then
         return sourcePath, false
     end
     
-    -- Construire le chemin de destination
+    -- Build the destination path
     local destPath = mediaDir
     if not destPath:match("[/\\]$") then
         destPath = destPath .. "/"
     end
     destPath = destPath .. fileName
     
-    -- Éviter de recopier si le fichier existe déjà
+    -- Avoid copying if the file already exists at the destination
     if Settings.fileExists(destPath) then
         return destPath, true
     end
     
-    -- Copier le fichier
+    -- Copy the file and return the result
     local success = Settings.copyFile(sourcePath, destPath)
     
     return destPath, success
 end
 
--- Traiter les médias d'un conteneur
+-- Process all media files in a container, copying them if needed
 function Settings.processContainerMedia(container)
     if not container or not container.items then
         return container
     end
     
-    -- Copier les médias de tous les items
+    -- Copy media files for each item in the container
     for i, item in ipairs(container.items) do
         if item.filePath and item.filePath ~= "" then
             local newPath, success = Settings.copyMediaFile(item.filePath)

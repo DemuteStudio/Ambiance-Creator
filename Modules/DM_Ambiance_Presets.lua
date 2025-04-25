@@ -3,18 +3,19 @@ local globals = {}
 local presetCache = {}
 local presetCacheTime = {}
 
+-- Initialize the module with global references from the main script
 function Presets.initModule(g)
   globals = g
 end
 
--- Function to determine the presets path with correct subfolder structure
+-- Function to determine the path for presets, creating the folder structure if needed
 function Presets.getPresetsPath(type, groupName)
   local basePath
-  
+
   if globals.presetsPath ~= "" then 
     basePath = globals.presetsPath 
   else
-    -- Define base path based on OS
+    -- Define the base path depending on the OS
     if reaper.GetOS():match("Win") then
       basePath = os.getenv("APPDATA") .. "\\REAPER\\Scripts\\Demute\\Ambiance Creator\\Presets\\"
     elseif reaper.GetOS():match("OSX") then
@@ -22,8 +23,8 @@ function Presets.getPresetsPath(type, groupName)
     else -- Linux
       basePath = os.getenv("HOME") .. "/.config/REAPER/Scripts/Demute/Ambiance Creator/Presets/"
     end
-    
-    -- Create base folder if it doesn't exist
+
+    -- Create the base directory if it doesn't exist
     local command
     if reaper.GetOS():match("Win") then
       command = 'if not exist "' .. basePath .. '" mkdir "' .. basePath .. '"'
@@ -31,22 +32,22 @@ function Presets.getPresetsPath(type, groupName)
       command = 'mkdir -p "' .. basePath .. '"'
     end
     os.execute(command)
-    
+
     globals.presetsPath = basePath
   end
-  
-  -- Determine specific path based on type
+
+  -- Determine the subfolder based on the preset type
   local specificPath = basePath
-  
+
   if type == "Global" then
     specificPath = basePath .. "Global\\"
   elseif type == "Groups" then
     specificPath = basePath .. "Groups\\"
   elseif type == "Containers" then
-    -- Élimination de la dépendance à groupName pour les conteneurs
+    -- Remove dependency on groupName for containers
     specificPath = basePath .. "Containers\\"
   end
-  
+
   -- Create the specific directory if it doesn't exist
   local command
   if reaper.GetOS():match("Win") then
@@ -55,73 +56,32 @@ function Presets.getPresetsPath(type, groupName)
     command = 'mkdir -p "' .. specificPath .. '"'
   end
   os.execute(command)
-  
+
   return specificPath
 end
 
--- Function to list available presets by type
+-- Function to list available presets by type, with optional cache and force refresh
 function Presets.listPresets(type, groupName, forceRefresh)
   local currentTime = os.time()
-  local cacheKey = type .. (groupName or "")
-  
-  if not type then type = "Global" end
-  
-  -- Initialize preset cache if needed
-  if not presetCache then presetCache = {} end
-  if not presetCacheTime then presetCacheTime = {} end
-  
-  if not forceRefresh and presetCache[cacheKey] then
-    return presetCache[cacheKey] -- Return cached list if recent
-  end
-  
-  local path = Presets.getPresetsPath(type, groupName)
-  
-  -- Reset the presets list
-  local typePresets = {}
-  
-  -- Use reaper.EnumerateFiles to list files
-  local i = 0
-  local file = reaper.EnumerateFiles(path, i)
-  while file do
-    if file:match("%.lua$") then
-      -- Explicitly capture the result of gsub in a variable
-      local presetName = file:gsub("%.lua$", "")
-      -- Add the preset name to the list
-      typePresets[#typePresets + 1] = presetName
-    end
-    i = i + 1
-    file = reaper.EnumerateFiles(path, i)
-  end
-  
-  table.sort(typePresets)
-  presetCache[cacheKey] = typePresets
-  presetCacheTime[cacheKey] = currentTime
-  
-  return typePresets
-end
+  local cacheKey = type -- No need to include groupName for containers
 
--- Function to serialize a table
-function Presets.listPresets(type, groupName, forceRefresh)
-  local currentTime = os.time()
-  local cacheKey = type -- Plus besoin d'inclure groupName pour les conteneurs
-  
   if not type then type = "Global" end
-  
-  -- Initialisation du cache et vérification
+
+  -- Initialize cache if necessary
   if not presetCache then presetCache = {} end
   if not presetCacheTime then presetCacheTime = {} end
-  
+
   if not forceRefresh and presetCache[cacheKey] then
-    return presetCache[cacheKey] -- Retour du cache si récent
+    return presetCache[cacheKey] -- Return from cache if available
   end
-  
-  -- Obtention du chemin sans référence au groupName pour les conteneurs
+
+  -- Get the directory path (groupName ignored for containers)
   local path = Presets.getPresetsPath(type, nil)
-  
-  -- Reset de la liste des presets
+
+  -- Reset the preset list
   local typePresets = {}
-  
-  -- Utilisation de reaper.EnumerateFiles pour lister les fichiers
+
+  -- Use reaper.EnumerateFiles to list all .lua preset files
   local i = 0
   local file = reaper.EnumerateFiles(path, i)
   while file do
@@ -132,29 +92,28 @@ function Presets.listPresets(type, groupName, forceRefresh)
     i = i + 1
     file = reaper.EnumerateFiles(path, i)
   end
-  
+
   table.sort(typePresets)
   presetCache[cacheKey] = typePresets
   presetCacheTime[cacheKey] = currentTime
-  
+
   return typePresets
 end
 
+-- Helper function to serialize a table into a Lua string
 local function serializeTable(val, name, depth)
   depth = depth or 0
   local indent = string.rep("  ", depth)
   local result = ""
-  
+
   if name then result = indent .. name .. " = " end
-  
+
   if type(val) == "table" then
     result = result .. "{\n"
-    
     for k, v in pairs(val) do
       local key = type(k) == "number" and "[" .. k .. "]" or k
       result = result .. serializeTable(v, key, depth + 1) .. ",\n"
     end
-    
     result = result .. indent .. "}"
   elseif type(val) == "number" then
     result = result .. tostring(val)
@@ -165,47 +124,47 @@ local function serializeTable(val, name, depth)
   else
     result = result .. "nil"
   end
-  
+
   return result
 end
 
-
--- Function to save a global preset
+-- Save a global preset (all groups) to disk
 function Presets.savePreset(name)
   if name == "" then return false end
 
+  -- If auto-import media is enabled, process all containers in all groups
   if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
     for _, group in ipairs(globals.groups) do
-        for _, container in ipairs(group.containers) do
-            globals.Settings.processContainerMedia(container)
-        end
+      for _, container in ipairs(group.containers) do
+        globals.Settings.processContainerMedia(container)
+      end
     end
   end
 
   local path = Presets.getPresetsPath("Global") .. name .. ".lua"
   local file = io.open(path, "w")
-  
+
   if file then
     file:write("-- Ambiance Creator Global Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
     file:write("return " .. serializeTable(globals.groups) .. "\n")
     file:close()
-    
+
     -- Refresh the preset list
     Presets.listPresets("Global", nil, true)
     return true
   end
-  
+
   return false
 end
 
--- Function to load a global preset
+-- Load a global preset from disk and set it as the current groups
 function Presets.loadPreset(name)
   if name == "" then return false end
-  
+
   local path = Presets.getPresetsPath("Global") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
-  
+
   if success and type(presetData) == "table" then
     globals.groups = presetData
     globals.currentPresetName = name
@@ -216,15 +175,15 @@ function Presets.loadPreset(name)
   end
 end
 
--- Function to delete a preset
+-- Delete a preset file by name and type
 function Presets.deletePreset(name, type, groupName)
   if name == "" then return false end
-  
+
   if not type then type = "Global" end
-  
+
   local path = Presets.getPresetsPath(type, groupName) .. name .. ".lua"
   local success, result = os.remove(path)
-  
+
   if success then
     -- Refresh the preset list
     Presets.listPresets(type, groupName, true)
@@ -239,42 +198,43 @@ function Presets.deletePreset(name, type, groupName)
   end
 end
 
--- Function to save a group preset
+-- Save a group preset (single group) to disk
 function Presets.saveGroupPreset(name, groupIndex)
   if name == "" then return false end
-  
+
+  -- If auto-import media is enabled, process all containers in the group
   if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
     local group = globals.groups[groupIndex]
     for _, container in ipairs(group.containers) do
-        globals.Settings.processContainerMedia(container)
+      globals.Settings.processContainerMedia(container)
     end
   end
 
   local group = globals.groups[groupIndex]
   local path = Presets.getPresetsPath("Groups") .. name .. ".lua"
   local file = io.open(path, "w")
-  
+
   if file then
     file:write("-- Ambiance Creator Group Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
     file:write("return " .. serializeTable(group) .. "\n")
     file:close()
-    
+
     -- Refresh the preset list
     Presets.listPresets("Groups", nil, true)
     return true
   end
-  
+
   return false
 end
 
--- Function to load a group preset
+-- Load a group preset from disk and assign it to the specified group index
 function Presets.loadGroupPreset(name, groupIndex)
   if name == "" then return false end
-  
+
   local path = Presets.getPresetsPath("Groups") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
-  
+
   if success and type(presetData) == "table" then
     globals.groups[groupIndex] = presetData
     return true
@@ -284,58 +244,58 @@ function Presets.loadGroupPreset(name, groupIndex)
   end
 end
 
--- Function to save a container preset
+-- Save a container preset (single container) to disk
 function Presets.saveContainerPreset(name, groupIndex, containerIndex)
   if name == "" then return false end
-  
+
+  -- If auto-import media is enabled, process the container
   if globals.Settings and globals.Settings.getSetting("autoImportMedia") then
     local container = globals.groups[groupIndex].containers[containerIndex]
     globals.Settings.processContainerMedia(container)
   end
 
-  -- Suppression de la référence au nom de la piste
+  -- Remove any reference to track name (if any)
   local container = globals.groups[groupIndex].containers[containerIndex]
   local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
   local file = io.open(path, "w")
-  
+
   if file then
     file:write("-- Ambiance Creator Container Preset: " .. name .. "\n")
     file:write("-- Created on " .. os.date("%Y-%m-%d %H:%M:%S") .. "\n\n")
     file:write("return " .. serializeTable(container) .. "\n")
     file:close()
-    
-    -- Rafraîchir la liste des presets sans référence au groupName
+
+    -- Refresh the preset list (no groupName reference)
     Presets.listPresets("Containers", nil, true)
     return true
   end
-  
+
   return false
 end
 
--- Function to load a container preset
+-- Load a container preset from disk and apply it to the specified container, preserving existing items
 function Presets.loadContainerPreset(name, groupIndex, containerIndex)
   if name == "" then return false end
-  
-  -- Suppression de la référence au nom de la piste
+
+  -- Remove any reference to track name (if any)
   local path = Presets.getPresetsPath("Containers") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
-  
+
   if success and type(presetData) == "table" then
-    -- Préservation des items existants
+    -- Preserve the existing items in the container
     local existingItems = globals.groups[groupIndex].containers[containerIndex].items
-    
-    -- Application du preset
+
+    -- Apply the loaded preset
     globals.groups[groupIndex].containers[containerIndex] = presetData
-    
-    -- Restauration des items
+
+    -- Restore the preserved items
     globals.groups[groupIndex].containers[containerIndex].items = existingItems
-    
+
     return true
   else
     reaper.ShowConsoleMsg("Error loading container preset: " .. tostring(presetData) .. "\n")
     return false
   end
 end
-
 
 return Presets

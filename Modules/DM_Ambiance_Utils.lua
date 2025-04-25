@@ -1,10 +1,12 @@
 local Utils = {}
 local globals = {}
 
+-- Initialize the module with global references from the main script
 function Utils.initModule(g)
     globals = g
 end
 
+-- Display a help marker "(?)" with a tooltip containing the provided description
 function Utils.HelpMarker(desc)
     imgui.TextDisabled(globals.ctx, '(?)')
     if imgui.BeginItemTooltip(globals.ctx) then
@@ -15,7 +17,7 @@ function Utils.HelpMarker(desc)
     end
 end
 
--- Function to find a group by its name
+-- Search for a track group by its name and return the track and its index if found
 function Utils.findGroupByName(name)
     for i = 0, reaper.CountTracks(0) - 1 do
         local group = reaper.GetTrack(0, i)
@@ -27,29 +29,29 @@ function Utils.findGroupByName(name)
     return nil, -1
 end
 
--- Function to find a container group within a parent group
+-- Search for a container group by name within a parent group, considering folder depth
 function Utils.findContainerGroup(parentGroupIdx, containerName)
     local groupCount = reaper.CountTracks(0)
-    local folderDepth = 1 -- Commencer avec profondeur 1 (à l'intérieur d'un dossier)
+    local folderDepth = 1 -- Start at depth 1 (inside a folder)
     
     for i = parentGroupIdx + 1, groupCount - 1 do
         local childGroup = reaper.GetTrack(0, i)
         local _, name = reaper.GetSetMediaTrackInfo_String(childGroup, "P_NAME", "", false)
         
-        -- Compare names with trim to avoid whitespace issues
+        -- Trim whitespace from both names before comparing
         local containerNameTrimmed = string.gsub(containerName, "^%s*(.-)%s*$", "%1")
         local groupNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
         
-        -- Case insensitive comparison
+        -- Case-insensitive comparison
         if string.lower(groupNameTrimmed) == string.lower(containerNameTrimmed) then
             return childGroup, i
         end
         
-        -- Update folder depth based on this group's folder status
+        -- Update folder depth according to the folder status of this track
         local depth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
         folderDepth = folderDepth + depth
         
-        -- If we reach the end of the folder, stop searching
+        -- Stop searching if we exit the parent folder
         if folderDepth <= 0 then
             break
         end
@@ -60,7 +62,7 @@ function Utils.findContainerGroup(parentGroupIdx, containerName)
     return nil, nil
 end
 
--- Function to delete all media items from a group
+-- Remove all media items from a given track group
 function Utils.clearGroupItems(group)
     if not group then return false end
     local itemCount = reaper.GetTrackNumMediaItems(group)
@@ -71,7 +73,7 @@ function Utils.clearGroupItems(group)
     return true
 end
 
--- Function to open the preset folder
+-- Open the preset folder in the system file explorer
 function Utils.openPresetsFolder(type, groupName)
     local path = globals.Presets.getPresetsPath(type, groupName)
     if reaper.GetOS():match("Win") then
@@ -83,7 +85,7 @@ function Utils.openPresetsFolder(type, groupName)
     end
 end
 
--- Fonction pour ouvrir un dossier dans l'explorateur de fichiers
+-- Open any folder in the system file explorer
 function Utils.openFolder(path)
     if not path or path == "" then
         return
@@ -100,7 +102,7 @@ function Utils.openFolder(path)
     os.execute(command .. path .. '"')
 end
 
--- Safe popup management to avoid flashing issues
+-- Open a popup safely (prevents multiple flashes or duplicate popups)
 function Utils.safeOpenPopup(popupName)
     if not globals.activePopups[popupName] then
         imgui.OpenPopup(globals.ctx, popupName)
@@ -108,91 +110,57 @@ function Utils.safeOpenPopup(popupName)
     end
 end
 
+-- Close a popup safely and remove it from the active popups list
 function Utils.safeClosePopup(popupName)
     imgui.CloseCurrentPopup(globals.ctx)
     globals.activePopups[popupName] = nil
 end
 
--- Function to check if media directory is set in settings
+-- Check if the media directory is configured and accessible in the settings
 function Utils.isMediaDirectoryConfigured()
-  -- Check if Settings module is properly initialized
-  if not globals.Settings then
-      return false
-  end
-  
-  local mediaDir = globals.Settings.getSetting("mediaItemDirectory")
-  return mediaDir ~= nil and mediaDir ~= "" and globals.Settings.directoryExists(mediaDir)
+    -- Ensure the Settings module is properly initialized
+    if not globals.Settings then
+        return false
+    end
+    
+    local mediaDir = globals.Settings.getSetting("mediaItemDirectory")
+    return mediaDir ~= nil and mediaDir ~= "" and globals.Settings.directoryExists(mediaDir)
 end
 
--- Function to display a warning popup if media directory is not configured
+-- Display a warning popup if the media directory is not configured
 function Utils.showDirectoryWarningPopup(popupTitle)
-  local ctx = globals.ctx
-  local imgui = globals.imgui
-  local title = popupTitle or "Warning: Media Directory Not Configured"
-  
-  -- Use safe popup management to avoid flashing issues
-  Utils.safeOpenPopup(title)
-  
-  if imgui.BeginPopupModal(ctx, title, nil, imgui.WindowFlags_AlwaysAutoResize) then
-      imgui.TextColored(ctx, 0xFF8000FF, "No media directory has been configured in the settings.")
-      imgui.TextWrapped(ctx, "You need to configure a media directory before saving presets to ensure proper media file management.")
-      
-      imgui.Separator(ctx)
-      
-      if imgui.Button(ctx, "Configure Now", 150, 0) then
-          -- Open settings window
-          globals.showSettingsWindow = true
-          Utils.safeClosePopup(title)
-          globals.showMediaDirWarning = false  -- Réinitialiser l'état
-      end
-      
-      imgui.SameLine(ctx)
-      
-      if imgui.Button(ctx, "Cancel", 120, 0) then
-          Utils.safeClosePopup(title)
-          globals.showMediaDirWarning = false  -- Réinitialiser l'état
-      end
-      
-      imgui.EndPopup(ctx)
-  end
+    local ctx = globals.ctx
+    local imgui = globals.imgui
+    local title = popupTitle or "Warning: Media Directory Not Configured"
+    
+    -- Use safe popup management to avoid flashing issues
+    Utils.safeOpenPopup(title)
+    
+    if imgui.BeginPopupModal(ctx, title, nil, imgui.WindowFlags_AlwaysAutoResize) then
+        imgui.TextColored(ctx, 0xFF8000FF, "No media directory has been configured in the settings.")
+        imgui.TextWrapped(ctx, "You need to configure a media directory before saving presets to ensure proper media file management.")
+        
+        imgui.Separator(ctx)
+        
+        if imgui.Button(ctx, "Configure Now", 150, 0) then
+            -- Open the settings window
+            globals.showSettingsWindow = true
+            Utils.safeClosePopup(title)
+            globals.showMediaDirWarning = false  -- Reset the state
+        end
+        
+        imgui.SameLine(ctx)
+        
+        if imgui.Button(ctx, "Cancel", 120, 0) then
+            Utils.safeClosePopup(title)
+            globals.showMediaDirWarning = false  -- Reset the state
+        end
+        
+        imgui.EndPopup(ctx)
+    end
 end
 
-
--- Function to display a warning popup if media directory is not configured
-function Utils.showDirectoryWarningPopup(popupTitle)
-  local ctx = globals.ctx
-  local imgui = globals.imgui
-  local title = popupTitle or "Warning: Media Directory Not Configured"
-  
-  -- Use safe popup management to avoid flashing issues
-  Utils.safeOpenPopup(title)
-  
-  if imgui.BeginPopupModal(ctx, title, nil, imgui.WindowFlags_AlwaysAutoResize) then
-      imgui.TextColored(ctx, 0xFF8000FF, "No media directory has been configured in the settings.")
-      imgui.TextWrapped(ctx, "You need to configure a media directory before saving presets to ensure proper media file management.")
-      
-      imgui.Separator(ctx)
-      
-      if imgui.Button(ctx, "Configure Now", 150, 0) then
-          -- Open settings window
-          globals.showSettingsWindow = true
-          Utils.safeClosePopup(title)
-          globals.showMediaDirWarning = false  -- Réinitialiser l'état
-      end
-      
-      imgui.SameLine(ctx)
-      
-      if imgui.Button(ctx, "Cancel", 120, 0) then
-          Utils.safeClosePopup(title)
-          globals.showMediaDirWarning = false  -- Réinitialiser l'état
-      end
-      
-      imgui.EndPopup(ctx)
-  end
-end
-
-
--- Function to check if a time selection exists
+-- Check if a time selection exists in the project and update globals accordingly
 function Utils.checkTimeSelection()
     local start, ending = reaper.GetSet_LoopTimeRange2(0, false, false, 0, 0, false)
     if start ~= ending then
@@ -207,41 +175,37 @@ function Utils.checkTimeSelection()
     end
 end
 
--- Generate a random value in a given range
+-- Generate a random value between min and max
 function Utils.randomInRange(min, max)
     return min + math.random() * (max - min)
 end
 
+-- Format a time value in seconds as HH:MM:SS
 function Utils.formatTime(seconds)
-    -- Ensure seconds is a number
     seconds = tonumber(seconds) or 0
     
-    -- Calculate hours, minutes, seconds
     local hours = math.floor(seconds / 3600)
     local minutes = math.floor((seconds % 3600) / 60)
     local secs = math.floor(seconds % 60)
     
-    -- Format with leading zeros if needed
     return string.format("%02d:%02d:%02d", hours, minutes, secs)
 end
 
--- Function to create crossfades for overlapping items
+-- Create crossfades between two overlapping media items with the given fade shape
 function Utils.createCrossfade(item1, item2, fadeShape)
     local item1End = reaper.GetMediaItemInfo_Value(item1, "D_POSITION") + reaper.GetMediaItemInfo_Value(item1, "D_LENGTH")
     local item2Start = reaper.GetMediaItemInfo_Value(item2, "D_POSITION")
     if item2Start < item1End then
         local overlapLength = item1End - item2Start
-        -- Create fade out on first item
+        -- Set fade out for the first item
         reaper.SetMediaItemInfo_Value(item1, "D_FADEOUTLEN", overlapLength)
         reaper.SetMediaItemInfo_Value(item1, "C_FADEOUTSHAPE", fadeShape)
-        -- Create fade in on second item
+        -- Set fade in for the second item
         reaper.SetMediaItemInfo_Value(item2, "D_FADEINLEN", overlapLength)
         reaper.SetMediaItemInfo_Value(item2, "C_FADEINSHAPE", fadeShape)
         return true
     end
     return false
 end
-
-
 
 return Utils

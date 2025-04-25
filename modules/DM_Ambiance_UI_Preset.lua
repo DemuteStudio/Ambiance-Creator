@@ -1,109 +1,121 @@
 --[[
 Sound Randomizer for REAPER - UI Preset Module
-This module handles the UI for global presets management
+This module manages the user interface for global presets management.
 ]]
 
 local UI_Preset = {}
 local globals = {}
 
--- Initialize the module with global variables from the main script
+-- Initialize the module with references to global variables from the main script
 function UI_Preset.initModule(g)
     globals = g
 end
 
--- Function to display global preset controls in the top section
+-- Draw the UI controls for managing global presets in the top section of the interface
 function UI_Preset.drawPresetControls()
-    -- Section title with colored text
+    -- Display section title with a specific color (orange)
     imgui.TextColored(globals.ctx, 0xFFAA00FF, "Global Presets")
     
-    -- Refresh button to update preset list
+    -- Place the next item on the same line as the title
     imgui.SameLine(globals.ctx)
+    -- Button to refresh the list of presets
     if imgui.Button(globals.ctx, "Refresh") then
-        globals.Presets.listPresets("Global", nil, true)
+        globals.Presets.listPresets("Global", nil, true) -- Refresh the global presets list forcibly
     end
     
-    -- Dropdown list of presets
     imgui.SameLine(globals.ctx)
     
-    -- Get the preset list from presets module
+    -- Retrieve the list of global presets from the Presets module
     local presetList = globals.Presets.listPresets("Global")
     
-    -- Prepare items for the dropdown (ImGui Combo)
+    -- Prepare the preset names as a null-separated string for ImGui Combo widget
     local presetItems = ""
     for _, name in ipairs(presetList) do
         presetItems = presetItems .. name .. "\0"
     end
-    presetItems = presetItems .. "\0"
+    presetItems = presetItems .. "\0" -- Null terminator for the combo list
     
-    -- Display the dropdown list with existing presets
+    -- Set the width of the combo box to 300 pixels
     imgui.PushItemWidth(globals.ctx, 300)
+    
+    -- Display the dropdown combo box for selecting a preset
     local rv, newSelectedIndex = imgui.Combo(globals.ctx, "##PresetSelector", globals.selectedPresetIndex, presetItems)
     
-    -- Handle selection change
+    -- If the user changed the selection, update the current preset index and name
     if rv then
         globals.selectedPresetIndex = newSelectedIndex
         globals.currentPresetName = presetList[globals.selectedPresetIndex + 1] or ""
     end
     
-    -- Action buttons: Load, Save, Delete, Open Directory
+    -- Button to load the selected preset, only active if a preset is selected
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Load") and globals.currentPresetName ~= "" then
         globals.Presets.loadPreset(globals.currentPresetName)
     end
     
+    -- Button to save the current preset
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Save") then
         
-        -- Vérifier si le répertoire média est configuré avant d'ouvrir le popup de sauvegarde
+        -- Check if the media directory is configured before opening the save popup
         if not globals.Utils.isMediaDirectoryConfigured() then
-            -- Définir le flag pour afficher l'avertissement
+            -- Set flag to show a warning about missing media directory configuration
             globals.showMediaDirWarning = true
         else
-            -- Continuer avec le popup de sauvegarde normal
+            -- Proceed to open the save preset popup safely
             globals.Utils.safeOpenPopup("Save Preset")
-            globals.newPresetName = globals.currentPresetName
+            globals.newPresetName = globals.currentPresetName -- Initialize the input field with the current preset name
         end
     end
     
+    -- Button to delete the currently selected preset, only active if a preset is selected
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Delete") and globals.currentPresetName ~= "" then
         globals.Utils.safeOpenPopup("Confirm deletion")
     end
     
+    -- Button to open the folder containing presets
     imgui.SameLine(globals.ctx)
     if imgui.Button(globals.ctx, "Open Preset Directory") then
         globals.Utils.openPresetsFolder("Presets")
     end
     
-    -- Save preset popup modal
+    -- Handle the save preset popup modal window
     UI_Preset.handleSavePresetPopup(presetList)
     
-    -- Deletion confirmation popup modal
+    -- Handle the delete preset confirmation popup modal window
     UI_Preset.handleDeletePresetPopup()
 end
 
--- Function to handle the save preset popup
+-- Handle the popup window for saving a preset
 function UI_Preset.handleSavePresetPopup(presetList)
     if imgui.BeginPopupModal(globals.ctx, "Save Preset", nil, imgui.WindowFlags_AlwaysAutoResize) then
         
+        -- Label for the preset name input field
         imgui.Text(globals.ctx, "Preset name:")
+        
+        -- Input text box for entering the new preset name
         local rv, value = imgui.InputText(globals.ctx, "##PresetName", globals.newPresetName)
         if rv then globals.newPresetName = value end
         
+        -- Save button, enabled only if the preset name is not empty
         if imgui.Button(globals.ctx, "Save", 120, 0) and globals.newPresetName ~= "" then
             if globals.Presets.savePreset(globals.newPresetName) then
+                -- Update current preset name and selected index after successful save
                 globals.currentPresetName = globals.newPresetName
                 for i, name in ipairs(presetList) do
                     if name == globals.currentPresetName then
-                        globals.selectedPresetIndex = i - 1
+                        globals.selectedPresetIndex = i - 1 -- ImGui combo index is zero-based
                         break
                     end
                 end
+                -- Close the save preset popup safely
                 globals.Utils.safeClosePopup("Save Preset")
             end
         end
         
         imgui.SameLine(globals.ctx)
+        -- Cancel button to close the popup without saving
         if imgui.Button(globals.ctx, "Cancel", 120, 0) then
             globals.Utils.safeClosePopup("Save Preset")
         end
@@ -112,18 +124,21 @@ function UI_Preset.handleSavePresetPopup(presetList)
     end
 end
 
--- Function to handle the delete preset confirmation popup
+-- Handle the popup window for confirming preset deletion
 function UI_Preset.handleDeletePresetPopup()
     if imgui.BeginPopupModal(globals.ctx, "Confirm deletion", nil, imgui.WindowFlags_AlwaysAutoResize) then
+        -- Confirmation message with the name of the preset to delete
         imgui.Text(globals.ctx, "Are you sure you want to delete the preset \"" .. globals.currentPresetName .. "\"?")
         imgui.Separator(globals.ctx)
         
+        -- Yes button to confirm deletion
         if imgui.Button(globals.ctx, "Yes", 120, 0) then
             globals.Presets.deletePreset(globals.currentPresetName, "Global")
             globals.Utils.safeClosePopup("Confirm deletion")
         end
         
         imgui.SameLine(globals.ctx)
+        -- No button to cancel deletion
         if imgui.Button(globals.ctx, "No", 120, 0) then
             globals.Utils.safeClosePopup("Confirm deletion")
         end
