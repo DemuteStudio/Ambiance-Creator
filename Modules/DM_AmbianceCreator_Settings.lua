@@ -113,8 +113,8 @@ function Settings.showSettingsWindow(open)
     local ctx = globals.ctx
     local imgui = globals.imgui
     
-    imgui.SetNextWindowSize(ctx, 500, 300, imgui.Cond_FirstUseEver)
-    local visible, open = imgui.Begin(ctx, 'Ambiance Creator Settings', open)
+    local windowFlags = imgui.WindowFlags_NoResize | imgui.WindowFlags_AlwaysAutoResize
+    local visible, open = imgui.Begin(ctx, 'Ambiance Creator Settings', open, windowFlags)
     
     if visible then
         imgui.TextColored(ctx, 0xFFAA00FF, "Media Management Settings")
