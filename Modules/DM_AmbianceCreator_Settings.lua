@@ -7,6 +7,9 @@ local globals = {}
 local defaultSettings = {
     mediaItemDirectory = "",  -- Path to the media directory
     autoImportMedia = true,   -- Automatically copy media files
+    buttonColor = 0x008491FF, -- Default blue color for buttons
+    backgroundColor = 0x2E2E2EFF, -- Dark gray background
+    textColor = 0xD5D5D5FF,   -- White text
 }
 
 -- Initialize the module with global references and load settings
@@ -103,58 +106,6 @@ function Settings.setSetting(key, value)
     Settings.saveSettings()
 end
 
--- Opens a dialog to configure the media directory, using the most reliable method available
-function Settings.setupMediaDirectory()
-    local retval, dirPath
-    
-    -- Prefer JS_ReaScriptAPI if available (most reliable method)
-    if reaper.JS_Dialog_BrowseForFolder then
-        retval, dirPath = reaper.JS_Dialog_BrowseForFolder("Select the directory for media files", "")
-        
-        if retval and dirPath and dirPath ~= "" then
-            -- Test directory access without attempting to create it
-            if Settings.directoryExists(dirPath) then
-                Settings.setSetting("mediaItemDirectory", dirPath)
-                return true
-            else
-                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
-            end
-        end
-        return false
-    end
-    
-    -- Alternative: Use SWS extension if available
-    if reaper.BR_Win32_BrowseForDirectory then
-        retval, dirPath = reaper.BR_Win32_BrowseForDirectory(reaper.GetResourcePath(), "Select the directory for media files")
-        
-        if retval and dirPath and dirPath ~= "" then
-            if Settings.directoryExists(dirPath) then
-                Settings.setSetting("mediaItemDirectory", dirPath)
-                return true
-            else
-                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
-            end
-        end
-        return false
-    end
-    
-    -- Fallback: Manual entry with GetUserInputs
-    reaper.ShowMessageBox("Please install the JS_ReaScriptAPI extension via ReaPack for best experience.", "Recommended Extensions", 0)
-    
-    retval, dirPath = reaper.GetUserInputs("Select the directory for media files", 1, "Full path:,extrawidth=300", reaper.GetResourcePath() .. "/Scripts")
-    
-    if retval and dirPath and dirPath ~= "" then
-        if Settings.directoryExists(dirPath) then
-            Settings.setSetting("mediaItemDirectory", dirPath)
-            return true
-        else
-            reaper.ShowMessageBox("The specified directory does not exist or is not accessible.", "Error", 0)
-        end
-    end
-    
-    return false
-end
-
 -- Main settings window for the user interface
 function Settings.showSettingsWindow(open)
     local ctx = globals.ctx
@@ -218,6 +169,9 @@ function Settings.showSettingsWindow(open)
         
         imgui.Separator(ctx)
         
+        -- Add the color settings section
+        Settings.showColorSettings()
+        
         -- Control buttons at the bottom
         if imgui.Button(ctx, "Save & Close", 120, 0) then
             Settings.saveSettings()
@@ -231,6 +185,62 @@ function Settings.showSettingsWindow(open)
     Settings.handleSetupMediaDirectoryPopup()
     
     return open
+end
+
+-------
+--- Media Directory
+-------
+
+-- Opens a dialog to configure the media directory, using the most reliable method available
+function Settings.setupMediaDirectory()
+    local retval, dirPath
+    
+    -- Prefer JS_ReaScriptAPI if available (most reliable method)
+    if reaper.JS_Dialog_BrowseForFolder then
+        retval, dirPath = reaper.JS_Dialog_BrowseForFolder("Select the directory for media files", "")
+        
+        if retval and dirPath and dirPath ~= "" then
+            -- Test directory access without attempting to create it
+            if Settings.directoryExists(dirPath) then
+                Settings.setSetting("mediaItemDirectory", dirPath)
+                return true
+            else
+                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
+            end
+        end
+        return false
+    end
+    
+    -- Alternative: Use SWS extension if available
+    if reaper.BR_Win32_BrowseForDirectory then
+        retval, dirPath = reaper.BR_Win32_BrowseForDirectory(reaper.GetResourcePath(), "Select the directory for media files")
+        
+        if retval and dirPath and dirPath ~= "" then
+            if Settings.directoryExists(dirPath) then
+                Settings.setSetting("mediaItemDirectory", dirPath)
+                return true
+            else
+                reaper.ShowMessageBox("Cannot access this directory. Check permissions.", "Access Error", 0)
+            end
+        end
+        return false
+    end
+    
+    -- Fallback: Manual entry with GetUserInputs
+    reaper.ShowMessageBox("Please install the JS_ReaScriptAPI extension via ReaPack for best experience.", "Recommended Extensions", 0)
+    
+    retval, dirPath = reaper.GetUserInputs("Select the directory for media files", 1, "Full path:,extrawidth=300", reaper.GetResourcePath() .. "/Scripts")
+    
+    if retval and dirPath and dirPath ~= "" then
+        if Settings.directoryExists(dirPath) then
+            Settings.setSetting("mediaItemDirectory", dirPath)
+            return true
+        else
+            reaper.ShowMessageBox("The specified directory does not exist or is not accessible.", "Error", 0)
+        end
+    end
+    
+    return false
 end
 
 -- Popup modal for configuring the media directory
@@ -350,6 +360,77 @@ function Settings.processContainerMedia(container)
     end
     
     return container
+end
+
+-------
+--- Color
+-------
+
+-- Converts a hex color (0xRRGGBBAA) to individual RGB components (0-1 for ImGui)
+function Settings.colorToRGBA(color)
+    -- Conversion de la chaîne en nombre si nécessaire
+    if type(color) == "string" then
+        color = tonumber(color)
+    end
+    
+    -- Vérification que la couleur est bien un nombre
+    if type(color) ~= "number" then
+        -- Valeur par défaut en cas d'erreur (blanc opaque)
+        return 1, 1, 1, 1
+    end
+    
+    -- Extract components using bitwise operations
+    local r = (color >> 24) & 0xFF
+    local g = (color >> 16) & 0xFF
+    local b = (color >> 8) & 0xFF
+    local a = color & 0xFF
+    
+    return r/255, g/255, b/255, a/255
+end
+
+
+-- Converts RGB components (0-1) to a hex color (0xRRGGBBAA)
+function Settings.rgbaToColor(r, g, b, a)
+    r = math.floor(r * 255)
+    g = math.floor(g * 255)
+    b = math.floor(b * 255)
+    a = math.floor((a or 1) * 255)
+    
+    return (r << 24) | (g << 16) | (b << 8) | a
+end
+
+-- Display a color picker UI element for a specific color setting
+function Settings.colorPicker(label, colorKey)
+    local ctx = globals.ctx
+    local imgui = globals.imgui
+    
+    local currentColor = Settings.getSetting(colorKey)
+    local r, g, b, a = Settings.colorToRGBA(currentColor)
+    
+    local rv, newColor = imgui.ColorEdit4(ctx, label, currentColor)
+    
+    if rv then
+        Settings.setSetting(colorKey, newColor)
+        return true
+    end
+    
+    return false
+end
+
+-- Add the color settings section to the main settings window
+function Settings.showColorSettings()
+    local ctx = globals.ctx
+    local imgui = globals.imgui
+    
+    imgui.TextColored(ctx, 0xFFAA00FF, "Color Settings")
+    imgui.Separator(ctx)
+    
+    -- Add color pickers for the three color settings
+    Settings.colorPicker("Button Color", "buttonColor")
+    Settings.colorPicker("Background Color", "backgroundColor")
+    Settings.colorPicker("Text Color", "textColor")
+    
+    imgui.Separator(ctx)
 end
 
 return Settings

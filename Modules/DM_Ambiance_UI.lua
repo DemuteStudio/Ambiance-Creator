@@ -52,17 +52,51 @@ function UI.initModule(g)
     globals.UI = UI
 end
 
--- Push custom style variables for UI (recommended by ReaImGui dev)
+-- Push custom style variables for UI
 function UI.PushStyle()
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_DisabledAlpha, 0.68)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_FrameRounding, 2)
-    imgui.PushStyleVar(globals.ctx, imgui.StyleVar_GrabRounding, 2)
+    local ctx = globals.ctx
+    local imgui = globals.imgui
+    local settings = globals.Settings
+    local utils = globals.Utils
+    
+    -- Round Style for buttons and frames
+    imgui.PushStyleVar(ctx, imgui.StyleVar_DisabledAlpha, 0.68)
+    imgui.PushStyleVar(ctx, imgui.StyleVar_FrameRounding, 2)
+    imgui.PushStyleVar(ctx, imgui.StyleVar_GrabRounding, 2)
+
+    -- Colors
+    local buttonColor = settings.getSetting("buttonColor")
+    local backgroundColor = settings.getSetting("backgroundColor")
+    local textColor = settings.getSetting("textColor")
+    
+    -- Apply button colors
+    imgui.PushStyleColor(ctx, imgui.Col_Button, buttonColor)
+    imgui.PushStyleColor(ctx, imgui.Col_ButtonHovered, utils.brightenColor(buttonColor, 0.1))
+    imgui.PushStyleColor(ctx, imgui.Col_ButtonActive, utils.brightenColor(buttonColor, -0.1))
+    
+    -- Apply background colors
+    imgui.PushStyleColor(ctx, imgui.Col_WindowBg, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_PopupBg, utils.brightenColor(backgroundColor, 0.05))
+    imgui.PushStyleColor(ctx, imgui.Col_FrameBg, utils.brightenColor(backgroundColor, 0.1))
+    imgui.PushStyleColor(ctx, imgui.Col_FrameBgHovered, utils.brightenColor(backgroundColor, 0.15))
+    imgui.PushStyleColor(ctx, imgui.Col_FrameBgActive, utils.brightenColor(backgroundColor, 0.2))
+    
+    -- Apply text colors
+    imgui.PushStyleColor(ctx, imgui.Col_Text, textColor)
+    imgui.PushStyleColor(ctx, imgui.Col_CheckMark, textColor)
 end
 
 -- Pop custom style variables
 function UI.PopStyle()
-    imgui.PopStyleVar(globals.ctx, 3)
+    local ctx = globals.ctx
+    
+    -- Pop 10 style colors (matching the number of PushStyleColor calls)
+    imgui.PopStyleColor(ctx, 10)
+    
+    -- Pop 3 style variables (matching the number of PushStyleVar calls)
+    imgui.PopStyleVar(ctx, 3)
 end
+
 
 -- Clear all container selections and reset selection state
 local function clearContainerSelections()

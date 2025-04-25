@@ -208,4 +208,48 @@ function Utils.createCrossfade(item1, item2, fadeShape)
     return false
 end
 
+-- Unpacks a 32-bit color into individual RGBA components (0-1)
+function Utils.unpackColor(color)
+    -- Conversion de la chaîne en nombre si nécessaire
+    if type(color) == "string" then
+        color = tonumber(color)
+    end
+    
+    -- Vérification que la couleur est bien un nombre
+    if type(color) ~= "number" then
+        -- Valeur par défaut en cas d'erreur (blanc opaque)
+        return 1, 1, 1, 1
+    end
+    
+    local r = ((color >> 24) & 0xFF) / 255
+    local g = ((color >> 16) & 0xFF) / 255
+    local b = ((color >> 8) & 0xFF) / 255
+    local a = (color & 0xFF) / 255
+    
+    return r, g, b, a
+end
+
+
+-- Packs RGBA components (0-1) into a 32-bit color
+function Utils.packColor(r, g, b, a)
+    r = math.floor(r * 255)
+    g = math.floor(g * 255)
+    b = math.floor(b * 255)
+    a = math.floor((a or 1) * 255)
+    
+    return (r << 24) | (g << 16) | (b << 8) | a
+end
+
+-- Utility function to brighten or darken a color
+function Utils.brightenColor(color, amount)
+    local r, g, b, a = Utils.unpackColor(color)
+    
+    r = math.max(0, math.min(1, r + amount))
+    g = math.max(0, math.min(1, g + amount))
+    b = math.max(0, math.min(1, b + amount))
+    
+    return Utils.packColor(r, g, b, a)
+end
+
+
 return Utils
