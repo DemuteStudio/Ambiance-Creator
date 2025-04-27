@@ -94,8 +94,8 @@ function UI.PushStyle()
     
     -- Apply background colors
     imgui.PushStyleColor(ctx, imgui.Col_Header, backgroundColor)
-    imgui.PushStyleColor(ctx, imgui.Col_HeaderActive, backgroundColor)
-    imgui.PushStyleColor(ctx, imgui.Col_HeaderHovered, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_HeaderActive, utils.brightenColor(backgroundColor, 0.2))
+    imgui.PushStyleColor(ctx, imgui.Col_HeaderHovered, utils.brightenColor(backgroundColor, 0.15))
     imgui.PushStyleColor(ctx, imgui.Col_TitleBgActive, utils.brightenColor(backgroundColor, -0.01))
     imgui.PushStyleColor(ctx, imgui.Col_WindowBg, backgroundColor)
     imgui.PushStyleColor(ctx, imgui.Col_PopupBg, utils.brightenColor(backgroundColor, 0.05))
