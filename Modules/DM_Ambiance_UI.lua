@@ -93,7 +93,7 @@ function UI.PushStyle()
     imgui.PushStyleColor(ctx, imgui.Col_CheckMark, buttonColor)
     
     -- Apply background colors
-    imgui.PushStyleColor(ctx, imgui.Col_Header, backgroundColor)
+    imgui.PushStyleColor(ctx, imgui.Col_Header, utils.brightenColor(backgroundColor, 0.1))
     imgui.PushStyleColor(ctx, imgui.Col_HeaderActive, utils.brightenColor(backgroundColor, 0.2))
     imgui.PushStyleColor(ctx, imgui.Col_HeaderHovered, utils.brightenColor(backgroundColor, 0.15))
     imgui.PushStyleColor(ctx, imgui.Col_TitleBgActive, utils.brightenColor(backgroundColor, -0.01))
