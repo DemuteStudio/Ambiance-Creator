@@ -282,15 +282,9 @@ function Presets.loadContainerPreset(name, groupIndex, containerIndex)
   local success, presetData = pcall(dofile, path)
 
   if success and type(presetData) == "table" then
-    -- Preserve the existing items in the container
-    local existingItems = globals.groups[groupIndex].containers[containerIndex].items
-
-    -- Apply the loaded preset
+    -- Appliquer directement le preset chargé sans préserver les items existants
     globals.groups[groupIndex].containers[containerIndex] = presetData
-
-    -- Restore the preserved items
-    globals.groups[groupIndex].containers[containerIndex].items = existingItems
-
+    
     return true
   else
     reaper.ShowConsoleMsg("Error loading container preset: " .. tostring(presetData) .. "\n")

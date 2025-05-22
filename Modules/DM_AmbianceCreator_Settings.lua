@@ -330,7 +330,7 @@ function Settings.copyMediaFile(sourcePath)
     -- Build the destination path
     local destPath = mediaDir
     if not destPath:match("[/\\]$") then
-        destPath = destPath .. "/"
+        destPath = destPath .. "\\"
     end
     destPath = destPath .. fileName
     
