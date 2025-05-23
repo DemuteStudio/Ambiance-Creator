@@ -116,6 +116,7 @@ By default, it will be named as the container. Feel free to change the name as y
 *Note: You can find all your preset files into a dedicated folder accessible by pressing the "Open Preset Directory" button.*
 
 If you work in a team and everyone uses the same directory, it means the preset can be shared and used by anyone with access to this shared directory.
+
 *Note again: It’s not planned to create a customizable "Preset Directory" because it means anyone could delete/override a shared preset. It’s better to keep presets user-side. Share them carefully.*
 
 **Parameters**
