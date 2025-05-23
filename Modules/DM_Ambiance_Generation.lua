@@ -61,6 +61,10 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
     -- Get effective parameters considering inheritance from parent group
     local effectiveParams = globals.Structures.getEffectiveContainerParams(group, container)
 
+    local skippedItems = 0
+    local minRequiredLength = 0
+    local containerName = container.name or "Unnamed Container"
+
     if effectiveParams.items and #effectiveParams.items > 0 then
         -- Calculate interval based on the selected mode
         local interval = effectiveParams.triggerRate -- Default (Absolute mode)
@@ -98,9 +102,25 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
         local lastItemEnd = globals.startTime
         
         while lastItemEnd < globals.endTime do
-            -- Select a random item from the container
+    -- Select a random item from the container
             local randomItemIndex = math.random(1, #effectiveParams.items)
             local itemData = effectiveParams.items[randomItemIndex]
+            
+            -- Vérification pour les intervalles négatifs
+            if interval < 0 then
+                local requiredLength = math.abs(interval)
+                if itemData.length < requiredLength then
+                    -- Item trop court, on le skip
+                    skippedItems = skippedItems + 1
+                    if minRequiredLength == 0 or requiredLength > minRequiredLength then
+                        minRequiredLength = requiredLength
+                    end
+                    
+                    -- Avancer légèrement pour éviter une boucle infinie
+                    lastItemEnd = lastItemEnd + 0.1
+                    goto continue_loop -- Skip cet item et passer au suivant
+                end
+            end
 
             local position
             local maxDrift
@@ -183,6 +203,21 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
             -- Update the last item end position and reference using the trimmed length
             lastItemEnd = position + actualLen
             lastItemRef = newItem
+            ::continue_loop::
+        end
+        -- Message d'erreur pour les items skippés (à ajouter à la fin de la fonction)
+        if skippedItems > 0 then
+            local message = string.format(
+                "Warning: %d item(s) were skipped in container '%s'\n" ..
+                "Reason: Item length insufficient for negative interval of %.2f seconds\n" ..
+                "Minimum required item length: %.2f seconds",
+                skippedItems,
+                containerName,
+                math.abs(interval),
+                minRequiredLength
+            )
+            
+            reaper.ShowConsoleMsg(message .. "\n")
         end
     end
 
