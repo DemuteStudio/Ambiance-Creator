@@ -3,27 +3,27 @@
 ![image](https://github.com/user-attachments/assets/87fe6cd5-9d4c-4109-a7ef-719ebeac0beb)
 
 
-The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline. 
+The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline.
 
-We wanted to make ambiance creation and preview for games and linear content as easy and efficient as possible. These were the main pillars for this tool:
+We wanted to make ambiance creation and preview for games and linear content as easy and efficient as possible. Here are the main pillars for this tool:
 
-- **Fast creation**: Create ambiances can be tedious, take times and can be repetitive. The idea here is to create an complete ambiance in few seconds.
-- **Iteration**: Iterate over the ambiance should be as easy as drinking a glass of water.
-- **Reusability**: We wanted to be able to save the creation as preset.
-- **Modular**: Each part of the ambiance should exist as a separated module that can be reuse later on.
-- **Not context dependant**: The tool should be useful for both linear and video games workflow
+- **Fast creation**: Creating ambiances can be tedious, time-consuming, and repetitive. The idea here is to build a complete ambiance in just a few seconds.
+- **Iteration**: Iterating on an ambiance should be as easy as drinking a glass of water.
+- **Reusability**: We wanted to be able to save creations as presets.
+- **Modularity**: Each part of the ambiance should exist as a separate module that can be reused later.
+- **Not context-dependent**: The tool should be useful for both linear and video game workflows.
 
+## Video Tutorial
 
-## Video Tutorial:
 Coming soon.
 
+## Installing the Ambiance Creator
 
-## Installing the Ambiance Creator:
+### Requirements
 
-### Requirements:
-- **Reaper**: Package was made for reaper 7.22+ but should work for older versions as well.
-- **Reapack** : Used to import the package in reaper.
-- **ReaImGui**: Used for the whole interface, Is included in the ReaTeam Extensions Package that you can install with Reapack. To check if it is installed, you should have a ReaImGui Tab under the ReaScript tab in the preferences: **options >preferences >Plug-ins >ReaImGui** 
+- **Reaper**: The package was made for Reaper 7.22+ but should work with older versions as well.
+- **ReaPack**: Used to import the package into Reaper.
+- **ReaImGui**: Used for the whole interface. It's included in the ReaTeam Extensions package, which you can install with ReaPack. To check if it's installed, you should see a ReaImGui tab under the ReaScript tab in Preferences: **Options > Preferences > Plug-ins > ReaImGui**.
 
 ### Reapack:
 To install Reapack follow these steps:
@@ -48,46 +48,47 @@ To install **ReaImGui**, find **ReaTeam Extensions** in Manage repositories. The
 
 The interface is divided into three main sections:
 
-1) The global section: This where you manage the global presets, settings and generate the whole ambiance
-2) The groups and containers section: This is where you organize your Groups and Containers
-3) The parameters section: This is where you tweak the parameters of Groups and Containers
-    
+1. **Global section**: This is where you manage global presets, settings, and generate the whole ambiance.
+2. **Groups and containers section**: This is where you organize your Groups and Containers.
+3. **Parameters section**: This is where you tweak the parameters of Groups and Containers.
+
 The tool works by defining "Groups" that contain "Containers," which group audio elements that will be randomly placed according to your parameters.
-This is subject to change in the futur to be more abstract.
+This may change in the future to be even more abstract (because who doesn’t love abstraction?).
 
 
 ## Creating/Editing Ambiances in the Ambiance Creator
 
-The very first step is to create your own containers data base. The idea is to build a collection of module (containers) that can be reused over and over. There is no "good way" to organize the groups and container but here is a suggestion.
-Let's say you want to create a Winter Forest. There is a lot of different forest type, but all forests are made of 2 things: A fauna and a flora. Let's divide these 2 categories in smaller pieces:
+The very first step is to create your own containers database. The idea is to build a collection of modules (containers) that can be reused over and over. There’s no “right way” to organize groups and containers, but here’s a suggestion.
+
+Let’s say you want to create a Winter Forest. There are lots of different forest types, but all forests are made of two things: fauna and flora. Let’s break these down further:
 - Fauna: Birds, Insects, Canidae, ...
 - Flora: Leaves, Branches, Grass, Bushes, ...
 
-You may also optionnaly want to add a third generic category:
+You might also want to add a third generic category:
 - Winds: Strong, Soft, Howling, Gust, ...
 
-Now that we've divided our forest into smaller catageories, let's create our first group:
+Now that we’ve divided our forest into smaller categories, let’s create our first group:
 - Press the "Add group" button.
 - Name the newly created group "Birds".
   
 ![image](https://github.com/user-attachments/assets/5c82fde4-8710-4b20-9fde-c09a7aacee5f)
 
 
-We'll discuss the parameters later, let's focus on the containers for now.
-- In the Birds groups, press the "Add containers" button to create your first container.
+We'll discuss the parameters later, let’s focus on containers for now.
+- In the Birds group, press the "Add containers" button to create your first container.
 - Name it "Birds - Generic Bed Chirps".
 
 ![image](https://github.com/user-attachments/assets/96e7e64d-e109-4f4c-a71c-4e6b42552328)
 
 
-*IMPORTANT NOTE: The following steps are needed only once for each new containers.*
+*IMPORTANT NOTE: The following steps are needed only once per new container.*
 
-Now that we have the begining of a hierarchy, we need to create the assets that will be used to build the ambiance. So let's find our best generic bird chirps sound and add them into the session.
+Now that we have the beginning of a hierarchy, we need to create the assets that will be used to build the ambiance. So let’s find our best generic bird chirps sound and add them into the session.
 
 ![image](https://github.com/user-attachments/assets/98658cbd-79b2-407d-b01e-0107dea77d56)
 
-Here I took a nice generic bed of birds. The file is 1'40 long. I could keep it as 1 single file but I choose to split it into 10 seconds chunk, you'll see why later.
-Select your items and make sure that "Birds - Generic Bed Chirps" container is also selected, then press "Import Selected Item" in the right panel.
+Here I took a nice generic bed of birds. The file is 1'40 long. I could keep it as one single file, but I chose to split it into 10-second chunks—you’ll see why later.
+Select your items and make sure that the "Birds - Generic Bed Chirps" container is also selected, then press "Import Selected Item" in the right panel.
 
 You should now see all the imported items in the list:
 
@@ -95,23 +96,23 @@ You should now see all the imported items in the list:
 
 **Save Presets**
 ---
-Depending on you workflow, it can be a good moment to save this container. You didn't set any parameter on it, but it contains some files that can be recall and tweak for a later use.
-Let's see how the Preset system works.
-When you save a preset, the path of the imported file is saved. By default, Reaper import your media item into a 'Media Files' directory, located at the project's root. Which means that by default, the item's path is this directory.
-It's not a problem. BUT ! If you delete this folder or the entire project folder, the reference to the item will be lost.
-In the Settings, you can choose a Media Item Directory. By default this field is empty. Once you set a location, all the media file will be copied to this directory when you save a preset (If they don't already exist). Which means that you will have all your file references at the same place. Convinient !
+Depending on your workflow, this might be a good moment to save this container. You haven’t set any parameters yet, but it contains files that can be recalled and tweaked later.
+Let’s see how the preset system works.
+When you save a preset, the path of the imported files is saved. By default, Reaper imports your media items into a 'Media Files' directory, located at the project’s root. This means that by default, the item’s path is this directory.
+It’s not a problem. BUT! If you delete this folder or the entire project folder, the reference to the item will be lost.
+In the Settings, you can choose a Media Item Directory. By default, this field is empty. Once you set a location, all media files will be copied to this directory when you save a preset (if they don’t already exist). This means you’ll have all your file references in the same place. Convenient!
 
 ![image](https://github.com/user-attachments/assets/9597f3dd-1580-442e-ad20-1874e545bd2d)
 
-Now that you've setup your *Media File Directory*, it's time to press the "Save Container" button.
-By default, it will be named as the container. Feel free to change the name as you whish.
+Now that you’ve set up your *Media File Directory*, it’s time to press the "Save Container" button.
+By default, it will be named as the container. Feel free to change the name as you wish.
 
 ![image](https://github.com/user-attachments/assets/5066689b-0cc8-4d11-aff3-e6f82cd94ebf)
 
 *Note: You can find all your preset files into a dedicated folder accessible by pressing the "Open Preset Directory" button.*
 
-If you work in a team and all the users in the team use the same directory, it means that the preset can be shared and used by anyone that have access to this shared directory.
-*Note again: It's not planned to create a customizable "Preset Directory" because it means that anyone can delete/override a shared preset. It's better to keep the presets on the user side. Share them carefully.*
+If you work in a team and everyone uses the same directory, it means the preset can be shared and used by anyone with access to this shared directory.
+*Note again: It’s not planned to create a customizable "Preset Directory" because it means anyone could delete/override a shared preset. It’s better to keep presets user-side. Share them carefully.*
 
 **Parameters**
 ---
@@ -150,10 +151,11 @@ If you remember, I've splitted the 1'40 long file into 10 seconds pieces. Let's 
 Choose the "Absolute" mode and set the interval at a negative value. This value will be the length of the overlap between each item. Let's say we want a 1 second overlap and set the interval at -1 second.
 We don't need any variation of this value, we can set it at 0%.
 
-Pan an valume are up to you. I will let these at the default value. 
-However, since our bed is in stereo and is supposed to be the foundation of the ambiance, let's disable the random pan.
+Pitch and Volume are up to you. I will let these at the default value. 
+However, since our bed is supposed to be the foundation of the ambiance, let's disable the random pan.
 
 You're container should looks like this:
+
 ![image](https://github.com/user-attachments/assets/e9ff62a5-c8c3-4372-bab7-15b2ff21739e)
 
 You can save the preset now if you whish. Keep in mind that with the same preset's name, the previous one will be overriden. Feel free to rename it if you want to have a raw and a tweaked version.
