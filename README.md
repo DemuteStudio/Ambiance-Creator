@@ -1,6 +1,7 @@
 # Reaper Ambiance Creator
 
-TOOL IMAGE
+![image](https://github.com/user-attachments/assets/87fe6cd5-9d4c-4109-a7ef-719ebeac0beb)
+
 
 The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline. 
 
@@ -183,6 +184,9 @@ All right, this is the whole loop ! Now let's populate our database to create re
 
 ![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
 
+
+**Settings**
+---
 
 You can also customize the interface in the Settings.
 
