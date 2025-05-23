@@ -106,6 +106,7 @@ Now that you've setup your *Media File Directory*, it's time to press the "Save 
 By default, it will be named as the container. Feel free to change the name as you whish.
 
 ![image](https://github.com/user-attachments/assets/5066689b-0cc8-4d11-aff3-e6f82cd94ebf)
+
 *Note: You can find all your preset files into a dedicated folder accessible by pressing the "Open Preset Directory" button.*
 
 If you work in a team and all the users in the team use the same directory, it means that the preset can be shared and used by anyone that have access to this shared directory.
@@ -140,6 +141,48 @@ Here is a quick explanation of each parameters:
 - Volume Range: Variation range in dB (e.g., -3 to +3)
 - Randomize Pan: Enables pan randomization
 - Pan Range: Variation range from -100 to +100
+
+
+The tool is meant to create ambiances of any length. If the total length is 20 minutes but your file is only 1 minutes long, it will be copied 20 times.
+If you remember, I've splitted the 1'40 long file into 10 seconds pieces. Let's roll 2d20 and take advantage of that.
+
+Choose the "Absolute" mode and set the interval at a negative value. This value will be the length of the overlap between each item. Let's say we want a 1 second overlap and set the interval at -1 second.
+We don't need any variation of this value, we can set it at 0%.
+
+Pan an valume are up to you. I will let these at the default value. 
+However, since our bed is in stereo and is supposed to be the foundation of the ambiance, let's disable the random pan.
+
+You're container should looks like this:
+![image](https://github.com/user-attachments/assets/e9ff62a5-c8c3-4372-bab7-15b2ff21739e)
+
+You can save the preset now if you whish. Keep in mind that with the same preset's name, the previous one will be overriden. Feel free to rename it if you want to have a raw and a tweaked version.
+
+It's now time to test if these parameters.
+Create a time selection on the Reaper timeline of the desired size.
+You can see that the previous "No time selection, please create one" message turned into a "Create Ambiance" button with an option next to it.
+We'll discuss this option in a second. Press the "Create Ambiance" button.
+
+![image](https://github.com/user-attachments/assets/e74a3e6b-1df7-4dd4-a863-391de374c7c4)
+
+Congratulation ! You have created you're first bed with the tool o//
+
+You can notice that the track structure is the same as the Group/Container.
+Each item overlap each other with a 1 second crossfade and the last item has been trimmed precisly at the end of the time selection.
+Each item has its own pitch and volume.
+![image](https://github.com/user-attachments/assets/468f0715-ffec-47d4-af36-6b3d2bb06184)
+
+if you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container.
+With the "Override existing tracks" checkbox enabled, the track structure will be preserved on each regeneration, no matter the source (Global, Groups or Container). It's interesting when you already tweaked your track volume, pan, fx etc and want to keep that but just change the content.
+If you change the time selection, only this time selection will be generate. If there is content in the time selection, it will be deleted and regenerate. The new content will be crossfade with what is outside the timeselection. The length of this crossfade can be set in the Settings.
+![image](https://github.com/user-attachments/assets/41342f0f-c195-46ed-bbae-af818dac1ad9)
+
+If "Override existing tracks" is disabled, the tracks will be deleted and recreated each time you Generate (It's still local. So if you regenerate only 1 container, only the track related to this container will be deleted/created.)
+
+All right, this is the whole loop ! Now let's populate our database to create reusable container and modular ambiance !
+
+
+![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
+
 
 
 ## Planned future additions:
