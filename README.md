@@ -86,6 +86,44 @@ Now that we have the begining of a hierarchy, we need to create the assets that 
 ![image](https://github.com/user-attachments/assets/98658cbd-79b2-407d-b01e-0107dea77d56)
 
 Here I took a nice generic bed of birds. The file is 1'40 long. I could keep it as 1 single file but I choose to split it into 10 seconds chunk, you'll see why later.
+Select your items and make sure that "Birds - Generic Bed Chirps" container is also selected, then press "Import Selected Item" in the right panel.
+
+You should now see all the imported items in the list:
+
+![image](https://github.com/user-attachments/assets/c3c0c082-ccb2-44d0-9171-6cdac8276027)
+
+**Save Presets**
+---
+Depending on you workflow, it can be a good moment to save this container. You didn't set any parameter on it, but it contains some files that can be recall and tweak for a later use.
+Let's see how the Preset system works.
+When you save a preset, the path of the imported file is saved. By default, Reaper import your media item into a 'Media Files' directory, located at the project's root. Which means that by default, the item's path is this directory.
+It's not a problem. BUT ! If you delete this folder or the entire project folder, the reference to the item will be lost.
+In the Settings, you can choose a Media Item Directory. By default this field is empty. Once you set a location, all the media file will be copied to this directory when you save a preset (If they don't already exist). Which means that you will have all your file references at the same place. Convinient !
+
+![image](https://github.com/user-attachments/assets/9597f3dd-1580-442e-ad20-1874e545bd2d)
+
+Now that you've setup your *Media File Directory*, it's time to press the "Save Container" button.
+By default, it will be named as the container. Feel free to change the name as you whish.
+
+![image](https://github.com/user-attachments/assets/5066689b-0cc8-4d11-aff3-e6f82cd94ebf)
+*Note: You can find all your preset files into a dedicated folder accessible by pressing the "Open Preset Directory" button.*
+
+If you work in a team and all the users in the team use the same directory, it means that the preset can be shared and used by anyone that have access to this shared directory.
+*Note again: It's not planned to create a customizable "Preset Directory" because it means that anyone can delete/override a shared preset. It's better to keep the presets on the user side. Share them carefully.*
+
+**Parameters**
+---
+It's now time to customize our container. If you're familiar with audio middleware, it's the same logic.
+The concept is the defined some parameter to give a specific behavior to a container.
+Both Groups and Containers have parameters. Containers inherit from their parent parent group by default.
+Depending on the nature of your group, it could be a good pratice to first set a general trigger and random settings.
+But for now let's create some specific behavior for our bed of birds.
+
+Select the Birds - Generic Bed Chirps container and press the "Override Parent Settings" checkbox. The parameters appears.
+
+![image](https://github.com/user-attachments/assets/5d9d3708-7eae-408a-97fa-3699896042d0)
+
+
 
 
 ## Planned future additions:
