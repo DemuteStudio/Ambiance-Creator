@@ -212,6 +212,8 @@ You can also customize the interface in the Settings.
 - **Action List**: Adds some Reaper actions to manipulate containers outside of the tool interface.
 - **Drag and Drop**: Be able to drag and drop items directly into a container instead of using the "Import" button.
 - **Reorganize Groups and Containers**: Allow users to manually drag and drop groups and containers to reorganize them.
+- **Export**: For video games, allow the extraction of one instance of each item variation, so they can be exported and used to replicate the generated behavior in an audio middleware.
+- **Middleware API**: Directly create Random or Sequence containers from the tool in your preferred audio middleware.
 
 
 
