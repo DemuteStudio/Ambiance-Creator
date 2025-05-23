@@ -74,14 +74,20 @@ function Utils.clearGroupItems(group)
 end
 
 
--- Function to clear items only within time selection, splitting intersecting items
-function Utils.clearGroupItemsInTimeSelection(containerGroup)
+function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
     if not globals.timeSelectionValid then
         return
     end
     
+    -- Paramètre par défaut pour la marge de crossfade (en secondes)
+    crossfadeMargin = crossfadeMargin or 0.2 -- 200ms par défaut pour permettre les crossfades
+    
     local itemCount = reaper.CountTrackMediaItems(containerGroup)
     local itemsToProcess = {}
+    
+    -- Stocker les références aux items qui vont être préservés pour les crossfades
+    globals.crossfadeItems = globals.crossfadeItems or {}
+    globals.crossfadeItems[containerGroup] = { startItems = {}, endItems = {} }
     
     -- Collect all items that need processing
     for i = 0, itemCount - 1 do
@@ -114,38 +120,69 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup)
             reaper.DeleteTrackMediaItem(containerGroup, item)
             
         elseif itemStart < globals.startTime and itemEnd > globals.endTime then
-            -- Item spans the entire time selection - split into two parts
-            -- First, split at the start of time selection
-            local splitItem1 = reaper.SplitMediaItem(item, globals.startTime)
+            -- Item spans the entire time selection - split into two parts with overlap
+            local splitStart = globals.startTime + crossfadeMargin  -- Couper plus tard
+            local splitEnd = globals.endTime - crossfadeMargin      -- Couper plus tôt
             
-            if splitItem1 then
-                -- Split the second part at the end of time selection
-                local splitItem2 = reaper.SplitMediaItem(splitItem1, globals.endTime)
-                
-                -- Delete the middle part (splitItem1)
-                reaper.DeleteTrackMediaItem(containerGroup, splitItem1)
+            -- Ensure we don't go beyond the original item boundaries
+            splitStart = math.max(splitStart, itemStart)
+            splitEnd = math.min(splitEnd, itemEnd)
+            
+            if splitStart < splitEnd then
+                local splitItem1 = reaper.SplitMediaItem(item, splitStart)
+                if splitItem1 then
+                    local splitItem2 = reaper.SplitMediaItem(splitItem1, splitEnd)
+                    -- Delete the middle part
+                    reaper.DeleteTrackMediaItem(containerGroup, splitItem1)
+                    -- Store references for crossfading
+                    table.insert(globals.crossfadeItems[containerGroup].startItems, item)
+                    if splitItem2 then
+                        table.insert(globals.crossfadeItems[containerGroup].endItems, splitItem2)
+                    end
+                end
             end
             
         elseif itemStart < globals.startTime and itemEnd <= globals.endTime then
-            -- Item starts before time selection and ends within it
-            -- Split at the start of time selection and keep the first part
-            local splitItem = reaper.SplitMediaItem(item, globals.startTime)
+            -- Item starts before and ends within selection
+            local splitPoint = globals.startTime + crossfadeMargin  -- Couper plus tard
+            splitPoint = math.max(splitPoint, itemStart)
+            splitPoint = math.min(splitPoint, itemEnd)
             
-            if splitItem then
-                -- Delete the second part (the part inside time selection)
-                reaper.DeleteTrackMediaItem(containerGroup, splitItem)
+            if splitPoint > itemStart and splitPoint < itemEnd then
+                local splitItem = reaper.SplitMediaItem(item, splitPoint)
+                if splitItem then
+                    reaper.DeleteTrackMediaItem(containerGroup, splitItem)
+                    -- Store reference for crossfading
+                    table.insert(globals.crossfadeItems[containerGroup].startItems, item)
+                end
+            elseif splitPoint >= itemEnd then
+                -- Si le split point est après la fin de l'item, supprimer tout l'item
+                reaper.DeleteTrackMediaItem(containerGroup, item)
             end
             
         elseif itemStart >= globals.startTime and itemEnd > globals.endTime then
-            -- Item starts within time selection and ends after it
-            -- Split at the end of time selection and keep the second part
-            local splitItem = reaper.SplitMediaItem(item, globals.endTime)
+            -- Item starts within and ends after selection
+            local splitPoint = globals.endTime - crossfadeMargin  -- Couper plus tôt
+            splitPoint = math.min(splitPoint, itemEnd)
+            splitPoint = math.max(splitPoint, itemStart)
             
-            -- Delete the first part (the part inside time selection)
-            reaper.DeleteTrackMediaItem(containerGroup, item)
+            if splitPoint < itemEnd and splitPoint > itemStart then
+                local splitItem = reaper.SplitMediaItem(item, splitPoint)
+                reaper.DeleteTrackMediaItem(containerGroup, item)
+                if splitItem then
+                    -- Store reference for crossfading
+                    table.insert(globals.crossfadeItems[containerGroup].endItems, splitItem)
+                end
+            elseif splitPoint <= itemStart then
+                -- Si le split point est avant le début de l'item, supprimer tout l'item
+                reaper.DeleteTrackMediaItem(containerGroup, item)
+            end
         end
     end
 end
+
+
+
 
 
 

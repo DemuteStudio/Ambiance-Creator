@@ -185,6 +185,53 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
             lastItemRef = newItem
         end
     end
+
+    -- Create crossfades with existing items if they exist
+    if globals.crossfadeItems and globals.crossfadeItems[containerGroup] then
+        local crossfadeData = globals.crossfadeItems[containerGroup]
+        
+        -- Create crossfades with items at the start of the time selection
+        for _, startItem in ipairs(crossfadeData.startItems) do
+            local startItemEnd = reaper.GetMediaItemInfo_Value(startItem, "D_POSITION") + 
+                                reaper.GetMediaItemInfo_Value(startItem, "D_LENGTH")
+            
+            -- Find new items that overlap with this start item
+            local containerItemCount = reaper.GetTrackNumMediaItems(containerGroup)
+            for i = 0, containerItemCount - 1 do
+                local newItem = reaper.GetTrackMediaItem(containerGroup, i)
+                local newItemStart = reaper.GetMediaItemInfo_Value(newItem, "D_POSITION")
+                
+                -- Check if the new item overlaps with the start item
+                if newItemStart < startItemEnd and newItemStart >= globals.startTime then
+                    Utils.createCrossfade(startItem, newItem, xfadeshape)
+                    break -- One crossfade per start item is enough
+                end
+            end
+        end
+        
+        -- Create crossfades with items at the end of the time selection
+        for _, endItem in ipairs(crossfadeData.endItems) do
+            local endItemStart = reaper.GetMediaItemInfo_Value(endItem, "D_POSITION")
+            
+            -- Find new items that overlap with this end item
+            local containerItemCount = reaper.GetTrackNumMediaItems(containerGroup)
+            for i = containerItemCount - 1, 0, -1 do -- Start from the end
+                local newItem = reaper.GetTrackMediaItem(containerGroup, i)
+                local newItemStart = reaper.GetMediaItemInfo_Value(newItem, "D_POSITION")
+                local newItemEnd = newItemStart + reaper.GetMediaItemInfo_Value(newItem, "D_LENGTH")
+                
+                -- Check if the new item overlaps with the end item
+                if newItemEnd > endItemStart and newItemEnd <= globals.endTime then
+                    Utils.createCrossfade(newItem, endItem, xfadeshape)
+                    break -- One crossfade per end item is enough
+                end
+            end
+        end
+        
+        -- Clean up the crossfade data after use
+        globals.crossfadeItems[containerGroup] = nil
+    end
+
 end
 
 
@@ -303,7 +350,7 @@ function Generation.generateSingleGroup(groupIndex)
         -- Clear items from existing container groups (respecting override setting)
         for i, containerGroup in ipairs(containerGroups) do
             if globals.overrideExistingTracks then
-                Utils.clearGroupItemsInTimeSelection(containerGroup)
+                Utils.clearGroupItemsInTimeSelection(containerGroup, 0.2)
             else
                 Utils.clearGroupItems(containerGroup)
             end
@@ -430,7 +477,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
     if containerGroup then
         -- Container exists, clear it and regenerate
         if globals.overrideExistingTracks then
-            Utils.clearGroupItemsInTimeSelection(containerGroup)
+            Utils.clearGroupItemsInTimeSelection(containerGroup, 0.2)
         else
             Utils.clearGroupItems(containerGroup)
         end
