@@ -57,10 +57,10 @@ function Utils.findContainerGroup(parentGroupIdx, containerName)
         end
     end
     
-    -- Not found
-    reaper.ShowConsoleMsg(" Container '" .. containerName .. "' not found in folder structure\n")
+    -- Not found - no error message, just return nil
     return nil, nil
 end
+
 
 -- Remove all media items from a given track group
 function Utils.clearGroupItems(group)
