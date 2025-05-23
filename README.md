@@ -89,7 +89,7 @@ Now that we have the beginning of a hierarchy, we need to create the assets that
 
 ![image](https://github.com/user-attachments/assets/98658cbd-79b2-407d-b01e-0107dea77d56)
 
-Here I took a nice generic bed of birds. The file is 1'40 long. I could keep it as one single file, but I chose to split it into 10-second chunks—you’ll see why later.
+Here I took a nice generic bed of birds. The file is 1'40 long. I could keep it as one single file, but I chose to split it into 10 parts—you’ll see why later.
 Select your items and make sure that the "Birds - Generic Bed Chirps" container is also selected, then press "Import Selected Item" in the right panel.
 
 You should now see all the imported items in the list:
