@@ -12,6 +12,7 @@ local defaultSettings = {
     textColor = 0xD5D5D5FF,   -- White text
     uiRounding = 2.0,         -- Default rounding for UI elements
     itemSpacing = 8,          -- Default item spacing
+    crossfadeMargin = 0.2,    -- Default crossfade margin in seconds
 }
 
 -- Initialize the module with global references and load settings
@@ -171,6 +172,9 @@ function Settings.showSettingsWindow(open)
         
         imgui.Separator(ctx)
         
+        -- Ajouter la section crossfade
+        Settings.showCrossfadeSettings()
+
         -- Add the color settings section
         Settings.showAppearanceSettings()
         
@@ -462,5 +466,32 @@ function Settings.showAppearanceSettings()
     imgui.Separator(ctx)
 end
 
+-- Add the crossfade settings section
+function Settings.showCrossfadeSettings()
+    local ctx = globals.ctx
+    local imgui = globals.imgui
+    
+    imgui.TextColored(ctx, 0xFFAA00FF, "Crossfade Settings")
+    imgui.Separator(ctx)
+    
+    -- Crossfade margin/length setting
+    local currentMargin = Settings.getSetting("crossfadeMargin")
+    imgui.PushItemWidth(ctx, 200)
+    local rv, newMargin = imgui.SliderDouble(ctx, "Crossfade Length (seconds)", currentMargin, 0.05, 2.0, "%.3f")
+    imgui.PopItemWidth(ctx)
+    
+    if rv then
+        Settings.setSetting("crossfadeMargin", newMargin)
+        -- Synchroniser avec la variable globale si elle existe
+        if globals.crossfadeMargin then
+            globals.crossfadeMargin = newMargin
+        end
+    end
+    
+    imgui.SameLine(ctx)
+    globals.Utils.HelpMarker("Determines the length of automatic crossfades created when regenerating content in a time selection. A higher value creates longer and smoother transitions")
+    
+    imgui.Separator(ctx)
+end
 
 return Settings

@@ -350,7 +350,7 @@ function Generation.generateSingleGroup(groupIndex)
         -- Clear items from existing container groups (respecting override setting)
         for i, containerGroup in ipairs(containerGroups) do
             if globals.overrideExistingTracks then
-                Utils.clearGroupItemsInTimeSelection(containerGroup, 0.2)
+                Utils.clearGroupItemsInTimeSelection(containerGroup)
             else
                 Utils.clearGroupItems(containerGroup)
             end
@@ -477,7 +477,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
     if containerGroup then
         -- Container exists, clear it and regenerate
         if globals.overrideExistingTracks then
-            Utils.clearGroupItemsInTimeSelection(containerGroup, 0.2)
+            Utils.clearGroupItemsInTimeSelection(containerGroup)
         else
             Utils.clearGroupItems(containerGroup)
         end

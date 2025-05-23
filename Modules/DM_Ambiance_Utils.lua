@@ -73,14 +73,13 @@ function Utils.clearGroupItems(group)
     return true
 end
 
-
 function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
     if not globals.timeSelectionValid then
         return
     end
     
     -- Paramètre par défaut pour la marge de crossfade (en secondes)
-    crossfadeMargin = crossfadeMargin or 0.2 -- 200ms par défaut pour permettre les crossfades
+    crossfadeMargin = globals.Settings.getSetting("crossfadeMargin") or crossfadeMargin
     
     local itemCount = reaper.CountTrackMediaItems(containerGroup)
     local itemsToProcess = {}
@@ -180,8 +179,6 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
         end
     end
 end
-
-
 
 
 
