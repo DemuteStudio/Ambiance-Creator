@@ -469,9 +469,12 @@ function UI.ShowMainWindow(open)
         end
         if globals.Utils.checkTimeSelection() then
             UI_Generation.drawMainGenerationButton()
+            globals.imgui.SameLine(globals.ctx)
+            UI_Generation.drawOverrideExistingTracksButton()
         else
             UI_Generation.drawTimeSelectionInfo()
         end
+
         globals.imgui.Separator(globals.ctx)
 
         -- Two-panel layout dimensions

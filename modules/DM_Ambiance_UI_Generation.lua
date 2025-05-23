@@ -33,6 +33,16 @@ function UI_Generation.drawMainGenerationButton()
     return buttonPressed
 end
 
+function UI_Generation.drawOverrideExistingTracksButton()
+    local changed, newValue = imgui.Checkbox(globals.ctx, "Override existing tracks", globals.overrideExistingTracks)
+    
+    if changed then
+        globals.overrideExistingTracks = newValue
+    end
+    
+    return changed
+end
+
 -- Function to display time selection information
 function UI_Generation.drawTimeSelectionInfo()
     if globals.Utils.checkTimeSelection() then
