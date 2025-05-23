@@ -182,7 +182,7 @@ Each item has its own pitch and volume.
 
 ![image](https://github.com/user-attachments/assets/468f0715-ffec-47d4-af36-6b3d2bb06184)
 
-If you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container.
+If you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container. You can also regenerate a whole group or the whole ambiance. It's up to you. Your call. Your decision. Trust yourself.
 
 
 - With the "Override existing tracks" checkbox enabled, the track structure will be preserved on each regeneration, no matter the source (Global, Groups, or Container). This is handy if you’ve already tweaked your track volume, pan, FX, etc., and want to keep that but just change the content.
