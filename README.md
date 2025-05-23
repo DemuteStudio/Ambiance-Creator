@@ -123,7 +123,23 @@ Select the Birds - Generic Bed Chirps container and press the "Override Parent S
 
 ![image](https://github.com/user-attachments/assets/5d9d3708-7eae-408a-97fa-3699896042d0)
 
+Here is a quick explanation of each parameters:
 
+**Trigger Settings**
+- Interval Mode: Choice between Absolute, Relative, or Coverage
+- Absolute: Fixed interval in seconds (can be negative to create overlaps)
+- Relative: Interval expressed as a percentage of the time selection
+- Coverage: Percentage of the time selection to fill
+- Interval: Time interval between sounds (in seconds or percentage depending on the mode)
+- Random variation (%): Percentage of random variation applied to the interval
+
+**Randomize Parameters**
+- Randomize Pitch: Enables pitch randomization
+- Pitch Range: Variation range in semitones (e.g., -3 to +3)
+- Randomize Volume: Enables volume randomization
+- Volume Range: Variation range in dB (e.g., -3 to +3)
+- Randomize Pan: Enables pan randomization
+- Pan Range: Variation range from -100 to +100
 
 
 ## Planned future additions:
