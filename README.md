@@ -152,7 +152,7 @@ Here is a quick explanation of each parameters:
 
 
 The tool is meant to create ambiances of any length. If the total length is 20 minutes but your file is only 1 minute long, it will be copied 20 times.
-If you remember, I split the 1'40 long file into 10-second pieces. Let’s roll 2d20 and take advantage of that.
+If you remember, I split the 1'40 long file into 10 pieces. Let’s roll 2d20 and take advantage of that.
 
 Choose the "Absolute" mode and set the interval to a negative value. This value will be the length of the overlap between each item. Let’s say we want a 1-second overlap, so set the interval to -1 second.
 We don’t need any variation for this value, so set it to 0%.
