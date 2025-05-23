@@ -552,38 +552,6 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
         end
     end
 
-        -- Insert the new container after the last existing container
-        local insertPosition = lastContainerIdx + 1
-        reaper.InsertTrackAtIndex(insertPosition, true)
-        containerGroup = reaper.GetTrack(0, insertPosition)
-        reaper.GetSetMediaTrackInfo_String(containerGroup, "P_NAME", container.name, true)
-
-        -- Set folder depth to 0 (normal track in folder)
-        reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", 0)
-
-        -- Generate items for this new container
-        Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
-
-        -- Fix the folder structure: ensure the last container has -1 depth
-        -- Re-scan to get updated container list
-        local updatedContainers = {}
-        folderDepth = 1
-        for i = parentGroupIdx + 1, reaper.CountTracks(0) - 1 do
-            local childGroup = reaper.GetTrack(0, i)
-            local depth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
-            
-            table.insert(updatedContainers, childGroup)
-            folderDepth = folderDepth + depth
-            
-            if folderDepth <= 0 then break end
-        end
-
-        -- Set all containers to depth 0 except the last one to -1
-        for i = 1, #updatedContainers do
-            local folderState = (i == #updatedContainers) and -1 or 0
-            reaper.SetMediaTrackInfo_Value(updatedContainers[i], "I_FOLDERDEPTH", folderState)
-        end
-
     reaper.PreventUIRefresh(-1)
     reaper.UpdateArrange()
     reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in group '" .. group.name .. "'", -1)
