@@ -39,7 +39,13 @@ function UI_Generation.drawOverrideExistingTracksButton()
     if changed then
         globals.overrideExistingTracks = newValue
     end
-    
+
+    Utils.HelpMarker("Determines clearing behavior before generation:\n" ..
+                    "-Enabled:\n" ..
+                    "Preserve tracks and content outside time selection, only replace content within selection\n\n" ..
+                    "-Disabled:\n" ..
+                    "Clear all existing tracks and content from tracks before generating new content")
+
     return changed
 end
 

@@ -8,6 +8,7 @@ end
 
 -- Display a help marker "(?)" with a tooltip containing the provided description
 function Utils.HelpMarker(desc)
+    imgui.SameLine(globals.ctx)
     imgui.TextDisabled(globals.ctx, '(?)')
     if imgui.BeginItemTooltip(globals.ctx) then
         imgui.PushTextWrapPos(globals.ctx, imgui.GetFontSize(globals.ctx) * 35.0)

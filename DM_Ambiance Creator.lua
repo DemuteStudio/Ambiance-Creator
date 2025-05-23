@@ -45,7 +45,8 @@ local globals = {
     selectedPresetIndex = -1,         -- Index of the currently selected global preset
     activePopups = {},                -- Table tracking active popup windows
     showMediaDirWarning = false,      -- Flag to display a warning if the media directory is not configured
-    mediaWarningShown = false         -- Prevents showing the media warning multiple times
+    mediaWarningShown = false,        -- Prevents showing the media warning multiple times
+    overrideExistingTracks = true,    -- Default behavior for generation
 }
 
 -- Main loop function for the GUI; called repeatedly via reaper.defer
