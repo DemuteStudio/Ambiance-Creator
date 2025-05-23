@@ -177,19 +177,26 @@ Congratulation ! You’ve created your first bed with the tool o//
 
 You’ll notice that the track structure matches the Group/Container.
 Each item overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
+
 Each item has its own pitch and volume.
+
 ![image](https://github.com/user-attachments/assets/468f0715-ffec-47d4-af36-6b3d2bb06184)
 
-if you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container.
+If you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container.
+
 
 - With the "Override existing tracks" checkbox enabled, the track structure will be preserved on each regeneration, no matter the source (Global, Groups, or Container). This is handy if you’ve already tweaked your track volume, pan, FX, etc., and want to keep that but just change the content.
 If you change the time selection, only that time selection will be generated. If there’s content in the time selection, it will be deleted and regenerated. The new content will be crossfaded with what’s outside the time selection. The length of this crossfade can be set in the Settings.
+
 ![image](https://github.com/user-attachments/assets/41342f0f-c195-46ed-bbae-af818dac1ad9)
+
 
 - If "Override existing tracks" is disabled, the tracks will be deleted and recreated each time you Generate (It's still local. So if you regenerate only 1 container, only the track related to this container will be deleted/created.)
 
 **Tadaaaa**
-All right, that’s the whole loop! Now let’s populate our database to create reusable containers and modular ambiances!
+---
+
+All right, that’s the whole loop! Now let’s populate our database, play around with the parameters to create reusable containers and modular ambiances!
 
 
 ![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
