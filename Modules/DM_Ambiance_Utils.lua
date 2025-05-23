@@ -73,6 +73,82 @@ function Utils.clearGroupItems(group)
     return true
 end
 
+
+-- Function to clear items only within time selection, splitting intersecting items
+function Utils.clearGroupItemsInTimeSelection(containerGroup)
+    if not globals.timeSelectionValid then
+        return
+    end
+    
+    local itemCount = reaper.CountTrackMediaItems(containerGroup)
+    local itemsToProcess = {}
+    
+    -- Collect all items that need processing
+    for i = 0, itemCount - 1 do
+        local item = reaper.GetTrackMediaItem(containerGroup, i)
+        local itemStart = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+        local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+        local itemEnd = itemStart + itemLength
+        
+        -- Check intersection with time selection
+        if itemEnd > globals.startTime and itemStart < globals.endTime then
+            table.insert(itemsToProcess, {
+                item = item,
+                start = itemStart,
+                length = itemLength,
+                ending = itemEnd
+            })
+        end
+    end
+    
+    -- Process items in reverse order to avoid index issues
+    for i = #itemsToProcess, 1, -1 do
+        local itemData = itemsToProcess[i]
+        local item = itemData.item
+        local itemStart = itemData.start
+        local itemLength = itemData.length
+        local itemEnd = itemData.ending
+        
+        if itemStart >= globals.startTime and itemEnd <= globals.endTime then
+            -- Item is completely within time selection - delete it
+            reaper.DeleteTrackMediaItem(containerGroup, item)
+            
+        elseif itemStart < globals.startTime and itemEnd > globals.endTime then
+            -- Item spans the entire time selection - split into two parts
+            -- First, split at the start of time selection
+            local splitItem1 = reaper.SplitMediaItem(item, globals.startTime)
+            
+            if splitItem1 then
+                -- Split the second part at the end of time selection
+                local splitItem2 = reaper.SplitMediaItem(splitItem1, globals.endTime)
+                
+                -- Delete the middle part (splitItem1)
+                reaper.DeleteTrackMediaItem(containerGroup, splitItem1)
+            end
+            
+        elseif itemStart < globals.startTime and itemEnd <= globals.endTime then
+            -- Item starts before time selection and ends within it
+            -- Split at the start of time selection and keep the first part
+            local splitItem = reaper.SplitMediaItem(item, globals.startTime)
+            
+            if splitItem then
+                -- Delete the second part (the part inside time selection)
+                reaper.DeleteTrackMediaItem(containerGroup, splitItem)
+            end
+            
+        elseif itemStart >= globals.startTime and itemEnd > globals.endTime then
+            -- Item starts within time selection and ends after it
+            -- Split at the end of time selection and keep the second part
+            local splitItem = reaper.SplitMediaItem(item, globals.endTime)
+            
+            -- Delete the first part (the part inside time selection)
+            reaper.DeleteTrackMediaItem(containerGroup, item)
+        end
+    end
+end
+
+
+
 -- Open the preset folder in the system file explorer
 function Utils.openPresetsFolder(type, groupName)
     local path = globals.Presets.getPresetsPath(type, groupName)
