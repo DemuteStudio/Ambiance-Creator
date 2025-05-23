@@ -99,7 +99,9 @@ You should now see all the imported items in the list:
 **Save Presets**
 ---
 Depending on your workflow, this might be a good moment to save this container. You haven’t set any parameters yet, but it contains files that can be recalled and tweaked later.
+
 Let’s see how the preset system works.
+
 When you save a preset, the path of the imported files is saved. By default, Reaper imports your media items into a 'Media Files' directory, located at the project’s root. This means that by default, the item’s path is this directory.
 It’s not a problem. BUT! If you delete this folder or the entire project folder, the reference to the item will be lost.
 In the Settings, you can choose a Media Item Directory. By default, this field is empty. Once you set a location, all media files will be copied to this directory when you save a preset (if they don’t already exist). This means you’ll have all your file references in the same place. Convenient!
