@@ -116,13 +116,14 @@ If you work in a team and everyone uses the same directory, it means the preset 
 
 **Parameters**
 ---
-It's now time to customize our container. If you're familiar with audio middleware, it's the same logic.
-The concept is the defined some parameter to give a specific behavior to a container.
-Both Groups and Containers have parameters. Containers inherit from their parent parent group by default.
-Depending on the nature of your group, it could be a good pratice to first set a general trigger and random settings.
-But for now let's create some specific behavior for our bed of birds.
 
-Select the Birds - Generic Bed Chirps container and press the "Override Parent Settings" checkbox. The parameters appears.
+Now it’s time to customize our container. If you’re familiar with audio middleware, it’s the same logic.
+The concept is to define some parameters to give a specific behavior to a container.
+Both Groups and Containers have parameters. Containers inherit from their parent group by default.
+Depending on the nature of your group, it can be good practice to first set a global rule for trigger and random settings.
+But for now, let’s create some specific behavior for our bed of birds.
+
+Select the "Birds - Generic Bed Chirps" container and check the "Override Parent Settings" box. The parameters will appear.
 
 ![image](https://github.com/user-attachments/assets/5d9d3708-7eae-408a-97fa-3699896042d0)
 
@@ -145,43 +146,45 @@ Here is a quick explanation of each parameters:
 - Pan Range: Variation range from -100 to +100
 
 
-The tool is meant to create ambiances of any length. If the total length is 20 minutes but your file is only 1 minutes long, it will be copied 20 times.
-If you remember, I've splitted the 1'40 long file into 10 seconds pieces. Let's roll 2d20 and take advantage of that.
+The tool is meant to create ambiances of any length. If the total length is 20 minutes but your file is only 1 minute long, it will be copied 20 times.
+If you remember, I split the 1'40 long file into 10-second pieces. Let’s roll 2d20 and take advantage of that.
 
-Choose the "Absolute" mode and set the interval at a negative value. This value will be the length of the overlap between each item. Let's say we want a 1 second overlap and set the interval at -1 second.
-We don't need any variation of this value, we can set it at 0%.
+Choose the "Absolute" mode and set the interval to a negative value. This value will be the length of the overlap between each item. Let’s say we want a 1-second overlap, so set the interval to -1 second.
+We don’t need any variation for this value, so set it to 0%.
 
-Pitch and Volume are up to you. I will let these at the default value. 
-However, since our bed is supposed to be the foundation of the ambiance, let's disable the random pan.
+Pitch and Volume are up to you. I’ll leave these at their default values.
+However, since our bed is supposed to be the foundation of the ambiance, let’s disable random pan.
 
-You're container should looks like this:
+Your container should look like this:
 
 ![image](https://github.com/user-attachments/assets/e9ff62a5-c8c3-4372-bab7-15b2ff21739e)
 
-You can save the preset now if you whish. Keep in mind that with the same preset's name, the previous one will be overriden. Feel free to rename it if you want to have a raw and a tweaked version.
+You can save the preset now if you whish. Keep in mind that with the same preset name, the previous one will be overwritten. Feel free to rename it if you want to have both a raw and a tweaked version.
 
-It's now time to test if these parameters.
+Now it’s time to test these parameters.
 Create a time selection on the Reaper timeline of the desired size.
-You can see that the previous "No time selection, please create one" message turned into a "Create Ambiance" button with an option next to it.
-We'll discuss this option in a second. Press the "Create Ambiance" button.
+You’ll see that the previous "No time selection, please create one" message has turned into a "Create Ambiance" button with an option next to it.
+We’ll discuss this option in a second. Press the "Create Ambiance" button.
 
 ![image](https://github.com/user-attachments/assets/e74a3e6b-1df7-4dd4-a863-391de374c7c4)
 
-Congratulation ! You have created you're first bed with the tool o//
+Congratulation ! You’ve created your first bed with the tool o//
 
-You can notice that the track structure is the same as the Group/Container.
-Each item overlap each other with a 1 second crossfade and the last item has been trimmed precisly at the end of the time selection.
+You’ll notice that the track structure matches the Group/Container.
+Each item overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
 Each item has its own pitch and volume.
 ![image](https://github.com/user-attachments/assets/468f0715-ffec-47d4-af36-6b3d2bb06184)
 
 if you're not satisfied with the result, you can change the parameters and press the "Regenerate" button next to the container.
-With the "Override existing tracks" checkbox enabled, the track structure will be preserved on each regeneration, no matter the source (Global, Groups or Container). It's interesting when you already tweaked your track volume, pan, fx etc and want to keep that but just change the content.
-If you change the time selection, only this time selection will be generate. If there is content in the time selection, it will be deleted and regenerate. The new content will be crossfade with what is outside the timeselection. The length of this crossfade can be set in the Settings.
+
+- With the "Override existing tracks" checkbox enabled, the track structure will be preserved on each regeneration, no matter the source (Global, Groups, or Container). This is handy if you’ve already tweaked your track volume, pan, FX, etc., and want to keep that but just change the content.
+If you change the time selection, only that time selection will be generated. If there’s content in the time selection, it will be deleted and regenerated. The new content will be crossfaded with what’s outside the time selection. The length of this crossfade can be set in the Settings.
 ![image](https://github.com/user-attachments/assets/41342f0f-c195-46ed-bbae-af818dac1ad9)
 
-If "Override existing tracks" is disabled, the tracks will be deleted and recreated each time you Generate (It's still local. So if you regenerate only 1 container, only the track related to this container will be deleted/created.)
+- If "Override existing tracks" is disabled, the tracks will be deleted and recreated each time you Generate (It's still local. So if you regenerate only 1 container, only the track related to this container will be deleted/created.)
 
-All right, this is the whole loop ! Now let's populate our database to create reusable container and modular ambiance !
+**Tadaaaa**
+All right, that’s the whole loop! Now let’s populate our database to create reusable containers and modular ambiances!
 
 
 ![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
@@ -199,30 +202,20 @@ You can also customize the interface in the Settings.
 ## Planned future additions:
 
 - **Volume Slider for Groups and Containers**: A dedicated volume control slider will be added to both groups and containers, allowing for more precise level adjustments without affecting the randomization parameters.
-    
 - **Preview Listening for Containers/Groups**: A new function will enable you to preview the sound of a container or an entire group directly within the interface before generating it in REAPER, saving time in the creative process.
-    
 - **Advanced File Splitting**: The ability to split longer audio files into multiple segments and randomize their in/out points. This will allow for more variation from a single source file and enable creating evolving soundscapes from fewer original assets.
-    
 - **Flexible Group Generation Options**: The ability to generate content into a new group, a specific existing group chosen from a list, or directly into the currently selected group, providing more workflow flexibility and integration with existing projects.
-    
-- **Master Group**: A group to rule them all. Allows you to create a master group to have better group organization.
-    
+- **Master Group**: A group to rule them all. Allows you to create a master group for better group organization.
 - **Settings Menu**: Introduce a user settings menu to offer a certain level of customization, allowing users to tailor the tool to their preferences and workflow needs.
-    
 - **Chunk Mode**: Implement a fourth mode that enables the creation of “chunks” of sounds. Instead of randomly spacing sounds across the entire time selection, this mode will allow you to define active sound periods (e.g., 10 seconds of sound followed by 20 seconds of silence), repeating this pattern throughout the selection. This will make it possible to structure sound density more precisely over time.
-    
-- **UI Improvements**: Once the core features are complete, the overall user interface will be polished to ensure a cleaner, more intuitive, and visually appealing experience.**
-
-- **Action list**: Adds some reaper action to manipulate containers outside of the tool interface.
-
-- **Drag and Drop**: Being able to drag and drop items directly into a container instead of using the "Import" button.
-
-- **Reorganize Groups and Containers**: Allow the use to manually drag and drop groups and containers to reorganize them.
+- **UI Improvements**: Once the core features are complete, the overall user interface will be polished to ensure a cleaner, more intuitive, and visually appealing experience.
+- **Action List**: Adds some Reaper actions to manipulate containers outside of the tool interface.
+- **Drag and Drop**: Be able to drag and drop items directly into a container instead of using the "Import" button.
+- **Reorganize Groups and Containers**: Allow users to manually drag and drop groups and containers to reorganize them.
 
 
 
 ## Known Issues
 
-- None atm
+- None at the moment. (If you find one, please send it to the nearest black hole.)
     
