@@ -122,6 +122,15 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
     -- Add group button
     if safeImGui(imgui.Button, globals.ctx, "Add Group") then
         table.insert(globals.groups, globals.Structures.createGroup())
+        
+        -- Sélectionner automatiquement le nouveau groupe
+        local newGroupIndex = #globals.groups
+        globals.selectedGroupIndex = newGroupIndex
+        globals.selectedContainerIndex = nil
+        clearContainerSelections()
+        globals.inMultiSelectMode = false
+        globals.shiftAnchorGroupIndex = newGroupIndex
+        globals.shiftAnchorContainerIndex = nil
     end
     safeImGui(imgui.Separator, globals.ctx)
 
@@ -175,6 +184,16 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                     -- Add container button
                     if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
                         table.insert(group.containers, globals.Structures.createContainer())
+                        
+                        -- Automatically select the new container
+                        clearContainerSelections()
+                        local newContainerIndex = #group.containers
+                        toggleContainerSelection(i, newContainerIndex)
+                        globals.selectedGroupIndex = i
+                        globals.selectedContainerIndex = newContainerIndex
+                        globals.inMultiSelectMode = false
+                        globals.shiftAnchorGroupIndex = i
+                        globals.shiftAnchorContainerIndex = newContainerIndex
                     end
 
                     -- Help marker for multi-selection
