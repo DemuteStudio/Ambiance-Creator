@@ -162,6 +162,8 @@ end
 function Presets.loadPreset(name)
   if name == "" then return false end
 
+  globals.selectedContainers = {}
+  
   local path = Presets.getPresetsPath("Global") .. name .. ".lua"
   local success, presetData = pcall(dofile, path)
 

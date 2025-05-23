@@ -429,6 +429,10 @@ end
 
 -- Draw the right panel with details for the selected container or group
 local function drawRightPanel(width)
+    if globals.selectedContainers == {} then
+        return
+    end
+        
     if globals.inMultiSelectMode then
         UI_MultiSelection.drawMultiSelectionPanel(width)
         return
