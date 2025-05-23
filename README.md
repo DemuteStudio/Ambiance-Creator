@@ -184,6 +184,11 @@ All right, this is the whole loop ! Now let's populate our database to create re
 ![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
 
 
+You can also customize the interface in the Settings.
+
+![image](https://github.com/user-attachments/assets/b0199a14-b829-4b91-8b05-8b657c220c9e)
+
+
 
 ## Planned future additions:
 
