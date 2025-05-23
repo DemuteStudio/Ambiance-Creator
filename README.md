@@ -33,7 +33,7 @@ To install Reapack follow these steps:
 4. Restart REAPER. Done!
 
 If you have Reapack installed go to **Extensions->Reapack->Import Repositories** paste the following link there and press **Ok**.
-
+--> Need to create the link
 Then in **Extensions->Reapack->Manage repositories** you should see **DM_AmbianceCreator** double click it and then press **Install/update DM_AmbianceCreator** and choose **Install all packages in this repository**. It should Install without any errors.
 
 To install **ReaImGui**, find **ReaTeam Extensions** in Manage repositories. Then if you only want ReaImGui Choose **Install individual packages in this repository** and find ReaImGui.
