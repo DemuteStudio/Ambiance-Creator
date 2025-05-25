@@ -164,7 +164,7 @@ Your container should look like this:
 
 ![image](https://github.com/user-attachments/assets/e9ff62a5-c8c3-4372-bab7-15b2ff21739e)
 
-You can save the preset now if you wish. Keep in mind that with the same preset name, the previous one will be overwritten. Feel free to rename it if you want to have both a raw and a tweaked version.
+You can save the container as a preset now if you wish. Keep in mind that with the same preset name, the previous one will be overwritten. Feel free to rename it if you want to have both a raw and a tweaked version.
 
 Now it’s time to test these parameters.
 Create a time selection on the Reaper timeline of the desired size.
