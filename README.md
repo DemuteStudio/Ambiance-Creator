@@ -176,7 +176,7 @@ We’ll discuss this option in a second. Press the "Create Ambiance" button.
 Congratulation ! You’ve created your first bed with the tool o//
 
 You’ll notice that the track structure matches the Group/Container.
-Each item overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
+Each item are placed randomly, overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
 
 Each item has its own pitch and volume.
 
