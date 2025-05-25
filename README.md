@@ -3,7 +3,7 @@
 ![image](https://github.com/user-attachments/assets/87fe6cd5-9d4c-4109-a7ef-719ebeac0beb)
 
 
-The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline.
+The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 
 We wanted to make ambiance creation and preview for games and linear content as easy and efficient as possible. Here are the main pillars for this tool:
 
