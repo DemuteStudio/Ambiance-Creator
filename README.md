@@ -232,5 +232,5 @@ You can also customize the interface in the Settings.
 
 ## Known Issues
 
-- None at the moment. (If you find one, please send it to the nearest black hole.)
+- None at the moment. (If you find one, please contact us.)
     
