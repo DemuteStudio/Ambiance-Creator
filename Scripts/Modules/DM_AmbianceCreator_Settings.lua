@@ -1,8 +1,5 @@
 --[[
-@description DM_Ambiance Creator - Settings
-@version 1.0
 @noindex
-@version 1.0
 --]]
 
 local Settings = {}
