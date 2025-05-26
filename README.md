@@ -3,7 +3,7 @@
 ![image](https://github.com/user-attachments/assets/87fe6cd5-9d4c-4109-a7ef-719ebeac0beb)
 
 
-The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline.
+The **Ambiance Creator** is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 
 We wanted to make ambiance creation and preview for games and linear content as easy and efficient as possible. Here are the main pillars for this tool:
 
@@ -164,7 +164,7 @@ Your container should look like this:
 
 ![image](https://github.com/user-attachments/assets/e9ff62a5-c8c3-4372-bab7-15b2ff21739e)
 
-You can save the preset now if you wish. Keep in mind that with the same preset name, the previous one will be overwritten. Feel free to rename it if you want to have both a raw and a tweaked version.
+You can save the container as a preset now if you wish. Keep in mind that with the same preset name, the previous one will be overwritten. Feel free to rename it if you want to have both a raw and a tweaked version.
 
 Now it’s time to test these parameters.
 Create a time selection on the Reaper timeline of the desired size.
@@ -176,7 +176,7 @@ We’ll discuss this option in a second. Press the "Create Ambiance" button.
 Congratulation ! You’ve created your first bed with the tool o//
 
 You’ll notice that the track structure matches the Group/Container.
-Each item overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
+Each item are placed randomly, overlaps the next with a 1-second crossfade, and the last item has been trimmed precisely at the end of the time selection.
 
 Each item has its own pitch and volume.
 
@@ -197,6 +197,7 @@ If you change the time selection, only that time selection will be generated. If
 ---
 
 All right, that’s the whole loop! Now let’s populate our database, play around with the parameters to create reusable containers and modular ambiances!
+Once you're done, you can save the whole structure as one single preset "Winter Forest" that can be recalled at any time. You can also save the groups to reuse them in other contexts, or just use the containers to manually build another type of ambiance. The possibilities are endless.
 
 
 ![image](https://github.com/user-attachments/assets/b602d03f-6ef0-4397-b9ef-13664d746d73)
@@ -231,5 +232,5 @@ You can also customize the interface in the Settings.
 
 ## Known Issues
 
-- None at the moment. (If you find one, please send it to the nearest black hole.)
+- None at the moment. (If you find one, please contact us.)
     
