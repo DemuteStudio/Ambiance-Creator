@@ -1,11 +1,11 @@
 --[[
 @description DM_Ambiance Creator
-@version 1.1
+@version 1.2
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
 @provides
-    [main] Modules/*.lua
+    [nomain] Modules/*.lua
 @changelog
     1.0
         Initial Release
