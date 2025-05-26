@@ -1,7 +1,7 @@
 --[[
-Sound Randomizer for REAPER - UI Group Module
-This module handles group settings UI display and editing
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI_Group = {}
 

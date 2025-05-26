@@ -1,4 +1,9 @@
--- DM_Ambiance_Structures.lua (modifié)
+--[[
+@noindex
+@version 1.0
+--]]
+
+
 local Structures = {}
 
 local globals = {}

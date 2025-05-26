@@ -1,4 +1,8 @@
--- DM_Ambiance_Generation.lua (modifié)
+--[[
+@noindex
+@version 1.0
+--]]
+
 local Generation = {}
 
 local globals = {}

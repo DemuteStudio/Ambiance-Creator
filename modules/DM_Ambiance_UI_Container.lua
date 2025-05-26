@@ -1,7 +1,7 @@
 --[[
-Sound Randomizer for REAPER - UI Container Module
-This module handles the UI for displaying and editing container settings.
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI_Container = {}
 local globals = {}

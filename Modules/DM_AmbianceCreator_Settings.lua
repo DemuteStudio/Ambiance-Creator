@@ -1,4 +1,7 @@
--- DM_AmbianceCreator_Settings.lua
+--[[
+@noindex
+@version 1.0
+--]]
 
 local Settings = {}
 

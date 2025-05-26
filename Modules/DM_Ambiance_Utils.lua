@@ -1,3 +1,8 @@
+--[[
+@noindex
+@version 1.0
+--]]
+
 local Utils = {}
 local globals = {}
 

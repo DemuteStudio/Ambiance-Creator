@@ -1,10 +1,7 @@
 --[[
-
-Sound Randomizer for REAPER - UI MultiSelection Module
-
-This module handles the multi-selection and batch editing of containers
-
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI_MultiSelection = {}
 

@@ -1,9 +1,7 @@
 --[[
-Sound Randomizer for REAPER
-This script provides a GUI interface for creating randomized ambient sounds.
-It allows creating groups with containers of audio items that can be randomized by pitch, volume, and pan.
-Uses ReaImGui for UI rendering.
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI = {}
 local globals = {}

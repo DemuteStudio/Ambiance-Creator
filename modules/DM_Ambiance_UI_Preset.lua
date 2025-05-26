@@ -1,7 +1,7 @@
 --[[
-Sound Randomizer for REAPER - UI Preset Module
-This module manages the user interface for global presets management.
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI_Preset = {}
 local globals = {}

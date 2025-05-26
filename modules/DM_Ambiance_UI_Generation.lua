@@ -1,7 +1,7 @@
 --[[
-Sound Randomizer for REAPER - UI Generation Module
-This module handles UI components related to the sound generation process
-]]
+@noindex
+@version 1.0
+--]]
 
 local UI_Generation = {}
 local globals = {}

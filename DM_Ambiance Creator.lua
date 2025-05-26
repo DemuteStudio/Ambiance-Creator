@@ -1,6 +1,15 @@
--- Sound Randomizer - Reaper Script
--- Allows creating groups and containers to organize audio samples with advanced preset management
--- Features selective regeneration of individual groups and containers
+--[[
+@description DM_Ambiance Creator
+@version 1.0
+@about
+    The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
+@author Anthony Deneyer for Demute
+@provides
+    Modules/*.lua
+@changelog
+    1.0
+        Initial Release
+--]]
 
 -- Check if ReaImGui is available; display an error and exit if not
 if not reaper.ImGui_CreateContext then
