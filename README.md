@@ -21,7 +21,7 @@ Coming soon.
 
 ### Requirements
 
-- **Reaper**: The package was made for Reaper 7.22+ but should work with older versions as well.
+- **Reaper**: The package was made for Reaper 7.39+ but should work with older versions as well.
 - **ReaPack**: Used to import the package into Reaper.
 - **ReaImGui**: Used for the whole interface. It's included in the ReaTeam Extensions package, which you can install with ReaPack. To check if it's installed, you should see a ReaImGui tab under the ReaScript tab in Preferences: **Options > Preferences > Plug-ins > ReaImGui**.
 
