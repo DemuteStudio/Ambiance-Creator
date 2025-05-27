@@ -36,7 +36,7 @@ If you have Reapack installed go to **Extensions->Reapack->Import Repositories**
 
 --> https://github.com/DemuteStudio/Ambiance-Creator/raw/main/index.xml
 
-Then in **Extensions->Reapack->Manage repositories** you should see **DM_AmbianceCreator** double click it and then press **Install/update DM_AmbianceCreator** and choose **Install all packages in this repository**. It should Install without any errors.
+Then in **Extensions->Reapack->Manage repositories** you should see **AmbianceCreator** double click it and then press **Install/update AmbianceCreator** and choose **Install all packages in this repository**. It should Install without any errors.
 
 To install **ReaImGui**, find **ReaTeam Extensions** in Manage repositories. Then if you only want ReaImGui Choose **Install individual packages in this repository** and find ReaImGui.
 
