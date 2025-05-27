@@ -1,7 +1,7 @@
 --[[
 
 @noindex
-
+@version 1.1
 --]]
 
 local Settings = {}
