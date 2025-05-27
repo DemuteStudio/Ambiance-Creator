@@ -9,6 +9,8 @@
 @changelog
     1.0
         Initial Release
+    1.1
+        Fix freeze issue with sliders in the setting windows
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
