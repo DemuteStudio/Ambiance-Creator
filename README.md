@@ -36,7 +36,7 @@ If you have Reapack installed go to **Extensions->Reapack->Import Repositories**
 
 --> https://github.com/DemuteStudio/Ambiance-Creator/raw/main/index.xml
 
-Then in **Extensions->Reapack->Manage repositories** you should see **DM_AmbianceCreator** double click it and then press **Install/update DM_AmbianceCreator** and choose **Install all packages in this repository**. It should Install without any errors.
+Then in **Extensions->Reapack->Manage repositories** you should see **Ambiance Creator** double click it and then press **Install/update Ambiance Creator** and choose **Install all packages in this repository**. It should Install without any errors.
 
 To install **ReaImGui**, find **ReaTeam Extensions** in Manage repositories. Then if you only want ReaImGui Choose **Install individual packages in this repository** and find ReaImGui.
 
@@ -227,10 +227,14 @@ You can also customize the interface in the Settings.
 - **Reorganize Groups and Containers**: Allow users to manually drag and drop groups and containers to reorganize them.
 - **Export**: For video games, allow the extraction of one instance of each item variation, so they can be exported and used to replicate the generated behavior in an audio middleware.
 - **Middleware API**: Directly create Random or Sequence containers from the tool in your preferred audio middleware.
+- **Multi Channel Management**: Be able to create quad/ambisonic containers
+- **Fade System**: Create a whole fade system to configure item's fade wihtin a container
 
 
 
 ## Known Issues
 
-- None at the moment. (If you find one, please contact us.)
+- "Imported Item" list collapsing each time an item is removed.
+- Some texts are blurry for some users.
+- Some users have freeze when changing the sliders.
     
