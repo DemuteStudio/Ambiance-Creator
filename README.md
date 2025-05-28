@@ -235,6 +235,6 @@ You can also customize the interface in the Settings.
 ## Known Issues
 
 - "Imported Item" list collapsing each time an item is removed.
-- Some texts are blurry for some users.
 - Some users have freeze when changing the sliders.
+- Startup and loading can be long on some setup.
     
