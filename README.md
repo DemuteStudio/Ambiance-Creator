@@ -238,4 +238,5 @@ You can also customize the interface in the Settings.
 - Some users have freezes when changing the sliders.
 - Startup and loading can be long on some setup.
 - Crashes on dock/undock
+- "Override Existing Track" option should be renamed into "Keep Existing Track"
     
