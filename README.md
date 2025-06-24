@@ -15,7 +15,7 @@ We wanted to make ambiance creation and preview for games and linear content as 
 
 ## Video Tutorial
 
-https://www.youtube.com/watch?v=aU6pfuM3aPQ
+[I'm a video link](https://www.youtube.com/watch?v=aU6pfuM3aPQ)
 
 ## Installing the Ambiance Creator
 
