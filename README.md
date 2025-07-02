@@ -239,4 +239,5 @@ You can also customize the interface in the Settings.
 - Startup and loading can be long on some setup.
 - Crashes on dock/undock. (Fixed in upcoming 1.3 release)
 - "Override Existing Track" option should be renamed into "Keep Existing Track" (Fixed in upcoming 1.3 release)
+- Track structure is modified when generating a new container on an already existing structure. (Fixed in upcoming 1.3 release)
     
