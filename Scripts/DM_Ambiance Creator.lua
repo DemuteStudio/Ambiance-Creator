@@ -26,6 +26,12 @@
        Fix auto-collapse behavior when removing items from container lists
             - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
             - Users can now remove multiple items consecutively without having to re-expand the list each time
+        Added Drag and Drop functionality
+            - Groups can now be reordered by dragging and dropping them
+            - Containers can be moved between groups via drag and drop
+            - REAPER track structure automatically reorganizes to match the new arrangement
+            - Visual feedback during drag operations shows what's being moved
+            - Proper handling of media items when moving containers between groups
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
@@ -74,6 +80,14 @@ local globals = {
     mediaWarningShown = false,        -- Prevents showing the media warning multiple times
     keepExistingTracks = true,        -- Default behavior for generation (changed from overrideExistingTracks)
     containerExpandedStates = {},     -- Stores expanded/collapsed states for container item lists to prevent auto-collapse
+    
+    -- Pending operations to avoid ImGui conflicts
+    pendingGroupMove = nil,           -- Pending group reorder operation
+    pendingContainerMove = nil,       -- Pending container move operation
+    pendingContainerReorder = nil,    -- Pending container reorder within same group
+    
+    -- Drag and drop state
+    draggedItem = nil,                -- Currently dragged item info
 }
 
 -- Main loop function for the GUI; called repeatedly via reaper.defer
@@ -87,6 +101,7 @@ local function loop()
 
     -- Render the main window; returns 'open' (true if window is open)
     local open = UI.ShowMainWindow(true)
+    
     UI.PopStyle()
 
     -- Continue the loop if the window is still open

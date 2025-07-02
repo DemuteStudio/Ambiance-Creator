@@ -72,7 +72,6 @@ function Utils.findContainerGroup(parentGroupIdx, containerName)
     return nil, nil
 end
 
-
 -- Remove all media items from a given track group
 function Utils.clearGroupItems(group)
     if not group then return false end
@@ -156,7 +155,6 @@ function Utils.fixGroupFolderStructure(parentGroupIdx)
     return true
 end
 
-
 -- Helper function to validate and repair folder structures if needed
 function Utils.validateAndRepairGroupStructure(parentGroupIdx)
     if not parentGroupIdx then
@@ -185,18 +183,19 @@ function Utils.validateAndRepairGroupStructure(parentGroupIdx)
     return true
 end
 
+-- Clear items from a group within the time selection, preserving items outside the selection
 function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
     if not globals.timeSelectionValid then
         return
     end
     
-    -- Paramètre par défaut pour la marge de crossfade (en secondes)
+    -- Default crossfade margin parameter (in seconds)
     crossfadeMargin = globals.Settings.getSetting("crossfadeMargin") or crossfadeMargin
     
     local itemCount = reaper.CountTrackMediaItems(containerGroup)
     local itemsToProcess = {}
     
-    -- Stocker les références aux items qui vont être préservés pour les crossfades
+    -- Store references to items that will be preserved for crossfades
     globals.crossfadeItems = globals.crossfadeItems or {}
     globals.crossfadeItems[containerGroup] = { startItems = {}, endItems = {} }
     
@@ -232,8 +231,8 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
             
         elseif itemStart < globals.startTime and itemEnd > globals.endTime then
             -- Item spans the entire time selection - split into two parts with overlap
-            local splitStart = globals.startTime + crossfadeMargin  -- Couper plus tard
-            local splitEnd = globals.endTime - crossfadeMargin      -- Couper plus tôt
+            local splitStart = globals.startTime + crossfadeMargin  -- Cut later
+            local splitEnd = globals.endTime - crossfadeMargin      -- Cut earlier
             
             -- Ensure we don't go beyond the original item boundaries
             splitStart = math.max(splitStart, itemStart)
@@ -255,7 +254,7 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
             
         elseif itemStart < globals.startTime and itemEnd <= globals.endTime then
             -- Item starts before and ends within selection
-            local splitPoint = globals.startTime + crossfadeMargin  -- Couper plus tard
+            local splitPoint = globals.startTime + crossfadeMargin  -- Cut later
             splitPoint = math.max(splitPoint, itemStart)
             splitPoint = math.min(splitPoint, itemEnd)
             
@@ -267,13 +266,13 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
                     table.insert(globals.crossfadeItems[containerGroup].startItems, item)
                 end
             elseif splitPoint >= itemEnd then
-                -- Si le split point est après la fin de l'item, supprimer tout l'item
+                -- If the split point is after the end of the item, delete the entire item
                 reaper.DeleteTrackMediaItem(containerGroup, item)
             end
             
         elseif itemStart >= globals.startTime and itemEnd > globals.endTime then
             -- Item starts within and ends after selection
-            local splitPoint = globals.endTime - crossfadeMargin  -- Couper plus tôt
+            local splitPoint = globals.endTime - crossfadeMargin  -- Cut earlier
             splitPoint = math.min(splitPoint, itemEnd)
             splitPoint = math.max(splitPoint, itemStart)
             
@@ -285,15 +284,169 @@ function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
                     table.insert(globals.crossfadeItems[containerGroup].endItems, splitItem)
                 end
             elseif splitPoint <= itemStart then
-                -- Si le split point est avant le début de l'item, supprimer tout l'item
+                -- If the split point is before the start of the item, delete the entire item
                 reaper.DeleteTrackMediaItem(containerGroup, item)
             end
         end
     end
 end
 
+-- Reorganize REAPER tracks after group reordering via drag and drop
+function Utils.reorganizeTracksAfterGroupReorder()
+    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after group reorder\n")
+    
+    reaper.Undo_BeginBlock()
+    reaper.PreventUIRefresh(1)
+    
+    -- Get all current tracks with their group associations
+    local tracksToStore = {}
+    
+    -- Map tracks to their groups and store all their data
+    for groupIndex, group in ipairs(globals.groups) do
+        --reaper.ShowConsoleMsg("DEBUG: Processing group " .. groupIndex .. ": " .. group.name .. "\n")
+        
+        local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+        if groupTrack and groupTrackIdx >= 0 then
+            -- Store the parent group track data
+            tracksToStore[groupIndex] = {
+                groupName = group.name,
+                containers = {}
+            }
+            
+            -- Get all container tracks in this group
+            local containers = Utils.getAllContainersInGroup(groupTrackIdx)
+            for _, container in ipairs(containers) do
+                local containerData = {
+                    name = container.name,
+                    mediaItems = {}
+                }
+                
+                -- Store all media items from this container
+                local itemCount = reaper.CountTrackMediaItems(container.track)
+                for i = 0, itemCount - 1 do
+                    local item = reaper.GetTrackMediaItem(container.track, i)
+                    local itemData = {
+                        position = reaper.GetMediaItemInfo_Value(item, "D_POSITION"),
+                        length = reaper.GetMediaItemInfo_Value(item, "D_LENGTH"),
+                        take = reaper.GetActiveTake(item)
+                    }
+                    if itemData.take then
+                        local source = reaper.GetMediaItemTake_Source(itemData.take)
+                        itemData.sourceFile = reaper.GetMediaSourceFileName(source, "")
+                        itemData.takeName = reaper.GetTakeName(itemData.take)
+                        itemData.startOffset = reaper.GetMediaItemTakeInfo_Value(itemData.take, "D_STARTOFFS")
+                        itemData.pitch = reaper.GetMediaItemTakeInfo_Value(itemData.take, "D_PITCH")
+                        itemData.volume = reaper.GetMediaItemTakeInfo_Value(itemData.take, "D_VOL")
+                        itemData.pan = reaper.GetMediaItemTakeInfo_Value(itemData.take, "D_PAN")
+                    end
+                    table.insert(containerData.mediaItems, itemData)
+                end
+                
+                table.insert(tracksToStore[groupIndex].containers, containerData)
+            end
+        end
+    end
+    
+    -- Delete all tracks that belong to our groups
+    local tracksToDelete = {}
+    for groupIndex, group in ipairs(globals.groups) do
+        local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+        if groupTrack then
+            -- Add all tracks in this group to deletion list
+            table.insert(tracksToDelete, groupTrack)
+            local containers = Utils.getAllContainersInGroup(groupTrackIdx)
+            for _, container in ipairs(containers) do
+                table.insert(tracksToDelete, container.track)
+            end
+        end
+    end
+    
+    -- Delete tracks in reverse order to maintain indices
+    table.sort(tracksToDelete, function(a, b)
+        local indexA = reaper.GetMediaTrackInfo_Value(a, "IP_TRACKNUMBER") - 1
+        local indexB = reaper.GetMediaTrackInfo_Value(b, "IP_TRACKNUMBER") - 1
+        return indexA > indexB
+    end)
+    
+    for _, track in ipairs(tracksToDelete) do
+        reaper.DeleteTrack(track)
+    end
+    
+    -- Recreate tracks in the new order
+    for groupIndex, group in ipairs(globals.groups) do
+        local storedData = tracksToStore[groupIndex]
+        if storedData then
+            -- Create parent group track
+            local parentGroupIdx = reaper.GetNumTracks()
+            reaper.InsertTrackAtIndex(parentGroupIdx, true)
+            local parentGroup = reaper.GetTrack(0, parentGroupIdx)
+            reaper.GetSetMediaTrackInfo_String(parentGroup, "P_NAME", group.name, true)
+            reaper.SetMediaTrackInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
+            
+            -- Create container tracks
+            local containerCount = #group.containers
+            for j, container in ipairs(group.containers) do
+                local containerGroupIdx = reaper.GetNumTracks()
+                reaper.InsertTrackAtIndex(containerGroupIdx, true)
+                local containerGroup = reaper.GetTrack(0, containerGroupIdx)
+                reaper.GetSetMediaTrackInfo_String(containerGroup, "P_NAME", container.name, true)
+                
+                -- Set folder state based on position
+                local folderState = 0 -- Default: normal track in a folder
+                if j == containerCount then
+                    -- If it's the last container, mark as folder end
+                    folderState = -1
+                end
+                reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
+                
+                -- Restore media items if we have stored data for this container
+                if storedData.containers[j] then
+                    local containerData = storedData.containers[j]
+                    for _, itemData in ipairs(containerData.mediaItems) do
+                        if itemData.sourceFile and itemData.sourceFile ~= "" then
+                            local newItem = reaper.AddMediaItemToTrack(containerGroup)
+                            local newTake = reaper.AddTakeToMediaItem(newItem)
+                            
+                            local pcmSource = reaper.PCM_Source_CreateFromFile(itemData.sourceFile)
+                            reaper.SetMediaItemTake_Source(newTake, pcmSource)
+                            
+                            reaper.SetMediaItemInfo_Value(newItem, "D_POSITION", itemData.position)
+                            reaper.SetMediaItemInfo_Value(newItem, "D_LENGTH", itemData.length)
+                            reaper.GetSetMediaItemTakeInfo_String(newTake, "P_NAME", itemData.takeName, true)
+                            reaper.SetMediaItemTakeInfo_Value(newTake, "D_STARTOFFS", itemData.startOffset)
+                            reaper.SetMediaItemTakeInfo_Value(newTake, "D_PITCH", itemData.pitch)
+                            reaper.SetMediaItemTakeInfo_Value(newTake, "D_VOL", itemData.volume)
+                            reaper.SetMediaItemTakeInfo_Value(newTake, "D_PAN", itemData.pan)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    reaper.PreventUIRefresh(-1)
+    reaper.UpdateArrange()
+    reaper.Undo_EndBlock("Reorganize groups after drag and drop", -1)
+    
+    --reaper.ShowConsoleMsg("DEBUG: Track reorganization completed\n")
+end
 
-
+-- Reorganize REAPER tracks after moving a container between groups
+function Utils.reorganizeTracksAfterContainerMove(sourceGroupIndex, targetGroupIndex, containerName)
+    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after container move\n")
+    
+    -- If moving within the same group, no track reorganization needed
+    if sourceGroupIndex == targetGroupIndex then
+        --reaper.ShowConsoleMsg("DEBUG: Same group move, no track reorganization needed\n")
+        return
+    end
+    
+    -- For moves between different groups, we need to rebuild the entire track structure
+    -- to maintain proper folder hierarchy. Use the same approach as group reordering.
+    Utils.reorganizeTracksAfterGroupReorder()
+    
+    --reaper.ShowConsoleMsg("DEBUG: Track reorganization after container move completed\n")
+end
 
 -- Open the preset folder in the system file explorer
 function Utils.openPresetsFolder(type, groupName)
@@ -464,14 +617,14 @@ end
 
 -- Unpacks a 32-bit color into individual RGBA components (0-1)
 function Utils.unpackColor(color)
-    -- Conversion de la chaîne en nombre si nécessaire
+    -- Convert string to number if necessary
     if type(color) == "string" then
         color = tonumber(color)
     end
     
-    -- Vérification que la couleur est bien un nombre
+    -- Check that the color is a number
     if type(color) ~= "number" then
-        -- Valeur par défaut en cas d'erreur (blanc opaque)
+        -- Default value in case of error (opaque white)
         return 1, 1, 1, 1
     end
     
@@ -482,7 +635,6 @@ function Utils.unpackColor(color)
     
     return r, g, b, a
 end
-
 
 -- Packs RGBA components (0-1) into a 32-bit color
 function Utils.packColor(r, g, b, a)
@@ -504,6 +656,5 @@ function Utils.brightenColor(color, amount)
     
     return Utils.packColor(r, g, b, a)
 end
-
 
 return Utils
