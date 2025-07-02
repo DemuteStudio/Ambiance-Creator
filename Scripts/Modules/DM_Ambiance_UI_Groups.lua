@@ -115,7 +115,7 @@ local function createGroupInsertionLine(insertIndex)
             if globals.draggedItem and globals.draggedItem.type == "GROUP" then
                 local sourceGroupIndex = globals.draggedItem.index
                 if sourceGroupIndex and sourceGroupIndex ~= insertIndex then
-                    reaper.ShowConsoleMsg("DEBUG: Group drop at position " .. insertIndex .. "\n")
+                    --reaper.ShowConsoleMsg("DEBUG: Group drop at position " .. insertIndex .. "\n")
                     globals.pendingGroupMove = {
                         sourceIndex = sourceGroupIndex,
                         targetIndex = insertIndex
@@ -164,7 +164,7 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex then
-                    reaper.ShowConsoleMsg("DEBUG: Container drop at group " .. groupIndex .. " position " .. insertIndex .. "\n")
+                    --reaper.ShowConsoleMsg("DEBUG: Container drop at group " .. groupIndex .. " position " .. insertIndex .. "\n")
                     if sourceGroupIndex == groupIndex then
                         -- Moving within same group
                         if sourceContainerIndex ~= insertIndex and sourceContainerIndex ~= insertIndex - 1 then
@@ -214,7 +214,7 @@ local function createGroupDropZone(groupIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex and sourceGroupIndex ~= groupIndex then
-                    reaper.ShowConsoleMsg("DEBUG: Container drop on group " .. groupIndex .. " (end)\n")
+                    --reaper.ShowConsoleMsg("DEBUG: Container drop on group " .. groupIndex .. " (end)\n")
                     globals.pendingContainerMove = {
                         sourceGroupIndex = sourceGroupIndex,
                         sourceContainerIndex = sourceContainerIndex,
