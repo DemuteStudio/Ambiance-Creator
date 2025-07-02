@@ -234,8 +234,8 @@ You can also customize the interface in the Settings.
 
 ## Known Issues
 
-- "Imported Item" list collapsing each time an item is removed.
-- Some users have freezes when changing the sliders.
+- "Imported Item" list collapsing each time an item is removed. (Fixed in upcoming 1.3 release)
+- Some users have freezes when changing the sliders. (Fixed in upcoming 1.3 release)
 - Startup and loading can be long on some setup.
 - Crashes on dock/undock. (Fixed in upcoming 1.3 release)
 - "Override Existing Track" option should be renamed into "Keep Existing Track" (Fixed in upcoming 1.3 release)
