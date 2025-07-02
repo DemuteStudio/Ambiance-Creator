@@ -23,6 +23,9 @@
         Fix track folder structure corruption when adding containers to existing groups
             - Fixed issue where adding a new container to an existing group would change the entire track folder structure
             - New containers now properly inherit folder structure without affecting other tracks
+       Fix auto-collapse behavior when removing items from container lists
+            - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
+            - Users can now remove multiple items consecutively without having to re-expand the list each time
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
@@ -70,6 +73,7 @@ local globals = {
     showMediaDirWarning = false,      -- Flag to display a warning if the media directory is not configured
     mediaWarningShown = false,        -- Prevents showing the media warning multiple times
     keepExistingTracks = true,        -- Default behavior for generation (changed from overrideExistingTracks)
+    containerExpandedStates = {},     -- Stores expanded/collapsed states for container item lists to prevent auto-collapse
 }
 
 -- Main loop function for the GUI; called repeatedly via reaper.defer

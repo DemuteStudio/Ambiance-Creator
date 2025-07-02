@@ -8,6 +8,11 @@ local globals = {}
 -- Initialize the module with global variables from the main script
 function UI_Container.initModule(g)
     globals = g
+    
+    -- Initialize container expanded states if not already set
+    if not globals.containerExpandedStates then
+        globals.containerExpandedStates = {}
+    end
 end
 
 -- Display the preset controls for a specific container (load/save container presets)
@@ -140,23 +145,56 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
         end
     end
 
-    -- Display imported items in a collapsible header
+    -- Display imported items with persistent state
     if #container.items > 0 then
-        if imgui.CollapsingHeader(globals.ctx, "Imported items (" .. #container.items .. ")##" .. containerId) then
+        -- Create unique key for this container's expanded state
+        local expandedStateKey = groupIndex .. "_" .. containerIndex .. "_items"
+        
+        -- Initialize expanded state if not set (default to collapsed)
+        if globals.containerExpandedStates[expandedStateKey] == nil then
+            globals.containerExpandedStates[expandedStateKey] = false
+        end
+        
+        -- Use PushID to create stable context
+        imgui.PushID(globals.ctx, containerId .. "_items")
+        
+        -- If we need to maintain the open state, set it before the header
+        if globals.containerExpandedStates[expandedStateKey] then
+            imgui.SetNextItemOpen(globals.ctx, true)
+        end
+        
+        -- Create header with stable ID
+        local headerLabel = "Imported items (" .. #container.items .. ")"
+        local wasExpanded = globals.containerExpandedStates[expandedStateKey]
+        local isExpanded = imgui.CollapsingHeader(globals.ctx, headerLabel)
+        
+        -- Track state changes
+        if isExpanded ~= wasExpanded then
+            globals.containerExpandedStates[expandedStateKey] = isExpanded
+        end
+        
+        -- Show content if expanded
+        if isExpanded then
             local itemToDelete = nil
+            
             -- List all imported items with a button to remove each one
             for l, item in ipairs(container.items) do
                 imgui.Text(globals.ctx, l .. ". " .. item.name)
                 imgui.SameLine(globals.ctx)
-                if imgui.Button(globals.ctx, "X##item" .. containerId .. "_" .. l) then
+                if imgui.Button(globals.ctx, "X##item" .. l) then
                     itemToDelete = l
                 end
             end
+            
             -- Remove the item if the delete button was pressed
             if itemToDelete then
                 table.remove(container.items, itemToDelete)
+                -- Keep the header expanded after deletion
+                globals.containerExpandedStates[expandedStateKey] = true
             end
         end
+        
+        imgui.PopID(globals.ctx)
     end
 
     -- Display trigger/randomization settings or inheritance info
