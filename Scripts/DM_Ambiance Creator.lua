@@ -20,6 +20,9 @@
             - Renamed "Override Existing Track" option to "Keep Existing Track" to properly reflect its actual behavior
             - Inverted internal logic to match the new naming convention
             - Clarified help text to better explain the two generation modes
+        Fix track folder structure corruption when adding containers to existing groups
+            - Fixed issue where adding a new container to an existing group would change the entire track folder structure
+            - New containers now properly inherit folder structure without affecting other tracks
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
