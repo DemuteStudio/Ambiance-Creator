@@ -492,7 +492,7 @@ function UI.ShowMainWindow(open)
         if globals.Utils.checkTimeSelection() then
             UI_Generation.drawMainGenerationButton()
             globals.imgui.SameLine(globals.ctx)
-            UI_Generation.drawOverrideExistingTracksButton()
+            UI_Generation.drawKeepExistingTracksButton()  -- Changed from drawOverrideExistingTracksButton
         else
             UI_Generation.drawTimeSelectionInfo()
         end

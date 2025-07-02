@@ -290,13 +290,13 @@ function Generation.generateGroups()
     -- Get default crossfade shape from REAPER preferences
     local xfadeshape = reaper.SNM_GetIntConfigVar("defxfadeshape", 0)
 
-    if globals.overrideExistingTracks then
-        -- Use regeneration logic for existing tracks
+    if globals.keepExistingTracks then
+        -- Use regeneration logic for existing tracks (keep existing)
         for i, group in ipairs(globals.groups) do
             Generation.generateSingleGroup(i)
         end
     else
-        -- Original behavior: delete and recreate tracks
+        -- Original behavior: delete and recreate tracks (clear all)
         Generation.deleteExistingGroups()
         
         for i, group in ipairs(globals.groups) do
@@ -335,7 +335,7 @@ function Generation.generateGroups()
     reaper.PreventUIRefresh(-1)
     reaper.UpdateArrange()
     
-    if globals.overrideExistingTracks then
+    if globals.keepExistingTracks then
         reaper.Undo_EndBlock("Regenerate all groups", -1)
     else
         reaper.Undo_EndBlock("Generate groups and place items", -1)
@@ -385,9 +385,9 @@ function Generation.generateSingleGroup(groupIndex)
             if folderDepth <= 0 then break end
         end
 
-        -- Clear items from existing container groups (respecting override setting)
+        -- Clear items from existing container groups (respecting keep setting)
         for i, containerGroup in ipairs(containerGroups) do
-            if globals.overrideExistingTracks then
+            if globals.keepExistingTracks then
                 Utils.clearGroupItemsInTimeSelection(containerGroup)
             else
                 Utils.clearGroupItems(containerGroup)
@@ -491,7 +491,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
 
-    -- Désélectionner tous les items du projet
+    -- Deselect all items in the project
     reaper.Main_OnCommand(40289, 0) -- "Item: Unselect all items"
 
     -- Get default crossfade shape from REAPER preferences
@@ -514,7 +514,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
 
     if containerGroup then
         -- Container exists, clear it and regenerate
-        if globals.overrideExistingTracks then
+        if globals.keepExistingTracks then
             Utils.clearGroupItemsInTimeSelection(containerGroup)
         else
             Utils.clearGroupItems(containerGroup)
@@ -537,7 +537,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
             local depth = reaper.GetMediaTrackInfo_Value(childGroup, "I_FOLDERDEPTH")
             
             table.insert(existingContainers, childGroup)
-            insertPosition = i + 1  -- Position après le dernier container trouvé
+            insertPosition = i + 1  -- Position after the last container found
             
             folderDepth = folderDepth + depth
             
@@ -548,7 +548,7 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
             end
         end
         
-        -- Si on a des containers existants, on doit d'abord réinitialiser leur folder depth
+        -- If we have existing containers, we must first reset their folder depth
         if #existingContainers > 0 then
             for _, existingContainer in ipairs(existingContainers) do
                 reaper.SetMediaTrackInfo_Value(existingContainer, "I_FOLDERDEPTH", 0)
@@ -595,12 +595,6 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
     reaper.Undo_EndBlock("Regenerate container '" .. container.name .. "' in group '" .. group.name .. "'", -1)
 end
 
-
-
-
-
-
--- Function to fix folder structure of a group
 -- Function to fix folder structure of a group
 function Generation.fixGroupFolderStructure(parentGroupIdx)
     local containerGroups = {}

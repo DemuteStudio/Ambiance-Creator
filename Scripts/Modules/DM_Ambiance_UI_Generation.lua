@@ -32,17 +32,17 @@ function UI_Generation.drawMainGenerationButton()
     return buttonPressed
 end
 
-function UI_Generation.drawOverrideExistingTracksButton()
-    local changed, newValue = imgui.Checkbox(globals.ctx, "Override existing tracks", globals.overrideExistingTracks)
+function UI_Generation.drawKeepExistingTracksButton()
+    local changed, newValue = imgui.Checkbox(globals.ctx, "Keep existing tracks", globals.keepExistingTracks)
     
     if changed then
-        globals.overrideExistingTracks = newValue
+        globals.keepExistingTracks = newValue
     end
 
     Utils.HelpMarker("Determines clearing behavior before generation:\n" ..
-                    "-Enabled:\n" ..
+                    "- Enabled (Keep):\n" ..
                     "Preserve tracks and content outside time selection, only replace content within selection\n\n" ..
-                    "-Disabled:\n" ..
+                    "- Disabled (Clear All):\n" ..
                     "Clear all existing tracks and content from tracks before generating new content")
 
     return changed

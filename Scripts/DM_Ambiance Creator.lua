@@ -13,10 +13,13 @@
         Fix freeze issue with sliders in the setting windows
     1.3
         Fix critical ImGui assertion error "Calling End() too many times!"
-        - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
-        - Now properly follows ReaImGui developer (cfillion) guidelines: only call End() when Begin() returns true
-        - Improved stability when switching window states and popup handling
-        - No more crashes when clicking collapse arrow or changing dock state
+            - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
+            - Improved stability when switching window states and popup handling
+            - No more crashes when clicking collapse arrow or changing dock states
+        Fix confusing UI terminology
+            - Renamed "Override Existing Track" option to "Keep Existing Track" to properly reflect its actual behavior
+            - Inverted internal logic to match the new naming convention
+            - Clarified help text to better explain the two generation modes
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
@@ -63,7 +66,7 @@ local globals = {
     activePopups = {},                -- Table tracking active popup windows
     showMediaDirWarning = false,      -- Flag to display a warning if the media directory is not configured
     mediaWarningShown = false,        -- Prevents showing the media warning multiple times
-    overrideExistingTracks = true,    -- Default behavior for generation
+    keepExistingTracks = true,        -- Default behavior for generation (changed from overrideExistingTracks)
 }
 
 -- Main loop function for the GUI; called repeatedly via reaper.defer
