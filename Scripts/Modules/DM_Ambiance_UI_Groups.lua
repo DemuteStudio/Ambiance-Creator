@@ -83,8 +83,13 @@ function UI_Groups.drawGroupPresetControls(i)
     end
 end
 
--- Create a drop zone with insertion line for groups
+-- Create a drop zone with insertion line for groups (only during drag)
 local function createGroupInsertionLine(insertIndex)
+    -- Only show drop zones during an active drag
+    if not globals.draggedItem or globals.draggedItem.type ~= "GROUP" then
+        return
+    end
+    
     local dropZoneHeight = 8
     local dropZoneWidth = -1 -- Full width
     
@@ -116,8 +121,13 @@ local function createGroupInsertionLine(insertIndex)
     end
 end
 
--- Create a drop zone with insertion line for containers
+-- Create a drop zone with insertion line for containers (only during drag)
 local function createContainerInsertionLine(groupIndex, insertIndex)
+    -- Only show drop zones during an active container drag
+    if not globals.draggedItem or globals.draggedItem.type ~= "CONTAINER" then
+        return
+    end
+    
     local dropZoneHeight = 6
     local dropZoneWidth = -1 -- Full width
     
@@ -170,8 +180,13 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     imgui.Unindent(globals.ctx, 20)
 end
 
--- Create a drop zone on group header for moving containers to the end of the group
+-- Create a drop zone on group header for moving containers to the end of the group (only during container drag)
 local function createGroupDropZone(groupIndex)
+    -- Only show group drop zones during container drag
+    if not globals.draggedItem or globals.draggedItem.type ~= "CONTAINER" then
+        return
+    end
+    
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Highlight the entire group
         local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
