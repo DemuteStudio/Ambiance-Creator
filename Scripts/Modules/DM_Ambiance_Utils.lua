@@ -219,16 +219,37 @@ end
 
 -- Open a popup safely (prevents multiple flashes or duplicate popups)
 function Utils.safeOpenPopup(popupName)
+    -- Initialize activePopups if it doesn't exist
+    if not globals.activePopups then
+        globals.activePopups = {}
+    end
+    
+    -- Only open if not already active and if we're in a valid ImGui context
     if not globals.activePopups[popupName] then
-        imgui.OpenPopup(globals.ctx, popupName)
-        globals.activePopups[popupName] = { active = true, timeOpened = reaper.time_precise() }
+        local success = pcall(function()
+            imgui.OpenPopup(globals.ctx, popupName)
+        end)
+        
+        if success then
+            globals.activePopups[popupName] = { 
+                active = true, 
+                timeOpened = reaper.time_precise() 
+            }
+        end
     end
 end
 
 -- Close a popup safely and remove it from the active popups list
 function Utils.safeClosePopup(popupName)
-    imgui.CloseCurrentPopup(globals.ctx)
-    globals.activePopups[popupName] = nil
+    -- Use pcall to prevent crashes
+    pcall(function()
+        imgui.CloseCurrentPopup(globals.ctx)
+    end)
+    
+    -- Clean up the popup tracking
+    if globals.activePopups then
+        globals.activePopups[popupName] = nil
+    end
 end
 
 -- Check if the media directory is configured and accessible in the settings
@@ -251,27 +272,38 @@ function Utils.showDirectoryWarningPopup(popupTitle)
     -- Use safe popup management to avoid flashing issues
     Utils.safeOpenPopup(title)
     
-    if imgui.BeginPopupModal(ctx, title, nil, imgui.WindowFlags_AlwaysAutoResize) then
-        imgui.TextColored(ctx, 0xFF8000FF, "No media directory has been configured in the settings.")
-        imgui.TextWrapped(ctx, "You need to configure a media directory before saving presets to ensure proper media file management.")
-        
-        imgui.Separator(ctx)
-        
-        if imgui.Button(ctx, "Configure Now", 150, 0) then
-            -- Open the settings window
-            globals.showSettingsWindow = true
-            Utils.safeClosePopup(title)
-            globals.showMediaDirWarning = false  -- Reset the state
+    -- Use pcall to protect against errors in popup rendering
+    local success = pcall(function()
+        if imgui.BeginPopupModal(ctx, title, nil, imgui.WindowFlags_AlwaysAutoResize) then
+            imgui.TextColored(ctx, 0xFF8000FF, "No media directory has been configured in the settings.")
+            imgui.TextWrapped(ctx, "You need to configure a media directory before saving presets to ensure proper media file management.")
+            
+            imgui.Separator(ctx)
+            
+            if imgui.Button(ctx, "Configure Now", 150, 0) then
+                -- Open the settings window
+                globals.showSettingsWindow = true
+                Utils.safeClosePopup(title)
+                globals.showMediaDirWarning = false  -- Reset the state
+            end
+            
+            imgui.SameLine(ctx)
+            
+            if imgui.Button(ctx, "Cancel", 120, 0) then
+                Utils.safeClosePopup(title)
+                globals.showMediaDirWarning = false  -- Reset the state
+            end
+            
+            imgui.EndPopup(ctx)
         end
-        
-        imgui.SameLine(ctx)
-        
-        if imgui.Button(ctx, "Cancel", 120, 0) then
-            Utils.safeClosePopup(title)
-            globals.showMediaDirWarning = false  -- Reset the state
+    end)
+    
+    -- If popup rendering fails, reset the warning flag
+    if not success then
+        globals.showMediaDirWarning = false
+        if globals.activePopups then
+            globals.activePopups[title] = nil
         end
-        
-        imgui.EndPopup(ctx)
     end
 end
 

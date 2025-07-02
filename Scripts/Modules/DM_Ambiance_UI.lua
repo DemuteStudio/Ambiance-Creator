@@ -454,20 +454,41 @@ local function handlePopups()
     end
 end
 
+local function detectAndFixImGuiImbalance()
+    -- Get ImGui context state (if accessible)
+    -- This is a safety net to prevent crashes
+    local success = pcall(function()
+        -- Try to detect if we're in an inconsistent state
+        -- by checking if any operation causes an error
+        local testVar = globals.imgui.GetWindowWidth(globals.ctx)
+    end)
+    
+    if not success then
+        -- If there's an issue, reset some flags that might help
+        globals.showMediaDirWarning = false
+        globals.activePopups = {}
+        
+        -- Force close any open popups
+        pcall(function()
+            globals.imgui.CloseCurrentPopup(globals.ctx)
+        end)
+    end
+end
+
 -- Main window rendering function
 function UI.ShowMainWindow(open)
-    -- globals.imgui.SetNextWindowSizeConstraints(globals.ctx, 600, 400, -1, -1)
     local windowFlags = imgui.WindowFlags_None
     local visible, open = globals.imgui.Begin(globals.ctx, 'Ambiance Creator', open, windowFlags)
 
+    -- CRITICAL: Only call End() if Begin() returned true (visible)
     if visible then
         -- Top section: preset controls and generation button
         UI_Preset.drawPresetControls()
         globals.imgui.SameLine(globals.ctx)
-        globals.imgui.SameLine(globals.ctx)
         if globals.imgui.Button(globals.ctx, "Settings") then
             globals.showSettingsWindow = true
         end
+        
         if globals.Utils.checkTimeSelection() then
             UI_Generation.drawMainGenerationButton()
             globals.imgui.SameLine(globals.ctx)
@@ -484,27 +505,38 @@ function UI.ShowMainWindow(open)
         local rightPanelWidth = windowWidth * 0.63
 
         -- Left panel: groups and containers
-        if globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0) then
-            drawLeftPanel(leftPanelWidth)
-            globals.imgui.EndChild(globals.ctx)
-        end
+        -- For BeginChild/EndChild: ALWAYS call EndChild regardless of return value
+        globals.imgui.BeginChild(globals.ctx, "LeftPanel", leftPanelWidth, 0)
+        drawLeftPanel(leftPanelWidth)
+        globals.imgui.EndChild(globals.ctx)
 
         -- Right panel: container or group details
         globals.imgui.SameLine(globals.ctx)
-        if globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0) then
-            drawRightPanel(rightPanelWidth)
-            globals.imgui.EndChild(globals.ctx)
-        end
+        -- For BeginChild/EndChild: ALWAYS call EndChild regardless of return value
+        globals.imgui.BeginChild(globals.ctx, "RightPanel", rightPanelWidth, 0)
+        drawRightPanel(rightPanelWidth)
+        globals.imgui.EndChild(globals.ctx)
+
+        -- CRITICAL: Only call End() if Begin() returned true
+        globals.imgui.End(globals.ctx)
     end
 
-    globals.imgui.End(globals.ctx)
-
+    -- Handle settings window with the same pattern
     if globals.showSettingsWindow then
         globals.showSettingsWindow = globals.Settings.showSettingsWindow(true)
     end
 
+    -- Show the media directory warning popup if needed
+    if globals.showMediaDirWarning then
+        Utils.showDirectoryWarningPopup()
+    end
+
+    -- Handle other popups
     handlePopups()
+    
     return open
 end
+
+
 
 return UI

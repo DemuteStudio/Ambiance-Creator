@@ -166,17 +166,21 @@ local function applyTempSettings()
 end
 
 -- Main settings window for the user interface
-
 function Settings.showSettingsWindow(open)
     local ctx = globals.ctx
     local imgui = globals.imgui
+    
     -- Initialize temporary variables
     initTempSettings()
+    
     local windowFlags = imgui.WindowFlags_NoResize | imgui.WindowFlags_AlwaysAutoResize
     local visible, open = imgui.Begin(ctx, 'Ambiance Creator Settings', open, windowFlags)
+    
+    -- CRITICAL: Only render content and call End() if Begin() returned true
     if visible then
         imgui.TextColored(ctx, 0xFFAA00FF, "Media Management Settings")
         imgui.Separator(ctx)
+        
         -- Media directory section
         imgui.Text(ctx, "Media Item Directory")
         local mediaDir = Settings.getSetting("mediaItemDirectory")
@@ -184,24 +188,29 @@ function Settings.showSettingsWindow(open)
             mediaDir = "No directory selected"
             imgui.TextColored(ctx, 0xFF0000FF, "Warning: No media directory configured")
         end
+        
         -- Show current directory path (read-only)
         imgui.PushItemWidth(ctx, 350)
         imgui.InputText(ctx, "##MediaDir", mediaDir, imgui.InputTextFlags_ReadOnly)
+        
         -- Button to change the directory
         imgui.SameLine(ctx)
         if imgui.Button(ctx, "Browse") then
             Settings.setupMediaDirectory()
         end
+        
         -- Option to automatically import media files
         local rv, autoImport = imgui.Checkbox(ctx, "Automatically import media files when saving presets",
             Settings.getSetting("autoImportMedia"))
         if rv then
             Settings.setSetting("autoImportMedia", autoImport)
         end
+        
         -- Tooltip explaining the auto-import option
         imgui.SameLine(globals.ctx)
         globals.Utils.HelpMarker("- Enabled: Automatically copies all media files referenced in your presets to the central media directory when saving. This ensures your presets remain functional even if original files are moved or deleted.\n\n"..
             "- Disabled: Presets will maintain references to the original file locations without creating copies, which saves disk space but makes presets dependent on the original file locations.")
+        
         -- Button to open the media directory in the system file explorer
         if mediaDir ~= "No directory selected" then
             if imgui.Button(ctx, "Open Media Directory") then
@@ -215,11 +224,15 @@ function Settings.showSettingsWindow(open)
                 end
             end
         end
+        
         imgui.Separator(ctx)
+        
         -- Crossfade settings section
         Settings.showCrossfadeSettings()
+        
         -- Appearance settings section
         Settings.showAppearanceSettings()
+        
         -- Control buttons at the bottom
         if imgui.Button(ctx, "Save & Close", 120, 0) then
             applyTempSettings()
@@ -232,10 +245,14 @@ function Settings.showSettingsWindow(open)
             resetTempSettings()
             open = false
         end
+        
+        -- CRITICAL: Only call End() if Begin() returned true
+        imgui.End(ctx)
     end
-    imgui.End(ctx)
-    -- Handle the popup for configuring the media directory if needed
+    
+    -- Handle the popup for configuring the media directory (separate from main window)
     Settings.handleSetupMediaDirectoryPopup()
+    
     return open
 end
 
@@ -290,34 +307,41 @@ function Settings.setupMediaDirectory()
 end
 
 -- Popup modal for configuring the media directory
-
 function Settings.handleSetupMediaDirectoryPopup()
     local ctx = globals.ctx
     local imgui = globals.imgui
-    if imgui.BeginPopupModal(ctx, "Setup Media Directory", nil, imgui.WindowFlags_AlwaysAutoResize) then
-        imgui.Text(ctx, "You need to configure a directory for your media files")
-        imgui.TextWrapped(ctx, "This directory will be used to store copies of all media files used in your presets.")
-        -- Show the current directory if set
-        local mediaDir = Settings.getSetting("mediaItemDirectory") or ""
-        if mediaDir ~= "" then
-            imgui.Text(ctx, "Current directory:")
-            imgui.PushStyleColor(ctx, imgui.Col_Text, 0x00AA00FF)
-            imgui.Text(ctx, mediaDir)
-            imgui.PopStyleColor(ctx)
-        end
-        -- Button to open the directory selector
-        if imgui.Button(ctx, "Select a directory...", 200, 0) then
-            local success = Settings.setupMediaDirectory()
-            if success then
+    
+    local success = pcall(function()
+        if imgui.BeginPopupModal(ctx, "Setup Media Directory", nil, imgui.WindowFlags_AlwaysAutoResize) then
+            imgui.Text(ctx, "You need to configure a directory for your media files")
+            imgui.TextWrapped(ctx, "This directory will be used to store copies of all media files used in your presets.")
+            
+            -- Show the current directory if set
+            local mediaDir = Settings.getSetting("mediaItemDirectory") or ""
+            if mediaDir ~= "" then
+                imgui.Text(ctx, "Current directory:")
+                imgui.PushStyleColor(ctx, imgui.Col_Text, 0x00AA00FF)
+                imgui.Text(ctx, mediaDir)
+                imgui.PopStyleColor(ctx)
+            end
+            
+            -- Button to open the directory selector
+            if imgui.Button(ctx, "Select a directory...", 200, 0) then
+                local success = Settings.setupMediaDirectory()
+                if success then
+                    imgui.CloseCurrentPopup(ctx)
+                end
+            end
+            imgui.SameLine(ctx)
+            if imgui.Button(ctx, "Cancel", 120, 0) then
                 imgui.CloseCurrentPopup(ctx)
             end
+            
+            imgui.EndPopup(ctx)
         end
-        imgui.SameLine(ctx)
-        if imgui.Button(ctx, "Cancel", 120, 0) then
-            imgui.CloseCurrentPopup(ctx)
-        end
-        imgui.EndPopup(ctx)
-    end
+    end)
+    
+    -- If popup fails, ignore silently (it will be retried next frame if needed)
 end
 
 -- Check if a file exists at the given path
