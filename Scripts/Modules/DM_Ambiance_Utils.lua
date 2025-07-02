@@ -293,7 +293,7 @@ end
 
 -- Reorganize REAPER tracks after group reordering via drag and drop
 function Utils.reorganizeTracksAfterGroupReorder()
-    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after group reorder\n")
+    reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after group reorder\n")
     
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
@@ -303,7 +303,7 @@ function Utils.reorganizeTracksAfterGroupReorder()
     
     -- Map tracks to their groups and store all their data
     for groupIndex, group in ipairs(globals.groups) do
-        --reaper.ShowConsoleMsg("DEBUG: Processing group " .. groupIndex .. ": " .. group.name .. "\n")
+        reaper.ShowConsoleMsg("DEBUG: Processing group " .. groupIndex .. ": " .. group.name .. "\n")
         
         local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
         if groupTrack and groupTrackIdx >= 0 then
@@ -428,16 +428,16 @@ function Utils.reorganizeTracksAfterGroupReorder()
     reaper.UpdateArrange()
     reaper.Undo_EndBlock("Reorganize groups after drag and drop", -1)
     
-    --reaper.ShowConsoleMsg("DEBUG: Track reorganization completed\n")
+    reaper.ShowConsoleMsg("DEBUG: Track reorganization completed\n")
 end
 
 -- Reorganize REAPER tracks after moving a container between groups
 function Utils.reorganizeTracksAfterContainerMove(sourceGroupIndex, targetGroupIndex, containerName)
-    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after container move\n")
+    reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after container move\n")
     
     -- If moving within the same group, no track reorganization needed
     if sourceGroupIndex == targetGroupIndex then
-        --reaper.ShowConsoleMsg("DEBUG: Same group move, no track reorganization needed\n")
+        reaper.ShowConsoleMsg("DEBUG: Same group move, no track reorganization needed\n")
         return
     end
     
@@ -445,7 +445,7 @@ function Utils.reorganizeTracksAfterContainerMove(sourceGroupIndex, targetGroupI
     -- to maintain proper folder hierarchy. Use the same approach as group reordering.
     Utils.reorganizeTracksAfterGroupReorder()
     
-    --reaper.ShowConsoleMsg("DEBUG: Track reorganization after container move completed\n")
+    reaper.ShowConsoleMsg("DEBUG: Track reorganization after container move completed\n")
 end
 
 -- Open the preset folder in the system file explorer

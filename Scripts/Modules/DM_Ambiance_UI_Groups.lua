@@ -96,20 +96,26 @@ local function createGroupInsertionLine(insertIndex)
     -- Create an interactive invisible button for the drop zone
     imgui.InvisibleButton(globals.ctx, "##group_dropzone_" .. insertIndex, dropZoneWidth, dropZoneHeight)
     
+    -- Always draw the drop zone outline when visible
+    local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
+    local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
+    local drawList = imgui.GetWindowDrawList(globals.ctx)
+    
+    -- Draw background and border for the drop zone
+    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x2000FF00) -- Semi-transparent green background
+    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x8000FF00, 0, 0, 1) -- Green border
+    
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Draw insertion line when hovering with valid payload
-        local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
-        local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
-        local drawList = imgui.GetWindowDrawList(globals.ctx)
         local lineY = min_y + dropZoneHeight / 2
-        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF00FF00, 4) -- Green insertion line
+        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF00FF00, 4) -- Bright green insertion line
         
         -- Accept group drops
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_GROUP") then
             if globals.draggedItem and globals.draggedItem.type == "GROUP" then
                 local sourceGroupIndex = globals.draggedItem.index
                 if sourceGroupIndex and sourceGroupIndex ~= insertIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Group drop at position " .. insertIndex .. "\n")
+                    reaper.ShowConsoleMsg("DEBUG: Group drop at position " .. insertIndex .. "\n")
                     globals.pendingGroupMove = {
                         sourceIndex = sourceGroupIndex,
                         targetIndex = insertIndex
@@ -137,13 +143,19 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     -- Create an interactive invisible button for the drop zone
     imgui.InvisibleButton(globals.ctx, "##container_dropzone_" .. groupIndex .. "_" .. insertIndex, dropZoneWidth, dropZoneHeight)
     
+    -- Always draw the drop zone outline when visible
+    local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
+    local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
+    local drawList = imgui.GetWindowDrawList(globals.ctx)
+    
+    -- Draw background and border for the drop zone
+    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x200080FF) -- Semi-transparent blue background
+    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x800080FF, 0, 0, 1) -- Blue border
+    
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Draw insertion line when hovering with valid payload
-        local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
-        local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
-        local drawList = imgui.GetWindowDrawList(globals.ctx)
         local lineY = min_y + dropZoneHeight / 2
-        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF0080FF, 3) -- Blue insertion line
+        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF0080FF, 3) -- Bright blue insertion line
         
         -- Accept container drops
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_CONTAINER") then
@@ -152,7 +164,7 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Container drop at group " .. groupIndex .. " position " .. insertIndex .. "\n")
+                    reaper.ShowConsoleMsg("DEBUG: Container drop at group " .. groupIndex .. " position " .. insertIndex .. "\n")
                     if sourceGroupIndex == groupIndex then
                         -- Moving within same group
                         if sourceContainerIndex ~= insertIndex and sourceContainerIndex ~= insertIndex - 1 then
@@ -188,7 +200,7 @@ local function createGroupDropZone(groupIndex)
     end
     
     if imgui.BeginDragDropTarget(globals.ctx) then
-        -- Highlight the entire group
+        -- Highlight the entire group with enhanced visuals
         local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
         local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
         local drawList = imgui.GetWindowDrawList(globals.ctx)
@@ -202,7 +214,7 @@ local function createGroupDropZone(groupIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex and sourceGroupIndex ~= groupIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Container drop on group " .. groupIndex .. " (end)\n")
+                    reaper.ShowConsoleMsg("DEBUG: Container drop on group " .. groupIndex .. " (end)\n")
                     globals.pendingContainerMove = {
                         sourceGroupIndex = sourceGroupIndex,
                         sourceContainerIndex = sourceContainerIndex,
@@ -571,7 +583,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
     if globals.pendingGroupMove then
         UI_Groups.reorderGroups(globals.pendingGroupMove.sourceIndex, globals.pendingGroupMove.targetIndex)
         globals.pendingGroupMove = nil
-        globals.draggedItem = nil -- Clear drag state
+        globals.draggedItem = nil -- Clear drag state after successful move
     end
     
     if globals.pendingContainerMove then
@@ -582,7 +594,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             globals.pendingContainerMove.targetContainerIndex
         )
         globals.pendingContainerMove = nil
-        globals.draggedItem = nil -- Clear drag state
+        globals.draggedItem = nil -- Clear drag state after successful move
     end
     
     if globals.pendingContainerReorder then
@@ -592,7 +604,13 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             globals.pendingContainerReorder.targetIndex
         )
         globals.pendingContainerReorder = nil
-        globals.draggedItem = nil -- Clear drag state
+        globals.draggedItem = nil -- Clear drag state after successful move
+    end
+    
+    -- Clean up drag state if no drag is active and no pending operations (fixes persistent drop zones)
+    if globals.draggedItem and not imgui.IsMouseDown(globals.ctx, imgui.MouseButton_Left) and 
+       not globals.pendingGroupMove and not globals.pendingContainerMove and not globals.pendingContainerReorder then
+        globals.draggedItem = nil
     end
 end
 
