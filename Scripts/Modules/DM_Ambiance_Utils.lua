@@ -36,19 +36,25 @@ end
 
 -- Search for a container group by name within a parent group, considering folder depth
 function Utils.findContainerGroup(parentGroupIdx, containerName)
+    if not parentGroupIdx or not containerName then
+        return nil, nil
+    end
+    
     local groupCount = reaper.CountTracks(0)
     local folderDepth = 1 -- Start at depth 1 (inside a folder)
+    
+    -- Trim and normalize the container name for comparison
+    local containerNameTrimmed = string.gsub(containerName, "^%s*(.-)%s*$", "%1")
     
     for i = parentGroupIdx + 1, groupCount - 1 do
         local childGroup = reaper.GetTrack(0, i)
         local _, name = reaper.GetSetMediaTrackInfo_String(childGroup, "P_NAME", "", false)
         
-        -- Trim whitespace from both names before comparing
-        local containerNameTrimmed = string.gsub(containerName, "^%s*(.-)%s*$", "%1")
-        local groupNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
+        -- Trim whitespace from track name
+        local trackNameTrimmed = string.gsub(name, "^%s*(.-)%s*$", "%1")
         
-        -- Case-insensitive comparison
-        if string.lower(groupNameTrimmed) == string.lower(containerNameTrimmed) then
+        -- Case-sensitive exact match (more reliable than case-insensitive)
+        if trackNameTrimmed == containerNameTrimmed then
             return childGroup, i
         end
         
@@ -62,7 +68,7 @@ function Utils.findContainerGroup(parentGroupIdx, containerName)
         end
     end
     
-    -- Not found - no error message, just return nil
+    -- Container not found in this group
     return nil, nil
 end
 
@@ -75,6 +81,107 @@ function Utils.clearGroupItems(group)
         local item = reaper.GetTrackMediaItem(group, i)
         reaper.DeleteTrackMediaItem(group, item)
     end
+    return true
+end
+
+-- Helper function to get all containers in a group with their information
+function Utils.getAllContainersInGroup(parentGroupIdx)
+    if not parentGroupIdx then
+        return {}
+    end
+    
+    local containers = {}
+    local groupCount = reaper.CountTracks(0)
+    local folderDepth = 1  -- We start inside the parent folder
+    
+    -- Start scanning from the track right after the parent
+    for i = parentGroupIdx + 1, groupCount - 1 do
+        local track = reaper.GetTrack(0, i)
+        if not track then break end
+        
+        local _, name = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
+        local depth = reaper.GetMediaTrackInfo_Value(track, "I_FOLDERDEPTH")
+        
+        -- Add this track as a container
+        table.insert(containers, {
+            track = track,
+            index = i,
+            name = name,
+            originalDepth = depth
+        })
+        
+        -- Update folder depth
+        folderDepth = folderDepth + depth
+        
+        -- Stop if we exit the parent folder
+        if folderDepth <= 0 then
+            break
+        end
+    end
+    
+    return containers
+end
+
+-- Helper function to fix folder structure for a specific group
+function Utils.fixGroupFolderStructure(parentGroupIdx)
+    if not parentGroupIdx then
+        return false
+    end
+    
+    -- Get fresh container list after any track insertions/deletions
+    local containers = Utils.getAllContainersInGroup(parentGroupIdx)
+    
+    if #containers == 0 then
+        return false
+    end
+    
+    -- IMPORTANT: Set proper folder depths with the correct logic
+    for i = 1, #containers do
+        local container = containers[i]
+        if i == #containers then
+            -- Last container should end the folder (-1 depth)
+            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", -1)
+        else
+            -- All other containers should be normal tracks in folder (0 depth)
+            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", 0)
+        end
+    end
+    
+    -- Ensure the parent group has the correct folder start depth
+    local parentTrack = reaper.GetTrack(0, parentGroupIdx)
+    if parentTrack then
+        reaper.SetMediaTrackInfo_Value(parentTrack, "I_FOLDERDEPTH", 1)
+    end
+    
+    return true
+end
+
+
+-- Helper function to validate and repair folder structures if needed
+function Utils.validateAndRepairGroupStructure(parentGroupIdx)
+    if not parentGroupIdx then
+        return false
+    end
+    
+    local containers = Utils.getAllContainersInGroup(parentGroupIdx)
+    local needsRepair = false
+    
+    -- Check if the structure is correct
+    for i = 1, #containers do
+        local container = containers[i]
+        local expectedDepth = (i == #containers) and -1 or 0
+        
+        if container.originalDepth ~= expectedDepth then
+            needsRepair = true
+            break
+        end
+    end
+    
+    -- Repair if needed
+    if needsRepair then
+        return Utils.fixGroupFolderStructure(parentGroupIdx)
+    end
+    
     return true
 end
 
