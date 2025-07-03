@@ -149,13 +149,13 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     local drawList = imgui.GetWindowDrawList(globals.ctx)
     
     -- Draw background and border for the drop zone
-    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x200080FF) -- Semi-transparent blue background
-    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x800080FF, 0, 0, 1) -- Blue border
+    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x200080FF)
+    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x800080FF, 0, 0, 1)
     
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Draw insertion line when hovering with valid payload
         local lineY = min_y + dropZoneHeight / 2
-        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF0080FF, 3) -- Bright blue insertion line
+        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0x200080FF, 3)
         
         -- Accept container drops
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_CONTAINER") then
@@ -437,8 +437,8 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             -- Help marker
             imgui.SameLine(globals.ctx)
             globals.Utils.HelpMarker("Drag and drop:\n" ..
-                "- Drag groups to reorder them (green insertion lines)\n" ..
-                "- Drag containers to move them within/between groups (blue insertion lines)\n" ..
+                "- Drag groups to reorder them\n" ..
+                "- Drag containers to move them within/between groups\n" ..
                 "- Drop containers on group headers to add them to the end\n" ..
                 "- Use Ctrl+Click and Shift+Click for multi-selection")
 
