@@ -1,6 +1,6 @@
 --[[
 @description DM_Ambiance Creator
-@version 1.3
+@version 1.4
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
@@ -12,8 +12,10 @@
     1.1
         Fix freeze issue with sliders in the setting windows
     1.2
-        Minor updates and improvements
+        Minor updates and improvements  
     1.3
+        Partial fixes and improvements
+    1.4
         Fix critical ImGui assertion error "Calling End() too many times!"
             - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
             - Improved stability when switching window states and popup handling
