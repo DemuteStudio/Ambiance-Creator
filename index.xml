@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="Ambiance Creator" commit="2b2333b5b3c068f95cb5ebd2e7e85295eab997ed">
+<index version="1" name="Ambiance Creator" commit="cddba3889f8a25c97aa475a9399f53841fa95af0">
   <category name="Scripts">
     <reapack name="DM_Ambiance Creator.lua" type="script" desc="DM_Ambiance Creator">
       <metadata>
@@ -64,6 +64,32 @@
         <source file="Modules/DM_Ambiance_UI_MultiSelection.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/2b2333b5b3c068f95cb5ebd2e7e85295eab997ed/Scripts/Modules/DM_Ambiance_UI_MultiSelection.lua</source>
         <source file="Modules/DM_Ambiance_UI_Preset.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/2b2333b5b3c068f95cb5ebd2e7e85295eab997ed/Scripts/Modules/DM_Ambiance_UI_Preset.lua</source>
         <source file="Modules/DM_Ambiance_Utils.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/2b2333b5b3c068f95cb5ebd2e7e85295eab997ed/Scripts/Modules/DM_Ambiance_Utils.lua</source>
+      </version>
+      <version name="1.3" author="Anthony Deneyer" time="2025-07-02T09:47:32Z">
+        <changelog><![CDATA[1.0
+    Initial Release
+1.1
+    Fix freeze issue with sliders in the setting windows
+1.3
+    Fix critical ImGui assertion error "Calling End() too many times!"
+    - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
+    - Now properly follows ReaImGui developer (cfillion) guidelines: only call End() when Begin() returns true
+    - Improved stability when switching window states and popup handling
+    - No more crashes when clicking collapse arrow or changing dock state]]></changelog>
+        <source main="main">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/DM_Ambiance%20Creator.lua</source>
+        <source file="Modules/DM_AmbianceCreator_Settings.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_AmbianceCreator_Settings.lua</source>
+        <source file="Modules/DM_Ambiance_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_Items.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Items.lua</source>
+        <source file="Modules/DM_Ambiance_Presets.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Presets.lua</source>
+        <source file="Modules/DM_Ambiance_Structures.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Structures.lua</source>
+        <source file="Modules/DM_Ambiance_UI.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Container.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Container.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Group.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Group.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Groups.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Groups.lua</source>
+        <source file="Modules/DM_Ambiance_UI_MultiSelection.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_MultiSelection.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Preset.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Preset.lua</source>
+        <source file="Modules/DM_Ambiance_Utils.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Utils.lua</source>
       </version>
     </reapack>
   </category>
