@@ -83,6 +83,7 @@ function UI_Groups.drawGroupPresetControls(i)
     end
 end
 
+
 -- Create a drop zone with insertion line for groups (only during drag)
 local function createGroupInsertionLine(insertIndex)
     -- Only show drop zones during an active drag
@@ -93,6 +94,12 @@ local function createGroupInsertionLine(insertIndex)
     local dropZoneHeight = 8
     local dropZoneWidth = -1 -- Full width
     
+    -- Get button color from settings and create variations
+    local buttonColor = globals.Settings.getSetting("buttonColor")
+    local backgroundColorTransparent = buttonColor
+    local borderColor = globals.Utils.brightenColor(buttonColor, 0.2) -- Brighter border
+    local insertionLineColor = globals.Utils.brightenColor(buttonColor, 0.4) -- Even brighter insertion line
+    
     -- Create an interactive invisible button for the drop zone
     imgui.InvisibleButton(globals.ctx, "##group_dropzone_" .. insertIndex, dropZoneWidth, dropZoneHeight)
     
@@ -101,21 +108,21 @@ local function createGroupInsertionLine(insertIndex)
     local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
     local drawList = imgui.GetWindowDrawList(globals.ctx)
     
-    -- Draw background and border for the drop zone
-    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x2000FF00) -- Semi-transparent green background
-    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x8000FF00, 0, 0, 1) -- Green border
+    -- Draw background and border for the drop zone using button color
+    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, backgroundColorTransparent)
+    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, borderColor, 0, 0, 1)
     
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Draw insertion line when hovering with valid payload
         local lineY = min_y + dropZoneHeight / 2
-        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0xFF00FF00, 4) -- Bright green insertion line
+        -- Draw insertion line using brightened button color
+        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, insertionLineColor, 4)
         
         -- Accept group drops
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_GROUP") then
             if globals.draggedItem and globals.draggedItem.type == "GROUP" then
                 local sourceGroupIndex = globals.draggedItem.index
                 if sourceGroupIndex and sourceGroupIndex ~= insertIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Group drop at position " .. insertIndex .. "\n")
                     globals.pendingGroupMove = {
                         sourceIndex = sourceGroupIndex,
                         targetIndex = insertIndex
@@ -137,6 +144,12 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     local dropZoneHeight = 6
     local dropZoneWidth = -1 -- Full width
     
+    -- Get button color from settings and create variations
+    local buttonColor = globals.Settings.getSetting("buttonColor")
+    local backgroundColorTransparent = buttonColor
+    local borderColor = globals.Utils.brightenColor(buttonColor, 0.1) -- Slightly brighter border
+    local insertionLineColor = globals.Utils.brightenColor(buttonColor, 0.3) -- Brighter insertion line
+    
     -- Indent to match containers
     imgui.Indent(globals.ctx, 20)
     
@@ -148,14 +161,14 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
     local drawList = imgui.GetWindowDrawList(globals.ctx)
     
-    -- Draw background and border for the drop zone
-    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x200080FF)
-    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0x800080FF, 0, 0, 1)
+    -- Draw background and border for the drop zone using button color
+    imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, backgroundColorTransparent)
+    imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, borderColor, 0, 0, 1)
     
     if imgui.BeginDragDropTarget(globals.ctx) then
         -- Draw insertion line when hovering with valid payload
         local lineY = min_y + dropZoneHeight / 2
-        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, 0x200080FF, 3)
+        imgui.DrawList_AddLine(drawList, min_x, lineY, max_x, lineY, insertionLineColor, 3)
         
         -- Accept container drops
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_CONTAINER") then
@@ -164,7 +177,6 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Container drop at group " .. groupIndex .. " position " .. insertIndex .. "\n")
                     if sourceGroupIndex == groupIndex then
                         -- Moving within same group
                         if sourceContainerIndex ~= insertIndex and sourceContainerIndex ~= insertIndex - 1 then
@@ -200,12 +212,17 @@ local function createGroupDropZone(groupIndex)
     end
     
     if imgui.BeginDragDropTarget(globals.ctx) then
-        -- Highlight the entire group with enhanced visuals
+        -- Get button color from settings and create variations
+        local buttonColor = globals.Settings.getSetting("buttonColor")
+        local highlightColor = buttonColor
+        local borderColor = globals.Utils.brightenColor(buttonColor, 0.3) -- Bright border
+        
+        -- Highlight the entire group with enhanced visuals using button color
         local min_x, min_y = imgui.GetItemRectMin(globals.ctx)
         local max_x, max_y = imgui.GetItemRectMax(globals.ctx)
         local drawList = imgui.GetWindowDrawList(globals.ctx)
-        imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, 0x40FF8000) -- Orange highlight
-        imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, 0xFFFF8000, 0, 0, 2) -- Orange border
+        imgui.DrawList_AddRectFilled(drawList, min_x, min_y, max_x, max_y, highlightColor)
+        imgui.DrawList_AddRect(drawList, min_x, min_y, max_x, max_y, borderColor, 0, 0, 2)
         
         -- Accept container drops (add to end of group)
         if imgui.AcceptDragDropPayload(globals.ctx, "DND_CONTAINER") then
@@ -214,7 +231,6 @@ local function createGroupDropZone(groupIndex)
                 local sourceContainerIndex = globals.draggedItem.containerIndex
                 
                 if sourceGroupIndex and sourceContainerIndex and sourceGroupIndex ~= groupIndex then
-                    --reaper.ShowConsoleMsg("DEBUG: Container drop on group " .. groupIndex .. " (end)\n")
                     globals.pendingContainerMove = {
                         sourceGroupIndex = sourceGroupIndex,
                         sourceContainerIndex = sourceContainerIndex,
