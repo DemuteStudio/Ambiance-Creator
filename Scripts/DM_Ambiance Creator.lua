@@ -1,6 +1,6 @@
 --[[
 @description DM_Ambiance Creator
-@version 1.3
+@version 1.4
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
@@ -11,7 +11,11 @@
         Initial Release
     1.1
         Fix freeze issue with sliders in the setting windows
+    1.2
+        Minor updates and improvements  
     1.3
+        Partial fixes and improvements
+    1.4
         Fix critical ImGui assertion error "Calling End() too many times!"
             - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
             - Improved stability when switching window states and popup handling
@@ -23,7 +27,7 @@
         Fix track folder structure corruption when adding containers to existing groups
             - Fixed issue where adding a new container to an existing group would change the entire track folder structure
             - New containers now properly inherit folder structure without affecting other tracks
-       Fix auto-collapse behavior when removing items from container lists
+        Fix auto-collapse behavior when removing items from container lists
             - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
             - Users can now remove multiple items consecutively without having to re-expand the list each time
         Added Drag and Drop functionality
