@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" name="Ambiance Creator" commit="cddba3889f8a25c97aa475a9399f53841fa95af0">
+<index version="1" commit="cddba3889f8a25c97aa475a9399f53841fa95af0">
   <category name="Scripts">
     <reapack name="DM_Ambiance Creator.lua" type="script" desc="DM_Ambiance Creator">
       <metadata>
