@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" commit="d6a1b9eca24877f0431a0f22941b73721940e864">
+<index version="1" commit="eed16652497e827fa8abef3d434d0a9913156895">
   <category name="Scripts">
     <reapack name="DM_Ambiance Creator.lua" type="script" desc="DM_Ambiance Creator">
       <metadata>
@@ -90,6 +90,50 @@
         <source file="Modules/DM_Ambiance_UI_MultiSelection.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_MultiSelection.lua</source>
         <source file="Modules/DM_Ambiance_UI_Preset.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_UI_Preset.lua</source>
         <source file="Modules/DM_Ambiance_Utils.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/aae9f74193d4c383fd703e0008dc43bbb02f94c4/Scripts/Modules/DM_Ambiance_Utils.lua</source>
+      </version>
+      <version name="1.4" author="Anthony Deneyer" time="2025-07-03T21:55:26Z">
+        <changelog><![CDATA[1.0
+    Initial Release
+1.1
+    Fix freeze issue with sliders in the setting windows
+1.2
+    Minor updates and improvements  
+1.3
+    Partial fixes and improvements
+1.4
+    Fix critical ImGui assertion error "Calling End() too many times!"
+        - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
+        - Improved stability when switching window states and popup handling
+        - No more crashes when clicking collapse arrow or changing dock states
+    Fix confusing UI terminology
+        - Renamed "Override Existing Track" option to "Keep Existing Track" to properly reflect its actual behavior
+        - Inverted internal logic to match the new naming convention
+        - Clarified help text to better explain the two generation modes
+    Fix track folder structure corruption when adding containers to existing groups
+        - Fixed issue where adding a new container to an existing group would change the entire track folder structure
+        - New containers now properly inherit folder structure without affecting other tracks
+    Fix auto-collapse behavior when removing items from container lists
+        - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
+        - Users can now remove multiple items consecutively without having to re-expand the list each time
+    Added Drag and Drop functionality
+        - Groups can now be reordered by dragging and dropping them
+        - Containers can be moved between groups via drag and drop
+        - REAPER track structure automatically reorganizes to match the new arrangement
+        - Visual feedback during drag operations shows what's being moved]]></changelog>
+        <source main="main">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/DM_Ambiance%20Creator.lua</source>
+        <source file="Modules/DM_AmbianceCreator_Settings.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_AmbianceCreator_Settings.lua</source>
+        <source file="Modules/DM_Ambiance_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_Items.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_Items.lua</source>
+        <source file="Modules/DM_Ambiance_Presets.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_Presets.lua</source>
+        <source file="Modules/DM_Ambiance_Structures.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_Structures.lua</source>
+        <source file="Modules/DM_Ambiance_UI.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Container.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_Container.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Group.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_Group.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Groups.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_Groups.lua</source>
+        <source file="Modules/DM_Ambiance_UI_MultiSelection.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_MultiSelection.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Preset.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_UI_Preset.lua</source>
+        <source file="Modules/DM_Ambiance_Utils.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/eed16652497e827fa8abef3d434d0a9913156895/Scripts/Modules/DM_Ambiance_Utils.lua</source>
       </version>
     </reapack>
   </category>
