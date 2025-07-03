@@ -31,7 +31,6 @@
             - Containers can be moved between groups via drag and drop
             - REAPER track structure automatically reorganizes to match the new arrangement
             - Visual feedback during drag operations shows what's being moved
-            - Proper handling of media items when moving containers between groups
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
