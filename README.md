@@ -238,6 +238,7 @@ You can also customize the interface in the Settings.
 
 
 ##Change log
+
     1.0
         Initial Release
     1.1
