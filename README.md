@@ -234,10 +234,36 @@ You can also customize the interface in the Settings.
 
 ## Known Issues
 
-- "Imported Item" list collapsing each time an item is removed. (Fixed in upcoming 1.3 release)
-- Some users have freezes when changing the sliders. (Fixed in upcoming 1.3 release)
 - Startup and loading can be long on some setup.
-- Crashes on dock/undock. (Fixed in upcoming 1.3 release)
-- "Override Existing Track" option should be renamed into "Keep Existing Track" (Fixed in upcoming 1.3 release)
-- Track structure is modified when generating a new container on an already existing structure. (Fixed in upcoming 1.3 release)
-    
+
+
+##Change log
+    1.0
+        Initial Release
+    1.1
+        Fix freeze issue with sliders in the setting windows
+    1.2
+        Minor updates and improvements  
+    1.3
+        Partial fixes and improvements
+    1.4
+        Fix critical ImGui assertion error "Calling End() too many times!"
+            - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
+            - Improved stability when switching window states and popup handling
+            - No more crashes when clicking collapse arrow or changing dock states
+        Fix confusing UI terminology
+            - Renamed "Override Existing Track" option to "Keep Existing Track" to properly reflect its actual behavior
+            - Inverted internal logic to match the new naming convention
+            - Clarified help text to better explain the two generation modes
+        Fix track folder structure corruption when adding containers to existing groups
+            - Fixed issue where adding a new container to an existing group would change the entire track folder structure
+            - New containers now properly inherit folder structure without affecting other tracks
+        Fix auto-collapse behavior when removing items from container lists
+            - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
+            - Users can now remove multiple items consecutively without having to re-expand the list each time
+        Added Drag and Drop functionality
+            - Groups can now be reordered by dragging and dropping them
+            - Containers can be moved between groups via drag and drop
+            - REAPER track structure automatically reorganizes to match the new arrangement
+            - Visual feedback during drag operations shows what's being moved
+
