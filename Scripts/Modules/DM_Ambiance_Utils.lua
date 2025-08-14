@@ -1,22 +1,30 @@
 --[[
-@version 1.3
+@version 1.5
 @noindex
 --]]
 
 local Utils = {}
 local globals = {}
+local Constants = require("DM_Ambiance_Constants")
 
 -- Initialize the module with global references from the main script
 function Utils.initModule(g)
+    if not g then
+        error("Utils.initModule: globals parameter is required")
+    end
     globals = g
 end
 
 -- Display a help marker "(?)" with a tooltip containing the provided description
 function Utils.HelpMarker(desc)
+    if not desc or desc == "" then
+        error("Utils.HelpMarker: description parameter is required")
+    end
+    
     imgui.SameLine(globals.ctx)
     imgui.TextDisabled(globals.ctx, '(?)')
     if imgui.BeginItemTooltip(globals.ctx) then
-        imgui.PushTextWrapPos(globals.ctx, imgui.GetFontSize(globals.ctx) * 35.0)
+        imgui.PushTextWrapPos(globals.ctx, imgui.GetFontSize(globals.ctx) * Constants.UI.HELP_MARKER_TEXT_WRAP)
         imgui.Text(globals.ctx, desc)
         imgui.PopTextWrapPos(globals.ctx)
         imgui.EndTooltip(globals.ctx)
@@ -24,12 +32,21 @@ function Utils.HelpMarker(desc)
 end
 
 -- Search for a track group by its name and return the track and its index if found
+-- @param name string: The name of the group to find
+-- @return MediaTrack|nil, number: The track object and its index, or nil and -1 if not found
 function Utils.findGroupByName(name)
-    for i = 0, reaper.CountTracks(0) - 1 do
-        local group = reaper.GetTrack(0, i)
-        local _, groupName = reaper.GetSetMediaTrackInfo_String(group, "P_NAME", "", false)
-        if groupName == name then
-            return group, i
+    if not name or name == "" then
+        return nil, -1
+    end
+    
+    local trackCount = reaper.CountTracks(0)
+    for i = 0, trackCount - 1 do
+        local track = reaper.GetTrack(0, i)
+        if track then
+            local success, groupName = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", false)
+            if success and groupName == name then
+                return track, i
+            end
         end
     end
     return nil, -1
@@ -123,8 +140,10 @@ function Utils.getAllContainersInGroup(parentGroupIdx)
 end
 
 -- Helper function to fix folder structure for a specific group
+-- @param parentGroupIdx number: Index of the parent group track
+-- @return boolean: true if successful, false otherwise
 function Utils.fixGroupFolderStructure(parentGroupIdx)
-    if not parentGroupIdx then
+    if not parentGroupIdx or parentGroupIdx < 0 then
         return false
     end
     
@@ -135,30 +154,32 @@ function Utils.fixGroupFolderStructure(parentGroupIdx)
         return false
     end
     
-    -- IMPORTANT: Set proper folder depths with the correct logic
+    -- Set proper folder depths with the correct logic
     for i = 1, #containers do
         local container = containers[i]
         if i == #containers then
-            -- Last container should end the folder (-1 depth)
-            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", -1)
+            -- Last container should end the folder
+            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", Constants.TRACKS.FOLDER_END_DEPTH)
         else
-            -- All other containers should be normal tracks in folder (0 depth)
-            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", 0)
+            -- All other containers should be normal tracks in folder
+            reaper.SetMediaTrackInfo_Value(container.track, "I_FOLDERDEPTH", Constants.TRACKS.NORMAL_TRACK_DEPTH)
         end
     end
     
     -- Ensure the parent group has the correct folder start depth
     local parentTrack = reaper.GetTrack(0, parentGroupIdx)
     if parentTrack then
-        reaper.SetMediaTrackInfo_Value(parentTrack, "I_FOLDERDEPTH", 1)
+        reaper.SetMediaTrackInfo_Value(parentTrack, "I_FOLDERDEPTH", Constants.TRACKS.FOLDER_START_DEPTH)
     end
     
     return true
 end
 
 -- Helper function to validate and repair folder structures if needed
+-- @param parentGroupIdx number: Index of the parent group track
+-- @return boolean: true if successful, false otherwise
 function Utils.validateAndRepairGroupStructure(parentGroupIdx)
-    if not parentGroupIdx then
+    if not parentGroupIdx or parentGroupIdx < 0 then
         return false
     end
     
@@ -168,7 +189,7 @@ function Utils.validateAndRepairGroupStructure(parentGroupIdx)
     -- Check if the structure is correct
     for i = 1, #containers do
         local container = containers[i]
-        local expectedDepth = (i == #containers) and -1 or 0
+        local expectedDepth = (i == #containers) and Constants.TRACKS.FOLDER_END_DEPTH or Constants.TRACKS.NORMAL_TRACK_DEPTH
         
         if container.originalDepth ~= expectedDepth then
             needsRepair = true
@@ -185,13 +206,19 @@ function Utils.validateAndRepairGroupStructure(parentGroupIdx)
 end
 
 -- Clear items from a group within the time selection, preserving items outside the selection
+-- @param containerGroup MediaTrack: The track containing items to clear
+-- @param crossfadeMargin number: Crossfade margin in seconds (optional)
 function Utils.clearGroupItemsInTimeSelection(containerGroup, crossfadeMargin)
+    if not containerGroup then
+        error("Utils.clearGroupItemsInTimeSelection: containerGroup parameter is required")
+    end
+    
     if not globals.timeSelectionValid then
         return
     end
     
     -- Default crossfade margin parameter (in seconds)
-    crossfadeMargin = globals.Settings.getSetting("crossfadeMargin") or crossfadeMargin
+    crossfadeMargin = crossfadeMargin or globals.Settings.getSetting("crossfadeMargin") or Constants.AUDIO.DEFAULT_CROSSFADE_MARGIN
     
     local itemCount = reaper.CountTrackMediaItems(containerGroup)
     local itemsToProcess = {}
@@ -294,7 +321,6 @@ end
 
 -- Reorganize REAPER tracks after group reordering via drag and drop
 function Utils.reorganizeTracksAfterGroupReorder()
-    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after group reorder\n")
     
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
@@ -304,7 +330,6 @@ function Utils.reorganizeTracksAfterGroupReorder()
     
     -- Map tracks to their groups and store all their data
     for groupIndex, group in ipairs(globals.groups) do
-        --reaper.ShowConsoleMsg("DEBUG: Processing group " .. groupIndex .. ": " .. group.name .. "\n")
         
         local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
         if groupTrack and groupTrackIdx >= 0 then
@@ -428,25 +453,18 @@ function Utils.reorganizeTracksAfterGroupReorder()
     reaper.PreventUIRefresh(-1)
     reaper.UpdateArrange()
     reaper.Undo_EndBlock("Reorganize groups after drag and drop", -1)
-    
-    --reaper.ShowConsoleMsg("DEBUG: Track reorganization completed\n")
 end
 
 -- Reorganize REAPER tracks after moving a container between groups
 function Utils.reorganizeTracksAfterContainerMove(sourceGroupIndex, targetGroupIndex, containerName)
-    --reaper.ShowConsoleMsg("DEBUG: Starting track reorganization after container move\n")
-    
     -- If moving within the same group, no track reorganization needed
     if sourceGroupIndex == targetGroupIndex then
-        --reaper.ShowConsoleMsg("DEBUG: Same group move, no track reorganization needed\n")
         return
     end
     
     -- For moves between different groups, we need to rebuild the entire track structure
     -- to maintain proper folder hierarchy. Use the same approach as group reordering.
     Utils.reorganizeTracksAfterGroupReorder()
-    
-    --reaper.ShowConsoleMsg("DEBUG: Track reorganization after container move completed\n")
 end
 
 -- Open the preset folder in the system file explorer
@@ -600,9 +618,20 @@ function Utils.formatTime(seconds)
 end
 
 -- Create crossfades between two overlapping media items with the given fade shape
+-- @param item1 MediaItem: First media item
+-- @param item2 MediaItem: Second media item  
+-- @param fadeShape number: Fade shape (optional, uses default if not provided)
+-- @return boolean: true if crossfade was created, false otherwise
 function Utils.createCrossfade(item1, item2, fadeShape)
+    if not item1 or not item2 then
+        return false
+    end
+    
+    fadeShape = fadeShape or Constants.AUDIO.DEFAULT_FADE_SHAPE
+    
     local item1End = reaper.GetMediaItemInfo_Value(item1, "D_POSITION") + reaper.GetMediaItemInfo_Value(item1, "D_LENGTH")
     local item2Start = reaper.GetMediaItemInfo_Value(item2, "D_POSITION")
+    
     if item2Start < item1End then
         local overlapLength = item1End - item2Start
         -- Set fade out for the first item
@@ -617,6 +646,8 @@ function Utils.createCrossfade(item1, item2, fadeShape)
 end
 
 -- Unpacks a 32-bit color into individual RGBA components (0-1)
+-- @param color number|string: Color value to unpack
+-- @return number, number, number, number: r, g, b, a values (0-1)
 function Utils.unpackColor(color)
     -- Convert string to number if necessary
     if type(color) == "string" then
@@ -626,7 +657,12 @@ function Utils.unpackColor(color)
     -- Check that the color is a number
     if type(color) ~= "number" then
         -- Default value in case of error (opaque white)
-        return 1, 1, 1, 1
+        local defaultColor = Constants.COLORS.DEFAULT_WHITE
+        local r = ((defaultColor >> 24) & 0xFF) / 255
+        local g = ((defaultColor >> 16) & 0xFF) / 255
+        local b = ((defaultColor >> 8) & 0xFF) / 255
+        local a = (defaultColor & 0xFF) / 255
+        return r, g, b, a
     end
     
     local r = ((color >> 24) & 0xFF) / 255
@@ -638,17 +674,39 @@ function Utils.unpackColor(color)
 end
 
 -- Packs RGBA components (0-1) into a 32-bit color
+-- @param r number: Red component (0-1)
+-- @param g number: Green component (0-1)
+-- @param b number: Blue component (0-1)
+-- @param a number: Alpha component (0-1, optional, defaults to 1)
+-- @return number: 32-bit color value
 function Utils.packColor(r, g, b, a)
+    if type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number" then
+        error("Utils.packColor: r, g, b parameters must be numbers")
+    end
+    
+    -- Clamp values to valid range
+    r = math.max(0, math.min(1, r))
+    g = math.max(0, math.min(1, g))
+    b = math.max(0, math.min(1, b))
+    a = math.max(0, math.min(1, a or 1))
+    
     r = math.floor(r * 255)
     g = math.floor(g * 255)
     b = math.floor(b * 255)
-    a = math.floor((a or 1) * 255)
+    a = math.floor(a * 255)
     
     return (r << 24) | (g << 16) | (b << 8) | a
 end
 
 -- Utility function to brighten or darken a color
+-- @param color number: Color value to modify
+-- @param amount number: Amount to brighten (positive) or darken (negative)
+-- @return number: Modified color value
 function Utils.brightenColor(color, amount)
+    if type(amount) ~= "number" then
+        error("Utils.brightenColor: amount parameter must be a number")
+    end
+    
     local r, g, b, a = Utils.unpackColor(color)
     
     r = math.max(0, math.min(1, r + amount))
@@ -656,6 +714,206 @@ function Utils.brightenColor(color, amount)
     b = math.max(0, math.min(1, b + amount))
     
     return Utils.packColor(r, g, b, a)
+end
+
+-- Convert decibel value to linear volume factor
+-- @param volumeDB number: Volume in decibels
+-- @return number: Linear volume factor
+function Utils.dbToLinear(volumeDB)
+    if type(volumeDB) ~= "number" then
+        error("Utils.dbToLinear: volumeDB parameter must be a number")
+    end
+    
+    -- Special case for -inf dB (mute)
+    if volumeDB <= Constants.AUDIO.VOLUME_RANGE_DB_MIN then
+        return 0.0
+    end
+    
+    return 10 ^ (volumeDB / 20)
+end
+
+-- Convert linear volume factor to decibel value  
+-- @param linearVolume number: Linear volume factor
+-- @return number: Volume in decibels
+function Utils.linearToDb(linearVolume)
+    if type(linearVolume) ~= "number" or linearVolume < 0 then
+        error("Utils.linearToDb: linearVolume parameter must be a non-negative number")
+    end
+    
+    -- Special case for mute
+    if linearVolume <= 0 then
+        return Constants.AUDIO.VOLUME_RANGE_DB_MIN
+    end
+    
+    return 20 * math.log10(linearVolume)
+end
+
+-- Set the volume of a container's track in Reaper
+-- @param groupIndex number: Index of the group containing the container
+-- @param containerIndex number: Index of the container within the group
+-- @param volumeDB number: Volume in decibels
+-- @return boolean: true if successful, false otherwise
+function Utils.setContainerTrackVolume(groupIndex, containerIndex, volumeDB)
+    if not groupIndex or groupIndex < 1 then
+        error("Utils.setContainerTrackVolume: valid groupIndex is required")
+    end
+    
+    if not containerIndex or containerIndex < 1 then
+        error("Utils.setContainerTrackVolume: valid containerIndex is required")
+    end
+    
+    if type(volumeDB) ~= "number" then
+        error("Utils.setContainerTrackVolume: volumeDB must be a number")
+    end
+    
+    -- Validate that the group and container exist
+    if not globals.groups[groupIndex] or not globals.groups[groupIndex].containers[containerIndex] then
+        return false
+    end
+    
+    local group = globals.groups[groupIndex]
+    local container = group.containers[containerIndex]
+    
+    -- Find the group track
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack then
+        return false
+    end
+    
+    -- Find the container track within the group
+    local containerTrack, containerTrackIdx = Utils.findContainerGroup(groupTrackIdx, container.name)
+    if not containerTrack then
+        return false
+    end
+    
+    -- Convert dB to linear factor and apply to track
+    local linearVolume = Utils.dbToLinear(volumeDB)
+    reaper.SetMediaTrackInfo_Value(containerTrack, "D_VOL", linearVolume)
+    
+    -- Update arrange view to reflect changes
+    reaper.UpdateArrange()
+    
+    return true
+end
+
+-- Get the current volume of a container's track from Reaper
+-- @param groupIndex number: Index of the group containing the container
+-- @param containerIndex number: Index of the container within the group
+-- @return number|nil: Volume in decibels, or nil if track not found
+function Utils.getContainerTrackVolume(groupIndex, containerIndex)
+    if not groupIndex or groupIndex < 1 or not containerIndex or containerIndex < 1 then
+        return nil
+    end
+    
+    -- Validate that the group and container exist
+    if not globals.groups[groupIndex] or not globals.groups[groupIndex].containers[containerIndex] then
+        return nil
+    end
+    
+    local group = globals.groups[groupIndex]
+    local container = group.containers[containerIndex]
+    
+    -- Find the group track
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack then
+        return nil
+    end
+    
+    -- Find the container track within the group
+    local containerTrack, containerTrackIdx = Utils.findContainerGroup(groupTrackIdx, container.name)
+    if not containerTrack then
+        return nil
+    end
+    
+    -- Get linear volume and convert to dB
+    local linearVolume = reaper.GetMediaTrackInfo_Value(containerTrack, "D_VOL")
+    return Utils.linearToDb(linearVolume)
+end
+
+-- Set the volume of a group's track in Reaper
+-- @param groupIndex number: Index of the group
+-- @param volumeDB number: Volume in decibels
+-- @return boolean: true if successful, false otherwise
+function Utils.setGroupTrackVolume(groupIndex, volumeDB)
+    if not groupIndex or groupIndex < 1 then
+        error("Utils.setGroupTrackVolume: valid groupIndex is required")
+    end
+    
+    if type(volumeDB) ~= "number" then
+        error("Utils.setGroupTrackVolume: volumeDB must be a number")
+    end
+    
+    -- Validate that the group exists
+    if not globals.groups[groupIndex] then
+        return false
+    end
+    
+    local group = globals.groups[groupIndex]
+    
+    -- Find the group track
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack then
+        return false
+    end
+    
+    -- Convert dB to linear factor and apply to track
+    local linearVolume = Utils.dbToLinear(volumeDB)
+    reaper.SetMediaTrackInfo_Value(groupTrack, "D_VOL", linearVolume)
+    
+    -- Update arrange view to reflect changes
+    reaper.UpdateArrange()
+    
+    return true
+end
+
+-- Get the current volume of a group's track from Reaper
+-- @param groupIndex number: Index of the group
+-- @return number|nil: Volume in decibels, or nil if track not found
+function Utils.getGroupTrackVolume(groupIndex)
+    if not groupIndex or groupIndex < 1 then
+        return nil
+    end
+    
+    -- Validate that the group exists
+    if not globals.groups[groupIndex] then
+        return nil
+    end
+    
+    local group = globals.groups[groupIndex]
+    
+    -- Find the group track
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack then
+        return nil
+    end
+    
+    -- Get linear volume and convert to dB
+    local linearVolume = reaper.GetMediaTrackInfo_Value(groupTrack, "D_VOL")
+    return Utils.linearToDb(linearVolume)
+end
+
+-- Initialize trackVolume property for all existing containers and groups that don't have it
+-- This ensures backward compatibility with existing projects
+function Utils.initializeContainerVolumes()
+    if not globals.groups then
+        return
+    end
+    
+    for groupIndex, group in ipairs(globals.groups) do
+        -- Initialize group trackVolume if it doesn't exist
+        if group.trackVolume == nil then
+            group.trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT
+        end
+        
+        if group.containers then
+            for containerIndex, container in ipairs(group.containers) do
+                -- Initialize container trackVolume if it doesn't exist
+                if container.trackVolume == nil then
+                    container.trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT
+                end
+            end
+        end
+    end
 end
 
 return Utils

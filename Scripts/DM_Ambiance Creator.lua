@@ -1,6 +1,6 @@
 --[[
 @description DM_Ambiance Creator
-@version 1.4
+@version 1.5
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
@@ -35,6 +35,8 @@
             - Containers can be moved between groups via drag and drop
             - REAPER track structure automatically reorganizes to match the new arrangement
             - Visual feedback during drag operations shows what's being moved
+    1.5
+        Volume Control Feature
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not
@@ -52,6 +54,7 @@ local script_path = debug.getinfo(1, "S").source:match[[^@?(.*[\/])[^\/]-$]]
 package.path = script_path .. "modules/?.lua;" .. package.path
 
 -- Import all project modules
+local Constants = require("DM_Ambiance_Constants")
 local Utils = require("DM_Ambiance_Utils")
 local Structures = require("DM_Ambiance_Structures")
 local Items = require("DM_Ambiance_Items")
@@ -117,6 +120,7 @@ end
 if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2) then
     -- Expose variables and modules globally for debugging and live tweaking
     _G.globals = globals
+    _G.Constants = Constants
     _G.Utils = Utils
     _G.Structures = Structures
     _G.Items = Items
@@ -135,6 +139,7 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     globals.imgui = imgui
 
     -- Share module references through the globals table for cross-module access
+    globals.Constants = Constants
     globals.Utils = Utils
     globals.Structures = Structures
     globals.Items = Items
@@ -151,6 +156,9 @@ if select(2, reaper.get_action_context()) == debug.getinfo(1, 'S').source:sub(2)
     Generation.initModule(globals)
     UI.initModule(globals)
     Settings.initModule(globals)
+    
+    -- Initialize backward compatibility for container volumes
+    Utils.initializeContainerVolumes()
 
     -- Force preset path initialization (ensures folders are created)
     globals.presetsPath = "" -- Reset to force directory creation

@@ -5,14 +5,22 @@
 
 local UI_Groups = {}
 local globals = {}
+local Constants = require("DM_Ambiance_Constants")
 
 -- Initialize the module with global variables from the main script
 function UI_Groups.initModule(g)
+    if not g then
+        error("UI_Groups.initModule: globals parameter is required")
+    end
     globals = g
 end
 
 -- Display group preset controls (load/save) for a specific group
+-- @param i number: Group index
 function UI_Groups.drawGroupPresetControls(i)
+    if not i or i < 1 then
+        error("UI_Groups.drawGroupPresetControls: valid group index is required")
+    end
     local groupId = "group" .. i
 
     -- Initialize selected preset index for this group if not already set
@@ -31,7 +39,7 @@ function UI_Groups.drawGroupPresetControls(i)
     groupPresetItems = groupPresetItems .. "\0"
 
     -- Group preset dropdown selector
-    imgui.PushItemWidth(globals.ctx, 200)
+    imgui.PushItemWidth(globals.ctx, Constants.UI.PRESET_SELECTOR_WIDTH)
     local rv, newSelectedGroupIndex = imgui.Combo(
         globals.ctx,
         "##GroupPresetSelector" .. groupId,
@@ -71,13 +79,13 @@ function UI_Groups.drawGroupPresetControls(i)
         imgui.Text(globals.ctx, "Group preset name:")
         local rv, value = imgui.InputText(globals.ctx, "##GroupPresetName" .. groupId, globals.newGroupPresetName)
         if rv then globals.newGroupPresetName = value end
-        if imgui.Button(globals.ctx, "Save", 120, 0) and globals.newGroupPresetName ~= "" then
+        if imgui.Button(globals.ctx, "Save", Constants.UI.BUTTON_WIDTH_STANDARD, 0) and globals.newGroupPresetName ~= "" then
             if globals.Presets.saveGroupPreset(globals.newGroupPresetName, globals.currentSaveGroupIndex) then
                 globals.Utils.safeClosePopup("Save Group Preset##" .. groupId)
             end
         end
         imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Cancel", 120, 0) then
+        if imgui.Button(globals.ctx, "Cancel", Constants.UI.BUTTON_WIDTH_STANDARD, 0) then
             globals.Utils.safeClosePopup("Save Group Preset##" .. groupId)
         end
         imgui.EndPopup(globals.ctx)
@@ -92,7 +100,7 @@ local function createGroupInsertionLine(insertIndex)
         return
     end
     
-    local dropZoneHeight = 8
+    local dropZoneHeight = Constants.UI.GROUP_DROP_ZONE_HEIGHT
     local dropZoneWidth = -1 -- Full width
     
     -- Get button color from settings and create variations
@@ -142,7 +150,7 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
         return
     end
     
-    local dropZoneHeight = 6
+    local dropZoneHeight = Constants.UI.CONTAINER_DROP_ZONE_HEIGHT
     local dropZoneWidth = -1 -- Full width
     
     -- Get button color from settings and create variations
@@ -152,7 +160,7 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
     local insertionLineColor = globals.Utils.brightenColor(buttonColor, 0.3) -- Brighter insertion line
     
     -- Indent to match containers
-    imgui.Indent(globals.ctx, 20)
+    imgui.Indent(globals.ctx, Constants.UI.CONTAINER_INDENT)
     
     -- Create an interactive invisible button for the drop zone
     imgui.InvisibleButton(globals.ctx, "##container_dropzone_" .. groupIndex .. "_" .. insertIndex, dropZoneWidth, dropZoneHeight)
@@ -202,7 +210,7 @@ local function createContainerInsertionLine(groupIndex, insertIndex)
         imgui.EndDragDropTarget(globals.ctx)
     end
     
-    imgui.Unindent(globals.ctx, 20)
+    imgui.Unindent(globals.ctx, Constants.UI.CONTAINER_INDENT)
 end
 
 -- Create a drop zone on group header for moving containers to the end of the group (only during container drag)
@@ -340,12 +348,24 @@ function UI_Groups.reorderContainers(groupIndex, sourceIndex, targetIndex)
 end
 
 -- Draw the left panel containing the list of groups and their containers
+-- @param width number: Panel width
+-- @param isContainerSelected function: Function to check if container is selected
+-- @param toggleContainerSelection function: Function to toggle container selection
+-- @param clearContainerSelections function: Function to clear all selections
+-- @param selectContainerRange function: Function to select container range
 function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSelection, clearContainerSelections, selectContainerRange)
+    if not width or width <= 0 then
+        error("UI_Groups.drawGroupsPanel: valid width parameter is required")
+    end
+    
+    if not isContainerSelected or not toggleContainerSelection or not clearContainerSelections or not selectContainerRange then
+        error("UI_Groups.drawGroupsPanel: all callback functions are required")
+    end
     -- Basic check for minimal window size
     local availableHeight = imgui.GetWindowHeight(globals.ctx)
     local availableWidth = imgui.GetWindowWidth(globals.ctx)
-    if availableHeight < 100 or availableWidth < 200 then
-        imgui.TextColored(globals.ctx, 0xFF0000FF, "Window too small")
+    if availableHeight < Constants.UI.MIN_WINDOW_HEIGHT or availableWidth < Constants.UI.MIN_WINDOW_WIDTH then
+        imgui.TextColored(globals.ctx, Constants.COLORS.ERROR_RED, "Window too small")
         return
     end
 
@@ -356,7 +376,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
     local selectedCount = UI_Groups.getSelectedContainersCount()
     if selectedCount > 1 then
         imgui.SameLine(globals.ctx)
-        imgui.TextColored(globals.ctx, 0xFF4CAF50, "(" .. selectedCount .. " selected)")
+        imgui.TextColored(globals.ctx, Constants.COLORS.SUCCESS_GREEN, "(" .. selectedCount .. " selected)")
         imgui.SameLine(globals.ctx)
         if imgui.Button(globals.ctx, "Clear Selection") then
             clearContainerSelections()
@@ -477,7 +497,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
 
                 -- Indent containers visually
                 local startX = imgui.GetCursorPosX(globals.ctx)
-                imgui.Indent(globals.ctx, 20)
+                imgui.Indent(globals.ctx, Constants.UI.CONTAINER_INDENT)
                 local nameWidth = width * 0.45
                 imgui.PushItemWidth(globals.ctx, nameWidth)
                 imgui.TreeNodeEx(globals.ctx, containerId, container.name, containerFlags)
@@ -535,7 +555,7 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                     globals.Generation.generateSingleContainer(i, j)
                 end
 
-                imgui.Unindent(globals.ctx, 20)
+                imgui.Unindent(globals.ctx, Constants.UI.CONTAINER_INDENT)
 
                 -- Drop zone after each container
                 createContainerInsertionLine(i, j + 1)

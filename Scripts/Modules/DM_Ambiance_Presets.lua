@@ -1,5 +1,5 @@
 --[[
-@version 1.3
+@version 1.5
 @noindex
 --]]
 
@@ -175,6 +175,24 @@ function Presets.loadPreset(name)
   if success and type(presetData) == "table" then
     globals.groups = presetData
     globals.currentPresetName = name
+    
+    -- Apply track volumes for all groups and containers if they have tracks
+    for groupIndex, group in ipairs(presetData) do
+      -- Apply group track volume if it exists
+      if group.trackVolume then
+        globals.Utils.setGroupTrackVolume(groupIndex, group.trackVolume)
+      end
+      
+      -- Apply container track volumes if they exist
+      if group.containers then
+        for containerIndex, container in ipairs(group.containers) do
+          if container.trackVolume then
+            globals.Utils.setContainerTrackVolume(groupIndex, containerIndex, container.trackVolume)
+          end
+        end
+      end
+    end
+    
     return true
   else
     reaper.ShowConsoleMsg("Error loading preset: " .. tostring(presetData) .. "\n")
@@ -244,6 +262,21 @@ function Presets.loadGroupPreset(name, groupIndex)
 
   if success and type(presetData) == "table" then
     globals.groups[groupIndex] = presetData
+    
+    -- Apply group track volume if it exists
+    if presetData.trackVolume then
+      globals.Utils.setGroupTrackVolume(groupIndex, presetData.trackVolume)
+    end
+    
+    -- Apply track volumes for all containers in the group if they have tracks
+    if presetData.containers then
+      for containerIndex, container in ipairs(presetData.containers) do
+        if container.trackVolume then
+          globals.Utils.setContainerTrackVolume(groupIndex, containerIndex, container.trackVolume)
+        end
+      end
+    end
+    
     return true
   else
     reaper.ShowConsoleMsg("Error loading group preset: " .. tostring(presetData) .. "\n")
@@ -291,6 +324,11 @@ function Presets.loadContainerPreset(name, groupIndex, containerIndex)
   if success and type(presetData) == "table" then
     -- Appliquer directement le preset chargé sans préserver les items existants
     globals.groups[groupIndex].containers[containerIndex] = presetData
+    
+    -- Apply the container track volume if the container track exists
+    if presetData.trackVolume then
+      globals.Utils.setContainerTrackVolume(groupIndex, containerIndex, presetData.trackVolume)
+    end
     
     return true
   else

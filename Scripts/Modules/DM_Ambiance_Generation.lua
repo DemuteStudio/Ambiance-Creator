@@ -1,5 +1,5 @@
 --[[
-@version 1.3
+@version 1.5
 @noindex
 --]]
 
@@ -310,6 +310,11 @@ function Generation.generateGroups()
             -- Set the group as parent (folder start)
             reaper.SetMediaTrackInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
             
+            -- Apply group track volume
+            local groupVolumeDB = group.trackVolume or 0.0
+            local linearVolume = Utils.dbToLinear(groupVolumeDB)
+            reaper.SetMediaTrackInfo_Value(parentGroup, "D_VOL", linearVolume)
+            
             local containerCount = #group.containers
             
             for j, container in ipairs(group.containers) do
@@ -326,6 +331,11 @@ function Generation.generateGroups()
                     folderState = -1
                 end
                 reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
+                
+                -- Apply container track volume
+                local volumeDB = container.trackVolume or 0.0
+                local linearVolume = Utils.dbToLinear(volumeDB)
+                reaper.SetMediaTrackInfo_Value(containerGroup, "D_VOL", linearVolume)
                 
                 -- Place items on the timeline according to the chosen mode
                 Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
@@ -364,7 +374,12 @@ function Generation.generateSingleGroup(groupIndex)
     local existingGroup, existingGroupIdx = Utils.findGroupByName(group.name)
 
     if existingGroup then
-        -- Group exists, find all container groups within this folder
+        -- Group exists, apply volume to existing group track
+        local groupVolumeDB = group.trackVolume or 0.0
+        local linearVolume = Utils.dbToLinear(groupVolumeDB)
+        reaper.SetMediaTrackInfo_Value(existingGroup, "D_VOL", linearVolume)
+        
+        -- Find all container groups within this folder
         local containerGroups = {}
         local containerNameMap = {}
         local groupCount = reaper.CountTracks(0)
@@ -419,6 +434,11 @@ function Generation.generateSingleGroup(groupIndex)
                 end
                 reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
                 
+                -- Apply container track volume
+                local volumeDB = container.trackVolume or 0.0
+                local linearVolume = Utils.dbToLinear(volumeDB)
+                reaper.SetMediaTrackInfo_Value(containerGroup, "D_VOL", linearVolume)
+                
                 -- Add to our tracking
                 table.insert(containerGroups, containerGroup)
                 containerNameMap[container.name] = #containerGroups
@@ -447,6 +467,11 @@ function Generation.generateSingleGroup(groupIndex)
 
         -- Set the group as parent (folder start)
         reaper.SetMediaTrackInfo_Value(parentGroup, "I_FOLDERDEPTH", 1)
+        
+        -- Apply group track volume
+        local groupVolumeDB = group.trackVolume or 0.0
+        local linearVolume = Utils.dbToLinear(groupVolumeDB)
+        reaper.SetMediaTrackInfo_Value(parentGroup, "D_VOL", linearVolume)
 
         local containerCount = #group.containers
 
@@ -464,6 +489,11 @@ function Generation.generateSingleGroup(groupIndex)
                 folderState = -1
             end
             reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", folderState)
+
+            -- Apply container track volume
+            local volumeDB = container.trackVolume or 0.0
+            local linearVolume = Utils.dbToLinear(volumeDB)
+            reaper.SetMediaTrackInfo_Value(containerGroup, "D_VOL", linearVolume)
 
             -- Place items on the timeline according to the chosen mode
             Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
@@ -521,6 +551,11 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
             Utils.clearGroupItems(containerGroup)
         end
 
+        -- Apply container track volume
+        local volumeDB = container.trackVolume or 0.0
+        local linearVolume = Utils.dbToLinear(volumeDB)
+        reaper.SetMediaTrackInfo_Value(containerGroup, "D_VOL", linearVolume)
+
         -- Regenerate items for this container
         Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)
 
@@ -546,6 +581,11 @@ function Generation.generateSingleContainer(groupIndex, containerIndex)
         
         -- Set initial folder depth as normal track in folder
         reaper.SetMediaTrackInfo_Value(containerGroup, "I_FOLDERDEPTH", 0)
+        
+        -- Apply container track volume
+        local volumeDB = container.trackVolume or 0.0
+        local linearVolume = Utils.dbToLinear(volumeDB)
+        reaper.SetMediaTrackInfo_Value(containerGroup, "D_VOL", linearVolume)
         
         -- Generate items for this new container
         Generation.placeItemsForContainer(group, container, containerGroup, xfadeshape)

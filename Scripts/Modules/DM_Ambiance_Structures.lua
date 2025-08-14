@@ -1,52 +1,61 @@
 --[[
-@version 1.3
+@version 1.5
 @noindex
 --]]
 
 
 local Structures = {}
-
 local globals = {}
+local Constants = require("DM_Ambiance_Constants")
 
 function Structures.initModule(g)
+    if not g then
+        error("Structures.initModule: globals parameter is required")
+    end
     globals = g
 end
 
 -- Group structure with randomization parameters
+-- @param name string: Group name (optional, defaults to "New Group")
+-- @return table: Group structure
 function Structures.createGroup(name)
     return {
         name = name or "New Group",
         containers = {},
         expanded = true,
-        -- Added randomization parameters similar to containers
-        pitchRange = {min = -3, max = 3},
-        volumeRange = {min = -3, max = 3},
-        panRange = {min = -100, max = 100},
+        -- Randomization parameters using constants
+        pitchRange = {min = Constants.DEFAULTS.PITCH_RANGE_MIN, max = Constants.DEFAULTS.PITCH_RANGE_MAX},
+        volumeRange = {min = Constants.DEFAULTS.VOLUME_RANGE_MIN, max = Constants.DEFAULTS.VOLUME_RANGE_MAX},
+        panRange = {min = Constants.DEFAULTS.PAN_RANGE_MIN, max = Constants.DEFAULTS.PAN_RANGE_MAX},
         randomizePitch = true,
         randomizeVolume = true,
         randomizePan = true,
-        triggerRate = 10.0,
-        triggerDrift = 30,
-        intervalMode = 0 -- 0 = Absolute, 1 = Relative, 2 = Coverage
+        triggerRate = Constants.DEFAULTS.TRIGGER_RATE,
+        triggerDrift = Constants.DEFAULTS.TRIGGER_DRIFT,
+        intervalMode = Constants.TRIGGER_MODES.ABSOLUTE,
+        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT -- Group track volume in dB
     }
 end
 
 -- Container structure with override parent flag
+-- @param name string: Container name (optional, defaults to "New Container")
+-- @return table: Container structure
 function Structures.createContainer(name)
     return {
         name = name or "New Container",
         items = {},
         expanded = true,
-        pitchRange = {min = -3, max = 3},
-        volumeRange = {min = -3, max = 3},
-        panRange = {min = -100, max = 100},
+        pitchRange = {min = Constants.DEFAULTS.PITCH_RANGE_MIN, max = Constants.DEFAULTS.PITCH_RANGE_MAX},
+        volumeRange = {min = Constants.DEFAULTS.VOLUME_RANGE_MIN, max = Constants.DEFAULTS.VOLUME_RANGE_MAX},
+        panRange = {min = Constants.DEFAULTS.PAN_RANGE_MIN, max = Constants.DEFAULTS.PAN_RANGE_MAX},
         randomizePitch = true,
         randomizeVolume = true,
         randomizePan = true,
-        triggerRate = 10.0, -- Can be negative for overlaps
-        triggerDrift = 30,
-        intervalMode = 0, -- 0 = Absolute, 1 = Relative, 2 = Coverage
-        overrideParent = false -- New flag to override parent group settings
+        triggerRate = Constants.DEFAULTS.TRIGGER_RATE, -- Can be negative for overlaps
+        triggerDrift = Constants.DEFAULTS.TRIGGER_DRIFT,
+        intervalMode = Constants.TRIGGER_MODES.ABSOLUTE,
+        overrideParent = false, -- Flag to override parent group settings
+        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT -- Container track volume in dB
     }
 end
 

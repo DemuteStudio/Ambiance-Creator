@@ -1,13 +1,17 @@
 --[[
-@version 1.3
+@version 1.5
 @noindex
 --]]
 
 local UI_Container = {}
 local globals = {}
+local Constants = require("DM_Ambiance_Constants")
 
 -- Initialize the module with global variables from the main script
 function UI_Container.initModule(g)
+    if not g then
+        error("UI_Container.initModule: globals parameter is required")
+    end
     globals = g
     
     -- Initialize container expanded states if not already set
@@ -123,6 +127,34 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
     imgui.PushItemWidth(globals.ctx, width * 0.5)
     local rv, newContainerName = imgui.InputText(globals.ctx, "Name##detail_" .. containerId, containerName)
     if rv then container.name = newContainerName end
+    
+    -- Container track volume slider
+    imgui.Text(globals.ctx, "Track Volume")
+    imgui.SameLine(globals.ctx)
+    globals.Utils.HelpMarker("Controls the volume of the container's track in Reaper. Affects all items in this container.")
+    
+    imgui.PushItemWidth(globals.ctx, width * 0.6)
+    
+    -- Ensure trackVolume is initialized
+    if container.trackVolume == nil then
+        container.trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT
+    end
+    
+    local volumeDB = container.trackVolume
+    local rv, newVolumeDB = imgui.SliderDouble(
+        globals.ctx, 
+        "##TrackVolume_" .. containerId, 
+        volumeDB, 
+        Constants.AUDIO.VOLUME_RANGE_DB_MIN, 
+        Constants.AUDIO.VOLUME_RANGE_DB_MAX, 
+        "%.1f dB"
+    )
+    if rv then 
+        container.trackVolume = newVolumeDB
+        -- Apply volume to track in real-time
+        globals.Utils.setContainerTrackVolume(groupIndex, containerIndex, newVolumeDB)
+    end
+    imgui.PopItemWidth(globals.ctx)
 
     -- "Override Parent Settings" checkbox
     local overrideParent = container.overrideParent
