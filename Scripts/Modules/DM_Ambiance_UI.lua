@@ -152,15 +152,17 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
         end
     elseif dataObj.intervalMode == 1 then
         imgui.TextColored(globals.ctx, 0xFFAA00FF, "Relative: Interval as percentage of time selection")
-    else
+    elseif dataObj.intervalMode == 2 then
         imgui.TextColored(globals.ctx, 0xFFAA00FF, "Coverage: Percentage of time selection to be filled")
+    else
+        imgui.TextColored(globals.ctx, 0xFFAA00FF, "Chunk: Structured sound/silence periods")
     end
 
     -- Interval mode selection (Combo box)
     do
         imgui.BeginGroup(globals.ctx)
         imgui.PushItemWidth(globals.ctx, controlWidth)
-        local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+        local intervalModes = "Absolute\0Relative\0Coverage\0Chunk\0\0"
         local rv, newIntervalMode = imgui.Combo(globals.ctx, "##IntervalMode", dataObj.intervalMode, intervalModes)
         if rv then callbacks.setIntervalMode(newIntervalMode) end
         imgui.EndGroup(globals.ctx)
@@ -171,7 +173,8 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
         globals.Utils.HelpMarker(
             "Absolute: Fixed interval in seconds\n" ..
             "Relative: Interval as percentage of time selection\n" ..
-            "Coverage: Percentage of time selection to be filled"
+            "Coverage: Percentage of time selection to be filled\n" ..
+            "Chunk: Create structured sound/silence periods"
         )
     end
 
@@ -189,6 +192,10 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
             rateLabel = "Coverage (%)"
             rateMin = 0.1
             rateMax = 100.0
+        elseif dataObj.intervalMode == 3 then
+            rateLabel = "Item Interval (sec)"
+            rateMin = -10.0
+            rateMax = 60.0
         end
 
         imgui.BeginGroup(globals.ctx)
@@ -213,6 +220,51 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
         imgui.Text(globals.ctx, "Random variation (%)")
     end
 
+    -- Chunk mode specific controls
+    if dataObj.intervalMode == 3 then
+        -- Chunk Duration slider with variation knob
+        do
+            imgui.BeginGroup(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, controlWidth)
+            local rv, newDuration = imgui.SliderDouble(globals.ctx, "##ChunkDuration", dataObj.chunkDuration, 0.5, 60.0, "%.1f sec")
+            if rv then callbacks.setChunkDuration(newDuration) end
+            imgui.EndGroup(globals.ctx)
+
+            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.Text(globals.ctx, "Chunk Duration")
+            imgui.SameLine(globals.ctx)
+            globals.Utils.HelpMarker("Duration of active sound periods in seconds")
+            
+            -- Compact variation control on same line
+            imgui.SameLine(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, 60)
+            local rv2, newDurationVar = imgui.DragInt(globals.ctx, "##ChunkDurationVar", dataObj.chunkDurationVariation, 0.5, 0, 100, "%d%%")
+            if rv2 then callbacks.setChunkDurationVariation(newDurationVar) end
+            imgui.PopItemWidth(globals.ctx)
+        end
+
+        -- Chunk Silence slider with variation knob
+        do
+            imgui.BeginGroup(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, controlWidth)
+            local rv, newSilence = imgui.SliderDouble(globals.ctx, "##ChunkSilence", dataObj.chunkSilence, 0.0, 120.0, "%.1f sec")
+            if rv then callbacks.setChunkSilence(newSilence) end
+            imgui.EndGroup(globals.ctx)
+
+            imgui.SameLine(globals.ctx, controlWidth + padding)
+            imgui.Text(globals.ctx, "Silence Duration")
+            imgui.SameLine(globals.ctx)
+            globals.Utils.HelpMarker("Duration of silence periods between chunks in seconds")
+            
+            -- Compact variation control on same line
+            imgui.SameLine(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, 60)
+            local rv2, newSilenceVar = imgui.DragInt(globals.ctx, "##ChunkSilenceVar", dataObj.chunkSilenceVariation, 0.5, 0, 100, "%d%%")
+            if rv2 then callbacks.setChunkSilenceVariation(newSilenceVar) end
+            imgui.PopItemWidth(globals.ctx)
+        end
+    end
+
     -- Fade in/out controls are commented out but can be enabled if needed
 end
 
@@ -229,6 +281,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
     -- Ensure fade properties are initialized
     obj.fadeIn = obj.fadeIn or 0.0
     obj.fadeOut = obj.fadeOut or 0.0
+    
+    -- Ensure chunk mode properties are initialized
+    obj.chunkDuration = obj.chunkDuration or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION
+    obj.chunkSilence = obj.chunkSilence or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE
+    obj.chunkDurationVariation = obj.chunkDurationVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION_VARIATION
+    obj.chunkSilenceVariation = obj.chunkSilenceVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE_VARIATION
 
     -- Draw trigger settings section
     UI.drawTriggerSettingsSection(
@@ -239,6 +297,11 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
             setTriggerDrift = function(v) obj.triggerDrift = v end,
             setFadeIn = function(v) obj.fadeIn = math.max(0, v) end,
             setFadeOut = function(v) obj.fadeOut = math.max(0, v) end,
+            -- Chunk mode callbacks
+            setChunkDuration = function(v) obj.chunkDuration = v end,
+            setChunkSilence = function(v) obj.chunkSilence = v end,
+            setChunkDurationVariation = function(v) obj.chunkDurationVariation = v end,
+            setChunkSilenceVariation = function(v) obj.chunkSilenceVariation = v end,
         },
         width,
         titlePrefix

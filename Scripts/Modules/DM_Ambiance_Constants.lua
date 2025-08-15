@@ -52,6 +52,7 @@ Constants.TRIGGER_MODES = {
     ABSOLUTE = 0,                       -- Absolute interval mode
     RELATIVE = 1,                       -- Relative interval mode  
     COVERAGE = 2,                       -- Coverage interval mode
+    CHUNK = 3,                          -- Chunk mode: structured sound/silence periods
 }
 
 -- Default Values
@@ -65,6 +66,11 @@ Constants.DEFAULTS = {
     PAN_RANGE_MIN = -100,               -- Default min pan range
     PAN_RANGE_MAX = 100,                -- Default max pan range
     CONTAINER_VOLUME_DEFAULT = 0.0,     -- Default container track volume (dB)
+    -- Chunk Mode defaults
+    CHUNK_DURATION = 10.0,              -- Default chunk duration in seconds
+    CHUNK_SILENCE = 5.0,                -- Default silence duration in seconds
+    CHUNK_DURATION_VARIATION = 20,      -- Default chunk duration variation percentage
+    CHUNK_SILENCE_VARIATION = 20,       -- Default silence duration variation percentage
 }
 
 return Constants

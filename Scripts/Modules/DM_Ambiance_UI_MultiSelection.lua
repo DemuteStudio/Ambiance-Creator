@@ -131,6 +131,11 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     local commonPitchMin, commonPitchMax = nil, nil
     local commonVolumeMin, commonVolumeMax = nil, nil
     local commonPanMin, commonPanMax = nil, nil
+    -- Chunk mode parameters
+    local commonChunkDuration = nil
+    local commonChunkSilence = nil
+    local commonChunkDurationVariation = nil
+    local commonChunkSilenceVariation = nil
 
     -- Check all containers to determine common settings
     for _, c in ipairs(containers) do
@@ -188,6 +193,31 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             if math.abs(commonPanMin - container.panRange.min) > 0.001 then commonPanMin = -999 end
             if math.abs(commonPanMax - container.panRange.max) > 0.001 then commonPanMax = -999 end
         end
+        
+        -- Chunk mode parameters
+        if commonChunkDuration == nil then
+            commonChunkDuration = container.chunkDuration or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION
+        elseif math.abs(commonChunkDuration - (container.chunkDuration or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION)) > 0.001 then
+            commonChunkDuration = -999 -- Mixed values
+        end
+        
+        if commonChunkSilence == nil then
+            commonChunkSilence = container.chunkSilence or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE
+        elseif math.abs(commonChunkSilence - (container.chunkSilence or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE)) > 0.001 then
+            commonChunkSilence = -999 -- Mixed values
+        end
+        
+        if commonChunkDurationVariation == nil then
+            commonChunkDurationVariation = container.chunkDurationVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION_VARIATION
+        elseif commonChunkDurationVariation ~= (container.chunkDurationVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_DURATION_VARIATION) then
+            commonChunkDurationVariation = -1 -- Mixed values
+        end
+        
+        if commonChunkSilenceVariation == nil then
+            commonChunkSilenceVariation = container.chunkSilenceVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE_VARIATION
+        elseif commonChunkSilenceVariation ~= (container.chunkSilenceVariation or require("DM_Ambiance_Constants").DEFAULTS.CHUNK_SILENCE_VARIATION) then
+            commonChunkSilenceVariation = -1 -- Mixed values
+        end
     end
 
     -- TRIGGER SETTINGS SECTION
@@ -207,7 +237,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
             
             -- Add a dropdown to set all values to the same value
             imgui.PushItemWidth(globals.ctx, width * 0.5)
-            local intervalModes = "Absolute\0Relative\0Coverage\0\0"
+            local intervalModes = "Absolute\0Relative\0Coverage\0Chunk\0\0"
             local rv, newIntervalMode = imgui.Combo(globals.ctx, "Set all to##IntervalMode", 0, intervalModes)
             if rv then
                 -- Apply to all selected containers
@@ -282,7 +312,12 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
         local dataObj = {
             intervalMode = commonIntervalMode,
             triggerRate = commonTriggerRate,
-            triggerDrift = commonTriggerDrift
+            triggerDrift = commonTriggerDrift,
+            -- Chunk mode parameters
+            chunkDuration = commonChunkDuration,
+            chunkSilence = commonChunkSilence,
+            chunkDurationVariation = commonChunkDurationVariation,
+            chunkSilenceVariation = commonChunkSilenceVariation
         }
         
         local callbacks = {
@@ -308,6 +343,38 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
                 end
                 -- Update state for UI refresh
                 commonTriggerDrift = newValue
+            end,
+            
+            -- Chunk mode callbacks
+            setChunkDuration = function(newValue)
+                for _, c in ipairs(containers) do
+                    globals.groups[c.groupIndex].containers[c.containerIndex].chunkDuration = newValue
+                end
+                -- Update state for UI refresh
+                commonChunkDuration = newValue
+            end,
+            
+            setChunkSilence = function(newValue)
+                for _, c in ipairs(containers) do
+                    globals.groups[c.groupIndex].containers[c.containerIndex].chunkSilence = newValue
+                end
+                -- Update state for UI refresh
+                commonChunkSilence = newValue
+            end,
+            
+            setChunkDurationVariation = function(newValue)
+                for _, c in ipairs(containers) do
+                    globals.groups[c.groupIndex].containers[c.containerIndex].chunkDurationVariation = newValue
+                end
+                -- Update state for UI refresh
+                commonChunkDurationVariation = newValue
+            end,
+            setChunkSilenceVariation = function(newValue)
+                for _, c in ipairs(containers) do
+                    globals.groups[c.groupIndex].containers[c.containerIndex].chunkSilenceVariation = newValue
+                end
+                -- Update state for UI refresh
+                commonChunkSilenceVariation = newValue
             end
         }
         

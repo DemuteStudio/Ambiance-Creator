@@ -96,6 +96,9 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
                     interval = globals.timeSelectionLength -- Fallback
                 end
             end
+        elseif effectiveParams.intervalMode == 3 then
+            -- Chunk mode: Generate chunks with sound periods followed by silence periods
+            return Generation.placeItemsChunkMode(effectiveParams, containerGroup, xfadeshape)
         end
         
         -- Référence pour le dernier item créé
@@ -638,6 +641,181 @@ function Generation.debugFolderStructure(groupName)
         reaper.ShowConsoleMsg("  Container " .. i .. ": '" .. container.name .. "' (index: " .. container.index .. ", depth: " .. container.originalDepth .. ")\n")
     end
     reaper.ShowConsoleMsg("========================\n")
+end
+
+-- Function to place items using Chunk Mode
+-- Creates structured patterns of sound chunks separated by silence periods
+function Generation.placeItemsChunkMode(effectiveParams, containerGroup, xfadeshape)
+    if not effectiveParams.items or #effectiveParams.items == 0 then
+        return
+    end
+    
+    local chunkDuration = effectiveParams.chunkDuration
+    local silenceDuration = effectiveParams.chunkSilence
+    local chunkDurationVariation = effectiveParams.chunkDurationVariation / 100 -- Convert to ratio
+    local chunkSilenceVariation = effectiveParams.chunkSilenceVariation / 100 -- Convert to ratio
+    
+    local lastItemRef = nil
+    local currentTime = globals.startTime
+    
+    -- Process chunks until we reach the end of the time selection
+    while currentTime < globals.endTime do
+        -- Calculate actual chunk duration with variation (corrected formula)
+        local actualChunkDuration = chunkDuration
+        if chunkDurationVariation > 0 then
+            local variation = Utils.randomInRange(-chunkDurationVariation, chunkDurationVariation)
+            actualChunkDuration = chunkDuration * (1 + variation)
+            actualChunkDuration = math.max(0.1, actualChunkDuration)
+        end
+        
+        -- Calculate actual silence duration with variation (separate control)
+        local actualSilenceDuration = silenceDuration
+        if chunkSilenceVariation > 0 then
+            local variation = Utils.randomInRange(-chunkSilenceVariation, chunkSilenceVariation)
+            actualSilenceDuration = silenceDuration * (1 + variation)
+            actualSilenceDuration = math.max(0, actualSilenceDuration)
+        end
+        
+        local chunkEnd = math.min(currentTime + actualChunkDuration, globals.endTime)
+        
+        -- Generate items within this chunk period
+        if chunkEnd > currentTime then
+            lastItemRef = Generation.generateItemsInTimeRange(effectiveParams, containerGroup, currentTime, chunkEnd, lastItemRef, xfadeshape)
+        end
+        
+        -- Progress using the actual durations that were calculated
+        currentTime = currentTime + actualChunkDuration + actualSilenceDuration
+        
+        -- Break if we've gone beyond the time selection
+        if currentTime >= globals.endTime then
+            break
+        end
+    end
+end
+
+-- Helper function to generate items within a specific time range for chunk mode
+function Generation.generateItemsInTimeRange(effectiveParams, containerGroup, rangeStart, rangeEnd, lastItemRef, xfadeshape)
+    local rangeLength = rangeEnd - rangeStart
+    if rangeLength <= 0 then
+        return lastItemRef
+    end
+    
+    -- Use the trigger rate as interval within chunks
+    local interval = effectiveParams.triggerRate
+    local currentTime = rangeStart
+    local isFirstItem = true
+    local itemCount = 0
+    local maxItemsPerChunk = 1000 -- Protection contre boucle infinie
+    
+    while currentTime < rangeEnd and itemCount < maxItemsPerChunk do
+        itemCount = itemCount + 1
+        -- Select a random item from the container
+        local randomItemIndex = math.random(1, #effectiveParams.items)
+        local itemData = effectiveParams.items[randomItemIndex]
+        
+        -- Vérification pour les intervalles négatifs (overlap)
+        if interval < 0 then
+            local requiredLength = math.abs(interval)
+            if itemData.length < requiredLength then
+                -- Item trop court pour supporter l'overlap, skip et avancer minimalement
+                currentTime = currentTime + 0.1
+                goto continue_loop
+            end
+        end
+        
+        local position
+        local maxDrift
+        local drift
+        
+        -- Placement pour le premier item
+        if isFirstItem then
+            if interval > 0 then
+                -- Placer directement entre rangeStart et rangeStart+interval
+                local maxStartOffset = math.min(interval, rangeLength)
+                position = rangeStart + math.random() * maxStartOffset
+            else
+                -- Pour intervalle négatif, placer le premier item au début du chunk
+                position = rangeStart
+            end
+            isFirstItem = false
+        else
+            -- Calcul standard de position pour les items suivants (même logique que mode Absolute)
+            maxDrift = math.abs(interval) * (effectiveParams.triggerDrift / 100)
+            drift = Utils.randomInRange(-maxDrift/2, maxDrift/2)
+            position = currentTime + interval + drift
+            
+            -- Ensure position stays within chunk bounds
+            position = math.max(rangeStart, math.min(position, rangeEnd))
+        end
+        
+        -- Stop if position would exceed chunk end
+        if position >= rangeEnd then
+            break
+        end
+        
+        -- Calculate item length, ensuring it doesn't exceed chunk boundary
+        local maxLength = rangeEnd - position
+        local actualLength = math.min(itemData.length, maxLength)
+        
+        if actualLength <= 0 then
+            break
+        end
+        
+        -- Create and configure the new item
+        local newItem = reaper.AddMediaItemToTrack(containerGroup)
+        local newTake = reaper.AddTakeToMediaItem(newItem)
+        
+        -- Configure the item
+        local PCM_source = reaper.PCM_Source_CreateFromFile(itemData.filePath)
+        reaper.SetMediaItemTake_Source(newTake, PCM_source)
+        reaper.SetMediaItemTakeInfo_Value(newTake, "D_STARTOFFS", itemData.startOffset)
+        
+        reaper.SetMediaItemInfo_Value(newItem, "D_POSITION", position)
+        reaper.SetMediaItemInfo_Value(newItem, "D_LENGTH", actualLength)
+        reaper.GetSetMediaItemTakeInfo_String(newTake, "P_NAME", itemData.name, true)
+
+        -- Apply randomizations using effective parameters
+        if effectiveParams.randomizePitch then
+            local randomPitch = itemData.originalPitch + Utils.randomInRange(effectiveParams.pitchRange.min, effectiveParams.pitchRange.max)
+            reaper.SetMediaItemTakeInfo_Value(newTake, "D_PITCH", randomPitch)
+        else
+            reaper.SetMediaItemTakeInfo_Value(newTake, "D_PITCH", itemData.originalPitch)
+        end
+
+        if effectiveParams.randomizeVolume then
+            local randomVolume = itemData.originalVolume * 10^(Utils.randomInRange(effectiveParams.volumeRange.min, effectiveParams.volumeRange.max) / 20)
+            reaper.SetMediaItemTakeInfo_Value(newTake, "D_VOL", randomVolume)
+        else
+            reaper.SetMediaItemTakeInfo_Value(newTake, "D_VOL", itemData.originalVolume)
+        end
+
+        if effectiveParams.randomizePan then
+            local randomPan = itemData.originalPan + Utils.randomInRange(effectiveParams.panRange.min, effectiveParams.panRange.max) / 100
+            randomPan = math.max(-1, math.min(1, randomPan))
+            -- Use envelope instead of directly modifying the property
+            require("DM_Ambiance_Items").createTakePanEnvelope(newTake, randomPan)
+        end
+
+        -- Create crossfade if items overlap
+        if lastItemRef and position < (reaper.GetMediaItemInfo_Value(lastItemRef, "D_POSITION") + reaper.GetMediaItemInfo_Value(lastItemRef, "D_LENGTH")) then
+            Utils.createCrossfade(lastItemRef, newItem, xfadeshape)
+        end
+
+        lastItemRef = newItem
+        
+        -- Calculer la prochaine position (fin de l'item actuel)
+        -- L'interval sera appliqué au prochain calcul de position
+        currentTime = position + actualLength
+        
+        -- Protection contre progression insuffisante
+        if currentTime <= position then
+            currentTime = position + 0.1 -- Progression minimale
+        end
+        
+        ::continue_loop::
+    end
+    
+    return lastItemRef
 end
 
 

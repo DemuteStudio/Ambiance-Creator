@@ -33,7 +33,12 @@ function Structures.createGroup(name)
         triggerRate = Constants.DEFAULTS.TRIGGER_RATE,
         triggerDrift = Constants.DEFAULTS.TRIGGER_DRIFT,
         intervalMode = Constants.TRIGGER_MODES.ABSOLUTE,
-        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT -- Group track volume in dB
+        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT, -- Group track volume in dB
+        -- Chunk Mode parameters
+        chunkDuration = Constants.DEFAULTS.CHUNK_DURATION,
+        chunkSilence = Constants.DEFAULTS.CHUNK_SILENCE,
+        chunkDurationVariation = Constants.DEFAULTS.CHUNK_DURATION_VARIATION,
+        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION
     }
 end
 
@@ -55,7 +60,12 @@ function Structures.createContainer(name)
         triggerDrift = Constants.DEFAULTS.TRIGGER_DRIFT,
         intervalMode = Constants.TRIGGER_MODES.ABSOLUTE,
         overrideParent = false, -- Flag to override parent group settings
-        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT -- Container track volume in dB
+        trackVolume = Constants.DEFAULTS.CONTAINER_VOLUME_DEFAULT, -- Container track volume in dB
+        -- Chunk Mode parameters
+        chunkDuration = Constants.DEFAULTS.CHUNK_DURATION,
+        chunkSilence = Constants.DEFAULTS.CHUNK_SILENCE,
+        chunkDurationVariation = Constants.DEFAULTS.CHUNK_DURATION_VARIATION,
+        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION
     }
 end
 
@@ -97,6 +107,12 @@ function Structures.getEffectiveContainerParams(group, container)
     effectiveParams.triggerRate = group.triggerRate
     effectiveParams.triggerDrift = group.triggerDrift
     effectiveParams.intervalMode = group.intervalMode
+    
+    -- Inherit chunk mode settings
+    effectiveParams.chunkDuration = group.chunkDuration
+    effectiveParams.chunkSilence = group.chunkSilence
+    effectiveParams.chunkDurationVariation = group.chunkDurationVariation
+    effectiveParams.chunkSilenceVariation = group.chunkSilenceVariation
     
     return effectiveParams
 end
