@@ -206,18 +206,15 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
 
         imgui.SameLine(globals.ctx, controlWidth + padding)
         imgui.Text(globals.ctx, rateLabel)
-    end
-
-    -- Random variation (slider)
-    do
-        imgui.BeginGroup(globals.ctx)
-        imgui.PushItemWidth(globals.ctx, controlWidth)
-        local rv, newDrift = imgui.SliderInt(globals.ctx, "##TriggerDrift", dataObj.triggerDrift, 0, 100, "%d")
-        if rv then callbacks.setTriggerDrift(newDrift) end
-        imgui.EndGroup(globals.ctx)
-
-        imgui.SameLine(globals.ctx, controlWidth + padding)
-        imgui.Text(globals.ctx, "Random variation (%)")
+        
+        -- Compact random variation control on same line
+        imgui.SameLine(globals.ctx)
+        imgui.PushItemWidth(globals.ctx, 60)
+        local rvDrift, newDrift = imgui.DragInt(globals.ctx, "##TriggerDrift", dataObj.triggerDrift, 0.5, 0, 100, "%d%%")
+        if rvDrift then callbacks.setTriggerDrift(newDrift) end
+        imgui.PopItemWidth(globals.ctx)
+        imgui.SameLine(globals.ctx)
+        imgui.Text(globals.ctx, "Var")
     end
 
     -- Chunk mode specific controls
@@ -241,6 +238,8 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
             local rv2, newDurationVar = imgui.DragInt(globals.ctx, "##ChunkDurationVar", dataObj.chunkDurationVariation, 0.5, 0, 100, "%d%%")
             if rv2 then callbacks.setChunkDurationVariation(newDurationVar) end
             imgui.PopItemWidth(globals.ctx)
+            imgui.SameLine(globals.ctx)
+            imgui.Text(globals.ctx, "Var")
         end
 
         -- Chunk Silence slider with variation knob
@@ -262,6 +261,8 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
             local rv2, newSilenceVar = imgui.DragInt(globals.ctx, "##ChunkSilenceVar", dataObj.chunkSilenceVariation, 0.5, 0, 100, "%d%%")
             if rv2 then callbacks.setChunkSilenceVariation(newSilenceVar) end
             imgui.PopItemWidth(globals.ctx)
+            imgui.SameLine(globals.ctx)
+            imgui.Text(globals.ctx, "Var")
         end
     end
 
