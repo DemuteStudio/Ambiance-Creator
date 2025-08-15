@@ -37,6 +37,8 @@
             - Visual feedback during drag operations shows what's being moved
     1.5
         Volume Control Feature
+        UI Enhancement - PNG Icon Integration
+
 --]]
 
 -- Check if ReaImGui is available; display an error and exit if not

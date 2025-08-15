@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "WebSearch",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.extremraym.com)"
+    ],
+    "deny": [],
+    "defaultMode": "acceptEdits"
+  }
+}
