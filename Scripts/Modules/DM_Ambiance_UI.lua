@@ -18,6 +18,7 @@ local UI_Groups = require("DM_Ambiance_UI_Groups")
 local UI_MultiSelection = require("DM_Ambiance_UI_MultiSelection")
 local UI_Generation = require("DM_Ambiance_UI_Generation")
 local UI_Group = require("DM_Ambiance_UI_Group")
+local Icons = require("DM_Ambiance_Icons")
 
 -- Initialize the module with global variables from the main script
 function UI.initModule(g)
@@ -42,9 +43,13 @@ function UI.initModule(g)
     UI_MultiSelection.initModule(globals)
     UI_Generation.initModule(globals)
     UI_Group.initModule(globals)
+    Icons.initModule(globals)
 
     -- Make UI_Groups accessible to the UI_Group module
     globals.UI_Groups = UI_Groups
+
+    -- Make Icons accessible to other modules
+    globals.Icons = Icons
 
     -- Make UI accessible to other modules
     globals.UI = UI
@@ -550,7 +555,7 @@ function UI.ShowMainWindow(open)
         -- Top section: preset controls and generation button
         UI_Preset.drawPresetControls()
         globals.imgui.SameLine(globals.ctx)
-        if globals.imgui.Button(globals.ctx, "Settings") then
+        if globals.Icons.createSettingsButton(globals.ctx, "main", "Open settings") then
             globals.showSettingsWindow = true
         end
         

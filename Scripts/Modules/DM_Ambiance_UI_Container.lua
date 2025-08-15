@@ -58,7 +58,7 @@ function UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
 
     -- Load preset button: loads the selected preset into this container
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Load Container##" .. containerId)
+    if globals.Icons.createDownloadButton(globals.ctx, "loadContainer" .. containerId, "Load container preset")
         and globals.selectedContainerPresetIndex[presetKey] >= 0
         and globals.selectedContainerPresetIndex[presetKey] < #containerPresetList then
 
@@ -68,7 +68,7 @@ function UI_Container.drawContainerPresetControls(groupIndex, containerIndex)
 
     -- Save preset button: opens a popup to save the current container as a preset
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Save Container##" .. containerId) then
+    if globals.Icons.createUploadButton(globals.ctx, "saveContainer" .. containerId, "Save container preset") then
         -- Check if a media directory is configured before allowing save
         if not globals.Utils.isMediaDirectoryConfigured() then
             -- Set flag to show the warning popup

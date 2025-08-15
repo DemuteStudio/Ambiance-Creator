@@ -48,7 +48,7 @@ function UI_MultiSelection.drawMultiSelectionPanel(width)
     local containers = UI_MultiSelection.getSelectedContainersList()
 
     -- Button to regenerate all selected containers
-    if imgui.Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
+    if imgui.Button(globals.ctx, "Regenerate All", width * 0.5, 30) then
         for _, c in ipairs(containers) do
             globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end

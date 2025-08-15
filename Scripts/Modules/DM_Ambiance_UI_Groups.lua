@@ -52,7 +52,7 @@ function UI_Groups.drawGroupPresetControls(i)
 
     -- Load preset button
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Load Group##" .. groupId)
+    if globals.Icons.createDownloadButton(globals.ctx, "loadGroup" .. groupId, "Load group preset")
         and globals.selectedGroupPresetIndex[i] >= 0
         and globals.selectedGroupPresetIndex[i] < #groupPresetList then
         local presetName = groupPresetList[globals.selectedGroupPresetIndex[i] + 1]
@@ -61,7 +61,7 @@ function UI_Groups.drawGroupPresetControls(i)
 
     -- Save preset button
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Save Group##" .. groupId) then
+    if globals.Icons.createUploadButton(globals.ctx, "saveGroup" .. groupId, "Save group preset") then
         -- Check if a media directory is configured before allowing save
         if not globals.Utils.isMediaDirectoryConfigured() then
             -- Set flag to show the warning popup
@@ -448,11 +448,11 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
 
         -- Delete and regenerate buttons
         imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Delete##" .. groupId) then
+        if globals.Icons.createDeleteButton(globals.ctx, groupId, "Delete group") then
             groupToDelete = i
         end
         imgui.SameLine(globals.ctx)
-        if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
+        if globals.Icons.createRegenButton(globals.ctx, groupId, "Regenerate group") then
             globals.Generation.generateSingleGroup(i)
         end
 
@@ -545,13 +545,13 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                 imgui.SetCursorPosX(globals.ctx, buttonsX)
 
                 -- Delete container button
-                if imgui.Button(globals.ctx, "Delete##" .. containerId) then
+                if globals.Icons.createDeleteButton(globals.ctx, containerId, "Delete container") then
                     containerToDelete = j
                 end
 
                 -- Regenerate container button
                 imgui.SameLine(globals.ctx)
-                if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
+                if globals.Icons.createRegenButton(globals.ctx, containerId, "Regenerate container") then
                     globals.Generation.generateSingleContainer(i, j)
                 end
 

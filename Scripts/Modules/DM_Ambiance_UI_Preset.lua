@@ -49,13 +49,13 @@ function UI_Preset.drawPresetControls()
     
     -- Button to load the selected preset, only active if a preset is selected
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Load") and globals.currentPresetName ~= "" then
+    if globals.Icons.createDownloadButton(globals.ctx, "preset", "Load preset") and globals.currentPresetName ~= "" then
         globals.Presets.loadPreset(globals.currentPresetName)
     end
     
     -- Button to save the current preset
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Save") then
+    if globals.Icons.createUploadButton(globals.ctx, "preset", "Save preset") then
         
         -- Check if the media directory is configured before opening the save popup
         if not globals.Utils.isMediaDirectoryConfigured() then
@@ -70,13 +70,13 @@ function UI_Preset.drawPresetControls()
     
     -- Button to delete the currently selected preset, only active if a preset is selected
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Delete") and globals.currentPresetName ~= "" then
+    if globals.Icons.createDeleteButtonWithFallback(globals.ctx, "preset", "Delete", "Delete preset") and globals.currentPresetName ~= "" then
         globals.Utils.safeOpenPopup("Confirm deletion")
     end
     
     -- Button to open the folder containing presets
     imgui.SameLine(globals.ctx)
-    if imgui.Button(globals.ctx, "Open Preset Directory") then
+    if globals.Icons.createFolderButton(globals.ctx, "presetDir", "Open preset directory") then
         globals.Utils.openPresetsFolder("Presets")
     end
     

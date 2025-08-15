@@ -63,7 +63,7 @@ end
 -- Function to draw regenerate button for a group
 function UI_Generation.drawGroupRegenerateButton(groupIndex)
     local groupId = "group" .. groupIndex
-    if imgui.Button(globals.ctx, "Regenerate##" .. groupId) then
+    if globals.Icons.createRegenButton(globals.ctx, groupId, "Regenerate group") then
         globals.Generation.generateSingleGroup(groupIndex)
         return true
     end
@@ -74,7 +74,7 @@ end
 function UI_Generation.drawContainerRegenerateButton(groupIndex, containerIndex)
     local groupId = "group" .. groupIndex
     local containerId = groupId .. "_container" .. containerIndex
-    if imgui.Button(globals.ctx, "Regenerate##" .. containerId) then
+    if globals.Icons.createRegenButton(globals.ctx, containerId, "Regenerate container") then
         globals.Generation.generateSingleContainer(groupIndex, containerIndex)
         return true
     end
@@ -90,7 +90,7 @@ function UI_Generation.drawMultiRegenerateButton(width)
         table.insert(selectedContainers, {groupIndex = tonumber(t), containerIndex = tonumber(c)})
     end
     
-    if imgui.Button(globals.ctx, "Regenerate All Selected", width * 0.5, 30) then
+    if imgui.Button(globals.ctx, "Regenerate All", width * 0.5, 30) then
         for _, c in ipairs(selectedContainers) do
             globals.Generation.generateSingleContainer(c.groupIndex, c.containerIndex)
         end
