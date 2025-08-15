@@ -539,10 +539,21 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
                     end
                 end
 
-                -- Position buttons for container actions
-                local buttonsX = startX + 20 + nameWidth + 10
+                -- Position buttons for container actions - align to the right (avoiding scrollbar)
+                local currentX = imgui.GetCursorPosX(globals.ctx)
+                local availableWidth = imgui.GetContentRegionAvail(globals.ctx)
+                local buttonWidth = 16 -- Icon size
+                local buttonSpacing = 4 -- Space between buttons
+                local totalButtonWidth = (buttonWidth * 2) + buttonSpacing
+                
+                -- Reserve space for scrollbar to avoid overlap
+                local scrollbarWidth = 16 -- Standard scrollbar width
+                local scrollbarMargin = 8  -- Safety margin
+                local safeWidth = availableWidth - scrollbarWidth - scrollbarMargin
+                local rightmostX = currentX + safeWidth - totalButtonWidth
+                
                 imgui.SameLine(globals.ctx)
-                imgui.SetCursorPosX(globals.ctx, buttonsX)
+                imgui.SetCursorPosX(globals.ctx, rightmostX)
 
                 -- Delete container button
                 if globals.Icons.createDeleteButton(globals.ctx, containerId, "Delete container") then
