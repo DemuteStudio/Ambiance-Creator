@@ -61,13 +61,13 @@ function Update-ScriptVersion {
     # Write back to file
     Set-Content -Path $SCRIPT_PATH -Value $content -NoNewline
     
-    Write-ColorMessage "✅ Updated $SCRIPT_PATH to version $NewVersion" $SuccessColor
+    Write-ColorMessage "Updated $SCRIPT_PATH to version $NewVersion" $SuccessColor
 }
 
 function Test-GitStatus {
     $status = git status --porcelain
     if ($status -and -not $Force) {
-        Write-ColorMessage "❌ You have uncommitted changes. Commit them first or use -Force" $ErrorColor
+        Write-ColorMessage "You have uncommitted changes. Commit them first or use -Force" $ErrorColor
         Write-ColorMessage "Uncommitted files:" $WarningColor
         $status | ForEach-Object { Write-ColorMessage "  $_" $WarningColor }
         return $false
@@ -82,14 +82,14 @@ function Test-ReaPackIndex {
         return $true
     }
     catch {
-        Write-ColorMessage "❌ reapack-index not found in PATH" $ErrorColor
+        Write-ColorMessage "reapack-index not found in PATH" $ErrorColor
         Write-ColorMessage "Please install reapack-index from: https://github.com/cfillion/reapack-index/releases" $InfoColor
         return $false
     }
 }
 
 function Update-ReaPackIndex {
-    Write-ColorMessage "📦 Updating ReaPack index..." $InfoColor
+    Write-ColorMessage "Updating ReaPack index..." $InfoColor
     
     # Remove old index
     if (Test-Path "index.xml") {
@@ -102,16 +102,16 @@ function Update-ReaPackIndex {
     $process = Start-Process -FilePath "reapack-index" -ArgumentList "--scan --output index.xml --verbose ." -NoNewWindow -Wait -PassThru
     
     if ($process.ExitCode -ne 0) {
-        Write-ColorMessage "❌ Failed to generate ReaPack index" $ErrorColor
+        Write-ColorMessage "Failed to generate ReaPack index" $ErrorColor
         return $false
     }
     
     if (-not (Test-Path "index.xml")) {
-        Write-ColorMessage "❌ index.xml was not created" $ErrorColor
+        Write-ColorMessage "index.xml was not created" $ErrorColor
         return $false
     }
     
-    Write-ColorMessage "✅ ReaPack index generated successfully" $SuccessColor
+    Write-ColorMessage "ReaPack index generated successfully" $SuccessColor
     return $true
 }
 
@@ -122,19 +122,19 @@ function Show-VersionInfo {
     if (Test-Path "index.xml") {
         $indexContent = Get-Content "index.xml" -Raw
         if ($indexContent -match "version name=`"$([regex]::Escape($Version))`".*?<changelog><!\[CDATA\[(.*?)\]\]></changelog>" -and $matches[1]) {
-            Write-ColorMessage "📋 Generated changelog for v$Version" $InfoColor
+            Write-ColorMessage "Generated changelog for v$Version" $InfoColor
             Write-Host $matches[1] -ForegroundColor Gray
         }
     }
 }
 
 # Main execution
-Write-ColorMessage "🚀 ReaPack Auto Publisher for $SCRIPT_NAME" $InfoColor
+Write-ColorMessage "ReaPack Auto Publisher for $SCRIPT_NAME" $InfoColor
 Write-ColorMessage "================================================" $InfoColor
 
 # Pre-flight checks
 if (-not (Test-Path $SCRIPT_PATH)) {
-    Write-ColorMessage "❌ Script file not found: $SCRIPT_PATH" $ErrorColor
+    Write-ColorMessage "Script file not found: $SCRIPT_PATH" $ErrorColor
     exit 1
 }
 
@@ -149,15 +149,15 @@ if (-not (Test-GitStatus)) {
 # Get current version
 $currentVersion = Get-CurrentVersion
 if (-not $currentVersion) {
-    Write-ColorMessage "❌ Could not read current version from $SCRIPT_PATH" $ErrorColor
+    Write-ColorMessage "Could not read current version from $SCRIPT_PATH" $ErrorColor
     exit 1
 }
 
-Write-ColorMessage "📍 Current version: $currentVersion" $InfoColor
+Write-ColorMessage "Current version: $currentVersion" $InfoColor
 
 # Propose next version
 $nextVersion = Get-NextVersion $currentVersion
-Write-ColorMessage "🔢 Proposed next version: $nextVersion" $InfoColor
+Write-ColorMessage "Proposed next version: $nextVersion" $InfoColor
 
 $userVersion = Read-Host "Enter version number (press Enter for $nextVersion)"
 if ($userVersion) {
@@ -166,7 +166,7 @@ if ($userVersion) {
 
 # Get changelog entry
 if (-not $CommitMessage) {
-    Write-ColorMessage "📝 Enter changelog for version $nextVersion" $InfoColor
+    Write-ColorMessage "Enter changelog for version $nextVersion" $InfoColor
     Write-ColorMessage "   (Enter multiple lines, finish with empty line)" $WarningColor
     
     $changelogLines = @()
@@ -179,27 +179,27 @@ if (-not $CommitMessage) {
     
     $changelogEntry = $changelogLines -join "`n        "
     if (-not $changelogEntry) {
-        Write-ColorMessage "❌ Changelog cannot be empty" $ErrorColor
+        Write-ColorMessage "Changelog cannot be empty" $ErrorColor
         exit 1
     }
 } else {
     $changelogEntry = $CommitMessage
 }
 
-Write-ColorMessage "`n📋 Version $nextVersion will include:" $InfoColor
+Write-ColorMessage "`nVersion $nextVersion will include:" $InfoColor
 Write-ColorMessage $changelogEntry $WarningColor
 
 if (-not $DryRun) {
     $confirm = Read-Host "`nProceed with publication? (y/N)"
     if ($confirm -ne "y") {
-        Write-ColorMessage "❌ Publication cancelled" $WarningColor
+        Write-ColorMessage "Publication cancelled" $WarningColor
         exit 0
     }
 }
 
 # DRY RUN - show what would happen
 if ($DryRun) {
-    Write-ColorMessage "`n🔍 DRY RUN - Would perform these actions:" $InfoColor
+    Write-ColorMessage "`nDRY RUN - Would perform these actions:" $InfoColor
     Write-ColorMessage "1. Update $SCRIPT_PATH to version $nextVersion" $InfoColor
     Write-ColorMessage "2. Add changelog entry: $changelogEntry" $InfoColor
     Write-ColorMessage "3. Commit changes with message: Release v$nextVersion" $InfoColor
@@ -210,13 +210,13 @@ if ($DryRun) {
 
 # Execute the publication process
 try {
-    Write-ColorMessage "`n🔄 Starting publication process..." $InfoColor
+    Write-ColorMessage "`nStarting publication process..." $InfoColor
     
     # 1. Update script version and changelog
     Update-ScriptVersion $nextVersion $changelogEntry
     
     # 2. Commit the script changes
-    Write-ColorMessage "📝 Committing script changes..." $InfoColor
+    Write-ColorMessage "Committing script changes..." $InfoColor
     git add $SCRIPT_PATH
     git commit -m "Release v$nextVersion"
     
@@ -233,7 +233,7 @@ try {
     Show-VersionInfo $nextVersion
     
     # 5. Commit index and push
-    Write-ColorMessage "📤 Committing index and pushing..." $InfoColor
+    Write-ColorMessage "Committing index and pushing..." $InfoColor
     git add index.xml
     git commit -m "Update ReaPack index for v$nextVersion"
     
@@ -247,12 +247,12 @@ try {
         throw "Git push failed"
     }
     
-    Write-ColorMessage "`n🎉 Successfully published $SCRIPT_NAME v$nextVersion!" $SuccessColor
-    Write-ColorMessage "🌐 Changes pushed to GitHub" $SuccessColor
-    Write-ColorMessage "📦 ReaPack index updated" $SuccessColor
+    Write-ColorMessage "`nSuccessfully published $SCRIPT_NAME v$nextVersion!" $SuccessColor
+    Write-ColorMessage "Changes pushed to GitHub" $SuccessColor
+    Write-ColorMessage "ReaPack index updated" $SuccessColor
     
 } catch {
-    Write-ColorMessage "`n❌ Publication failed: $_" $ErrorColor
-    Write-ColorMessage "🔄 You may need to manually fix the issues and retry" $WarningColor
+    Write-ColorMessage "`nPublication failed: $_" $ErrorColor
+    Write-ColorMessage "You may need to manually fix the issues and retry" $WarningColor
     exit 1
 }
