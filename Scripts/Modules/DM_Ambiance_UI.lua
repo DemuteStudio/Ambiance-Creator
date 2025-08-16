@@ -324,7 +324,21 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     -- Pitch randomization (checkbox + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
-    if rv then obj.randomizePitch = newRandomizePitch end
+    if rv then 
+        obj.randomizePitch = newRandomizePitch 
+        -- Debug: Check if parameters are available
+        reaper.ShowConsoleMsg("DEBUG: Pitch checkbox - groupIndex=" .. tostring(groupIndex) .. ", containerIndex=" .. tostring(containerIndex) .. "\n")
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            reaper.ShowConsoleMsg("DEBUG: Calling queueRandomizationUpdate for container\n")
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pitch")
+        elseif groupIndex then
+            reaper.ShowConsoleMsg("DEBUG: Calling queueRandomizationUpdate for group\n")
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "pitch")
+        else
+            reaper.ShowConsoleMsg("DEBUG: No groupIndex available - randomization update skipped\n")
+        end
+    end
     
     imgui.SameLine(globals.ctx)
     imgui.BeginDisabled(globals.ctx, not obj.randomizePitch)
@@ -334,6 +348,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     if rv then
         obj.pitchRange.min = newPitchMin
         obj.pitchRange.max = newPitchMax
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pitch")
+        elseif groupIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "pitch")
+        end
     end
     imgui.PopItemWidth(globals.ctx)
     imgui.EndDisabled(globals.ctx)
@@ -345,7 +365,15 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     -- Volume randomization (checkbox + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
-    if rv then obj.randomizeVolume = newRandomizeVolume end
+    if rv then 
+        obj.randomizeVolume = newRandomizeVolume 
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "volume")
+        elseif groupIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "volume")
+        end
+    end
     
     imgui.SameLine(globals.ctx)
     imgui.BeginDisabled(globals.ctx, not obj.randomizeVolume)
@@ -355,6 +383,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     if rv then
         obj.volumeRange.min = newVolumeMin
         obj.volumeRange.max = newVolumeMax
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "volume")
+        elseif groupIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "volume")
+        end
     end
     imgui.PopItemWidth(globals.ctx)
     imgui.EndDisabled(globals.ctx)
@@ -366,7 +400,15 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     -- Pan randomization (checkbox + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
-    if rv then obj.randomizePan = newRandomizePan end
+    if rv then 
+        obj.randomizePan = newRandomizePan 
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pan")
+        elseif groupIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "pan")
+        end
+    end
     
     imgui.SameLine(globals.ctx)
     imgui.BeginDisabled(globals.ctx, not obj.randomizePan)
@@ -376,6 +418,12 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     if rv then
         obj.panRange.min = newPanMin
         obj.panRange.max = newPanMax
+        -- Queue randomization update to avoid ImGui conflicts
+        if groupIndex and containerIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pan")
+        elseif groupIndex then
+            globals.Utils.queueRandomizationUpdate(groupIndex, nil, "pan")
+        end
     end
     imgui.PopItemWidth(globals.ctx)
     imgui.EndDisabled(globals.ctx)
@@ -770,6 +818,9 @@ function UI.ShowMainWindow(open)
     
     -- Process any queued fade updates after ImGui frame is complete
     globals.Utils.processQueuedFadeUpdates()
+    
+    -- Process any queued randomization updates after ImGui frame is complete
+    globals.Utils.processQueuedRandomizationUpdates()
     
     return open
 end

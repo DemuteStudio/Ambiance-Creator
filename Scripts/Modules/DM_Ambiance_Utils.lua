@@ -1081,4 +1081,277 @@ function Utils.applyFadeSettingsToGroupItems(groupIndex, modifiedFade)
     end
 end
 
+-- Apply randomization settings to all media items in a specific container in real-time
+-- @param groupIndex number: Index of the group
+-- @param containerIndex number: Index of the container
+-- @param modifiedParam string: Which parameter was modified ("pitch", "volume", "pan", or nil for all)
+function Utils.applyRandomizationSettingsToContainerItems(groupIndex, containerIndex, modifiedParam)
+    reaper.ShowConsoleMsg("DEBUG: applyRandomizationSettingsToContainerItems called - groupIndex=" .. tostring(groupIndex) .. ", containerIndex=" .. tostring(containerIndex) .. "\n")
+    
+    if not globals.groups or not globals.groups[groupIndex] then
+        reaper.ShowConsoleMsg("DEBUG: Group not found\n")
+        return
+    end
+    
+    local group = globals.groups[groupIndex]
+    if not group.containers or not group.containers[containerIndex] then
+        reaper.ShowConsoleMsg("DEBUG: Container not found\n")
+        return
+    end
+    
+    local container = group.containers[containerIndex]
+    local effectiveParams = globals.Structures.getEffectiveContainerParams(group, container)
+    
+    reaper.ShowConsoleMsg("DEBUG: Looking for group track: " .. group.name .. "\n")
+    -- Find the container track
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack then
+        reaper.ShowConsoleMsg("DEBUG: Group track not found\n")
+        return
+    end
+    
+    reaper.ShowConsoleMsg("DEBUG: Looking for container track: " .. container.name .. "\n")
+    local containerTrack, containerTrackIdx = Utils.findContainerGroup(groupTrackIdx, container.name)
+    if not containerTrack then
+        reaper.ShowConsoleMsg("DEBUG: Container track not found\n")
+        return
+    end
+    
+    local itemCount = reaper.GetTrackNumMediaItems(containerTrack)
+    reaper.ShowConsoleMsg("DEBUG: Found " .. itemCount .. " items in container track\n")
+    if itemCount == 0 then
+        return
+    end
+    
+    -- Begin undo block for batch operation
+    reaper.Undo_BeginBlock()
+    
+    for i = 0, itemCount - 1 do
+        local item = reaper.GetTrackMediaItem(containerTrack, i)
+        if item then
+            local take = reaper.GetActiveTake(item)
+            if take then
+                -- Get original values from item data
+                local itemData = nil
+                local retval, takeName = reaper.GetSetMediaItemTakeInfo_String(take, "P_NAME", "", false)
+                if not retval then
+                    takeName = "unknown"
+                end
+                
+                for _, containerData in ipairs(container.items) do
+                    if takeName == containerData.name then
+                        itemData = containerData
+                        break
+                    end
+                end
+                
+                if itemData then
+                    reaper.ShowConsoleMsg("DEBUG: Found itemData for " .. takeName .. ", applying randomization\n")
+                    Utils.applyRandomizationToItem(item, take, itemData, effectiveParams, modifiedParam)
+                else
+                    reaper.ShowConsoleMsg("DEBUG: No itemData found for take " .. takeName .. "\n")
+                end
+            end
+        end
+    end
+    
+    reaper.Undo_EndBlock("Apply Randomization Settings to Container Items", -1)
+    reaper.UpdateArrange()
+end
+
+-- Apply randomization settings to all containers in a group in real-time
+-- @param groupIndex number: Index of the group
+-- @param modifiedParam string: Which parameter was modified ("pitch", "volume", "pan", or nil for all)
+function Utils.applyRandomizationSettingsToGroupItems(groupIndex, modifiedParam)
+    if not globals.groups or not globals.groups[groupIndex] then
+        return
+    end
+    
+    local group = globals.groups[groupIndex]
+    if not group.containers then
+        return
+    end
+    
+    -- Apply randomization settings to all containers in this group
+    for containerIndex, container in ipairs(group.containers) do
+        Utils.applyRandomizationSettingsToContainerItems(groupIndex, containerIndex, modifiedParam)
+    end
+end
+
+-- Apply randomization to a single item based on current and previous settings
+-- @param item MediaItem: The media item
+-- @param take MediaItemTake: The media item take
+-- @param itemData table: Original item data with originalPitch, originalVolume, originalPan
+-- @param effectiveParams table: Current effective parameters
+-- @param modifiedParam string: Which parameter was modified
+function Utils.applyRandomizationToItem(item, take, itemData, effectiveParams, modifiedParam)
+    reaper.ShowConsoleMsg("DEBUG: applyRandomizationToItem called for param=" .. tostring(modifiedParam) .. "\n")
+    
+    -- Current values from the item
+    local currentPitch = reaper.GetMediaItemTakeInfo_Value(take, "D_PITCH")
+    local currentVolume = reaper.GetMediaItemTakeInfo_Value(take, "D_VOL")
+    
+    reaper.ShowConsoleMsg("DEBUG: Current values - pitch=" .. currentPitch .. ", volume=" .. currentVolume .. "\n")
+    reaper.ShowConsoleMsg("DEBUG: Original values - pitch=" .. itemData.originalPitch .. ", volume=" .. itemData.originalVolume .. "\n")
+    
+    -- Check if pan envelope exists (indicates randomized pan)
+    local panEnv = reaper.GetTakeEnvelopeByName(take, "Pan")
+    local currentPan = 0
+    if panEnv then
+        -- Get pan value from envelope (first point)
+        local retval, time, value, shape, tension, selected = reaper.GetEnvelopePoint(panEnv, 0)
+        if retval then
+            currentPan = value
+        end
+        reaper.ShowConsoleMsg("DEBUG: Pan envelope exists with value=" .. currentPan .. "\n")
+    else
+        reaper.ShowConsoleMsg("DEBUG: No pan envelope found\n")
+    end
+    
+    -- Apply pitch randomization
+    if modifiedParam == "pitch" or modifiedParam == nil then
+        reaper.ShowConsoleMsg("DEBUG: Processing pitch - randomizePitch=" .. tostring(effectiveParams.randomizePitch) .. "\n")
+        if effectiveParams.randomizePitch then
+            -- Check if current pitch is different from original (indicating it was randomized)
+            local isPitchRandomized = math.abs(currentPitch - itemData.originalPitch) > 0.001
+            reaper.ShowConsoleMsg("DEBUG: isPitchRandomized=" .. tostring(isPitchRandomized) .. "\n")
+            
+            local randomPitch = itemData.originalPitch + Utils.randomInRange(effectiveParams.pitchRange.min, effectiveParams.pitchRange.max)
+            reaper.ShowConsoleMsg("DEBUG: Setting new pitch=" .. randomPitch .. " (range:" .. effectiveParams.pitchRange.min .. " to " .. effectiveParams.pitchRange.max .. ")\n")
+            reaper.SetMediaItemTakeInfo_Value(take, "D_PITCH", randomPitch)
+        else
+            -- Randomization disabled, return to original value
+            reaper.ShowConsoleMsg("DEBUG: Pitch randomization disabled, resetting to original=" .. itemData.originalPitch .. "\n")
+            reaper.SetMediaItemTakeInfo_Value(take, "D_PITCH", itemData.originalPitch)
+        end
+    end
+    
+    -- Apply volume randomization
+    if modifiedParam == "volume" or modifiedParam == nil then
+        if effectiveParams.randomizeVolume then
+            -- Check if current volume is different from original (indicating it was randomized)
+            local isVolumeRandomized = math.abs(currentVolume - itemData.originalVolume) > 0.001
+            
+            if isVolumeRandomized then
+                -- For now, apply new randomization (proportional logic would need old range)
+                local randomVolume = itemData.originalVolume * 10^(Utils.randomInRange(effectiveParams.volumeRange.min, effectiveParams.volumeRange.max) / 20)
+                reaper.SetMediaItemTakeInfo_Value(take, "D_VOL", randomVolume)
+            else
+                -- Generate new random value
+                local randomVolume = itemData.originalVolume * 10^(Utils.randomInRange(effectiveParams.volumeRange.min, effectiveParams.volumeRange.max) / 20)
+                reaper.SetMediaItemTakeInfo_Value(take, "D_VOL", randomVolume)
+            end
+        else
+            -- Randomization disabled, return to original value
+            reaper.SetMediaItemTakeInfo_Value(take, "D_VOL", itemData.originalVolume)
+        end
+    end
+    
+    -- Apply pan randomization
+    if modifiedParam == "pan" or modifiedParam == nil then
+        if effectiveParams.randomizePan then
+            local randomPan = itemData.originalPan + Utils.randomInRange(effectiveParams.panRange.min, effectiveParams.panRange.max) / 100
+            randomPan = math.max(-1, math.min(1, randomPan))
+            
+            -- Check if pan envelope already exists
+            if panEnv then
+                -- Update existing envelope (preserves all points, just changes values)
+                reaper.ShowConsoleMsg("DEBUG: Updating existing pan envelope\n")
+                globals.Items.updateTakePanEnvelope(take, randomPan)
+            else
+                -- Create new envelope using API-only approach
+                reaper.ShowConsoleMsg("DEBUG: Creating new pan envelope\n")
+                globals.Items.createTakePanEnvelope(take, randomPan)
+                
+                -- Re-get the envelope after creation to ensure it's available for this session
+                panEnv = reaper.GetTakeEnvelopeByName(take, "Pan")
+                if panEnv then
+                    reaper.ShowConsoleMsg("DEBUG: Pan envelope successfully retrieved after creation\n")
+                else
+                    reaper.ShowConsoleMsg("DEBUG: Warning: Could not retrieve pan envelope after creation\n")
+                end
+            end
+        else
+            -- Randomization disabled, remove pan envelope to return to original
+            if panEnv then
+                -- For take envelopes, we need to use a different approach
+                -- Clear all envelope points to effectively disable the envelope
+                local numPoints = reaper.CountEnvelopePoints(panEnv)
+                for i = numPoints - 1, 0, -1 do
+                    reaper.DeleteEnvelopePointEx(panEnv, -1, i)
+                end
+                reaper.ShowConsoleMsg("DEBUG: Cleared pan envelope points\n")
+            end
+        end
+    end
+end
+
+-- Calculate proportional value when randomization range changes
+-- @param currentValue number: Current value on the item
+-- @param oldMin number: Previous minimum range value
+-- @param oldMax number: Previous maximum range value  
+-- @param newMin number: New minimum range value
+-- @param newMax number: New maximum range value
+-- @param defaultValue number: Default value (used when current value equals default)
+-- @return number: New proportional value
+function Utils.calculateProportionalValue(currentValue, oldMin, oldMax, newMin, newMax, defaultValue)
+    -- If current value is at default, keep it at default
+    if math.abs(currentValue - defaultValue) < 0.001 then
+        return defaultValue
+    end
+    
+    -- Calculate the relative position in the old range
+    local oldRange = oldMax - oldMin
+    if oldRange == 0 then
+        return defaultValue -- Avoid division by zero
+    end
+    
+    local relativePosition = (currentValue - defaultValue) / oldRange
+    
+    -- Apply this relative position to the new range
+    local newRange = newMax - newMin
+    local newValue = defaultValue + (relativePosition * newRange)
+    
+    return newValue
+end
+
+-- Queue system for randomization parameter updates
+local randomizationUpdateQueue = {}
+
+-- Add a randomization update request to the queue
+-- @param groupIndex number: Index of the group
+-- @param containerIndex number: Index of the container (nil for group-wide update)
+-- @param modifiedParam string: Which parameter was modified ("pitch", "volume", "pan", or nil for all)
+function Utils.queueRandomizationUpdate(groupIndex, containerIndex, modifiedParam)
+    local key = groupIndex .. "_" .. (containerIndex or "all") .. "_randomization"
+    reaper.ShowConsoleMsg("DEBUG: queueRandomizationUpdate called - key=" .. key .. ", param=" .. tostring(modifiedParam) .. "\n")
+    randomizationUpdateQueue[key] = {
+        groupIndex = groupIndex,
+        containerIndex = containerIndex,
+        modifiedParam = modifiedParam,
+        timestamp = os.clock()
+    }
+end
+
+-- Process all queued randomization updates (call this after ImGui frame)
+function Utils.processQueuedRandomizationUpdates()
+    local queueSize = 0
+    for _ in pairs(randomizationUpdateQueue) do queueSize = queueSize + 1 end
+    
+    if queueSize > 0 then
+        reaper.ShowConsoleMsg("DEBUG: Processing " .. queueSize .. " randomization updates\n")
+    end
+    
+    for key, update in pairs(randomizationUpdateQueue) do
+        reaper.ShowConsoleMsg("DEBUG: Processing update - key=" .. key .. ", param=" .. tostring(update.modifiedParam) .. "\n")
+        if update.containerIndex then
+            Utils.applyRandomizationSettingsToContainerItems(update.groupIndex, update.containerIndex, update.modifiedParam)
+        else
+            Utils.applyRandomizationSettingsToGroupItems(update.groupIndex, update.modifiedParam)
+        end
+    end
+    -- Clear the queue
+    randomizationUpdateQueue = {}
+end
+
 return Utils
