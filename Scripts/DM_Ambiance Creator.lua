@@ -1,11 +1,12 @@
 --[[
 @description DM_Ambiance Creator
-@version 1.6
+@version 1.7
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
 @provides
     [nomain] Modules/*.lua
+    [data] Icons/*.png
 @changelog
     1.0
         Initial Release
@@ -62,6 +63,9 @@
             - Default fade link mode set to Link for synchronized fade behavior
         Pan Envelope Handling Enhancement
             - Create, update, and remove envelopes based on item selection and randomization settings
+    1.7
+        Fix ReaPack packaging - Include PNG icons in distribution
+        Complete icon integration for all UI elements
 
 
 --]]
