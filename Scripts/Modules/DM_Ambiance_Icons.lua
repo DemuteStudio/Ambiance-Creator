@@ -41,16 +41,16 @@ local function getIconPaths()
             
             -- Build paths to icons
             return {
-                delete = scripts_dir .. separator .. "Icons" .. separator .. "delete_garbage_icon.png",
-                regen = scripts_dir .. separator .. "Icons" .. separator .. "refresh_reload_icon.png",
-                upload = scripts_dir .. separator .. "Icons" .. separator .. "export_share_upload_up_icon.png",
-                download = scripts_dir .. separator .. "Icons" .. separator .. "download_import_save_down_storage_icon.png",
-                settings = scripts_dir .. separator .. "Icons" .. separator .. "settings_icon.png",
-                folder = scripts_dir .. separator .. "Icons" .. separator .. "folder_icon.png",
-                add = scripts_dir .. separator .. "Icons" .. separator .. "+_add_increase_icon.png",
-                link = scripts_dir .. separator .. "Icons" .. separator .. "link_icon.png",
-                unlink = scripts_dir .. separator .. "Icons" .. separator .. "unlink_icon.png",
-                mirror = scripts_dir .. separator .. "Icons" .. separator .. "arrow_left_right_icon.png"
+                delete = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_delete_garbage_icon.png",
+                regen = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_refresh_reload_icon.png",
+                upload = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_export_share_upload_up_icon.png",
+                download = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_download_import_save_down_storage_icon.png",
+                settings = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_settings_icon.png",
+                folder = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_folder_icon.png",
+                add = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_+_add_increase_icon.png",
+                link = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_link_icon.png",
+                unlink = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_unlink_icon.png",
+                mirror = scripts_dir .. separator .. "Icons" .. separator .. "DM_Ambiance_arrow_left_right_icon.png"
             }
         end
     end
