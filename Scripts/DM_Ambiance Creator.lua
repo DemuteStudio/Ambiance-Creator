@@ -46,6 +46,8 @@
             - Added link mode for fade in/out parameters with Link and Unlink modes only
             - Fades enabled by default with 0.0 second duration for immediate availability
             - Default fade link mode set to Link for synchronized fade behavior
+        Pan Envelope Handling Enhancement
+            - Create, update, and remove envelopes based on item selection and randomization settings
         Real Time Time Parameters and Fade Parameters
 
 
