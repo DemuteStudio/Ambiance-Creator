@@ -275,7 +275,7 @@ function UI.drawTriggerSettingsSection(dataObj, callbacks, width, titlePrefix)
 end
 
 -- Display trigger and randomization settings for a group or container
-function UI.displayTriggerSettings(obj, objId, width, isGroup)
+function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, containerIndex)
     local titlePrefix = isGroup and "Default " or ""
     local inheritText = isGroup and "These settings will be inherited by containers unless overridden" or ""
 
@@ -385,11 +385,11 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
     imgui.EndGroup(globals.ctx)
     
     -- Fade Settings section
-    UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
+    UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, containerIndex)
 end
 
 -- Function to draw fade settings controls
-function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
+function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, containerIndex)
     local Constants = require("DM_Ambiance_Constants")
     
     -- Section separator and title
@@ -425,6 +425,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         if rv then 
             if isIn then obj.fadeInEnabled = newEnabled
             else obj.fadeOutEnabled = newEnabled end
+            -- Queue fade update to avoid ImGui conflicts
+            if groupIndex and containerIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+            elseif groupIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, nil)
+            end
         end
         
         -- Column 2: Label (position 25)
@@ -441,6 +447,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         if imgui.Button(globals.ctx, unitText .. "##Unit" .. suffix, unitButtonWidth, 0) then
             if isIn then obj.fadeInUsePercentage = not obj.fadeInUsePercentage
             else obj.fadeOutUsePercentage = not obj.fadeOutUsePercentage end
+            -- Queue fade update to avoid ImGui conflicts
+            if groupIndex and containerIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+            elseif groupIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, nil)
+            end
         end
         
         -- Column 4: Duration slider (position 145)
@@ -454,6 +466,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         if rv then
             if isIn then obj.fadeInDuration = newDuration
             else obj.fadeOutDuration = newDuration end
+            -- Queue fade update to avoid ImGui conflicts
+            if groupIndex and containerIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+            elseif groupIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, nil)
+            end
         end
         imgui.PopItemWidth(globals.ctx)
         
@@ -472,6 +490,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         if rv then
             if isIn then obj.fadeInShape = newShape
             else obj.fadeOutShape = newShape end
+            -- Queue fade update to avoid ImGui conflicts
+            if groupIndex and containerIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+            elseif groupIndex then
+                globals.Utils.queueFadeUpdate(groupIndex, nil)
+            end
         end
         imgui.PopItemWidth(globals.ctx)
         
@@ -492,6 +516,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
             if rv then
                 if isIn then obj.fadeInCurve = newCurve
                 else obj.fadeOutCurve = newCurve end
+                -- Apply changes to existing items in real-time
+                if groupIndex and containerIndex then
+                    globals.Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+                elseif groupIndex then
+                    globals.Utils.applyFadeSettingsToGroupItems(groupIndex)
+                end
             end
             imgui.PopItemWidth(globals.ctx)
         end
@@ -724,6 +754,9 @@ function UI.ShowMainWindow(open)
 
     -- Handle other popups
     handlePopups()
+    
+    -- Process any queued fade updates after ImGui frame is complete
+    globals.Utils.processQueuedFadeUpdates()
     
     return open
 end

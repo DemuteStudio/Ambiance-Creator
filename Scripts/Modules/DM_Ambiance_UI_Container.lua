@@ -233,7 +233,7 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
     -- Display trigger/randomization settings or inheritance info
     if container.overrideParent then
         -- Display the trigger and randomization settings for this container
-        globals.UI.displayTriggerSettings(container, containerId, width, false)
+        globals.UI.displayTriggerSettings(container, containerId, width, false, groupIndex, containerIndex)
     end
 end
 

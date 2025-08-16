@@ -916,4 +916,148 @@ function Utils.initializeContainerVolumes()
     end
 end
 
+-- Queue system for deferred fade applications to avoid ImGui conflicts
+local fadeUpdateQueue = {}
+
+-- Add a fade update request to the queue
+function Utils.queueFadeUpdate(groupIndex, containerIndex)
+    local key = groupIndex .. "_" .. (containerIndex or "all")
+    fadeUpdateQueue[key] = {
+        groupIndex = groupIndex,
+        containerIndex = containerIndex,
+        timestamp = os.clock()
+    }
+end
+
+-- Process all queued fade updates (call this after ImGui frame)
+function Utils.processQueuedFadeUpdates()
+    for key, update in pairs(fadeUpdateQueue) do
+        if update.containerIndex then
+            Utils.applyFadeSettingsToContainerItems(update.groupIndex, update.containerIndex)
+        else
+            Utils.applyFadeSettingsToGroupItems(update.groupIndex)
+        end
+    end
+    -- Clear the queue
+    fadeUpdateQueue = {}
+end
+
+-- Apply fade settings to all media items in a specific container in real-time
+function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+    if not globals.groups or not globals.groups[groupIndex] then
+        return
+    end
+    
+    local group = globals.groups[groupIndex]
+    if not group.containers or not group.containers[containerIndex] then
+        return
+    end
+    
+    local container = group.containers[containerIndex]
+    
+    -- Find the group track first
+    local groupTrack, groupTrackIdx = Utils.findGroupByName(group.name)
+    if not groupTrack or not groupTrackIdx then
+        return -- Group track not found
+    end
+    
+    -- Find the container track within the group
+    local containerTrack, containerTrackIdx = Utils.findContainerGroup(groupTrackIdx, container.name)
+    if not containerTrack then
+        return -- Container track not found
+    end
+    
+    -- Get effective parameters (handles parent inheritance)
+    local Structures = require("DM_Ambiance_Structures")
+    local effectiveParams = Structures.getEffectiveContainerParams(group, container)
+    
+    -- Get all media items from the container's track
+    local itemCount = reaper.CountTrackMediaItems(containerTrack)
+    if itemCount == 0 then
+        return -- No items to update
+    end
+    
+    -- Begin undo block for batch operation
+    reaper.Undo_BeginBlock()
+    
+    for i = 0, itemCount - 1 do
+        local item = reaper.GetTrackMediaItem(containerTrack, i)
+        if item then
+            -- Apply fade in settings
+            if effectiveParams.fadeInEnabled then
+                local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+                local fadeInDuration = 0.1 -- Default fallback
+                
+                -- Ensure we have a valid duration value
+                local duration = effectiveParams.fadeInDuration or 0.1
+                
+                if effectiveParams.fadeInUsePercentage then
+                    -- Convert percentage to seconds
+                    fadeInDuration = (duration / 100.0) * itemLength
+                else
+                    -- Use duration in seconds directly
+                    fadeInDuration = duration
+                end
+                
+                -- Ensure fade doesn't exceed item length and is positive
+                fadeInDuration = math.max(0, math.min(fadeInDuration, itemLength * 0.5))
+                
+                reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", fadeInDuration)
+                reaper.SetMediaItemInfo_Value(item, "C_FADEINSHAPE", effectiveParams.fadeInShape or 0)
+                reaper.SetMediaItemInfo_Value(item, "D_FADEINDIR", effectiveParams.fadeInCurve or 0.0)
+            else
+                -- Disable fade in
+                reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", 0)
+            end
+            
+            -- Apply fade out settings
+            if effectiveParams.fadeOutEnabled then
+                local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+                local fadeOutDuration = 0.1 -- Default fallback
+                
+                -- Ensure we have a valid duration value
+                local duration = effectiveParams.fadeOutDuration or 0.1
+                
+                if effectiveParams.fadeOutUsePercentage then
+                    -- Convert percentage to seconds
+                    fadeOutDuration = (duration / 100.0) * itemLength
+                else
+                    -- Use duration in seconds directly
+                    fadeOutDuration = duration
+                end
+                
+                -- Ensure fade doesn't exceed item length and is positive
+                fadeOutDuration = math.max(0, math.min(fadeOutDuration, itemLength * 0.5))
+                
+                reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", fadeOutDuration)
+                reaper.SetMediaItemInfo_Value(item, "C_FADEOUTSHAPE", effectiveParams.fadeOutShape or 0)
+                reaper.SetMediaItemInfo_Value(item, "D_FADEOUTDIR", effectiveParams.fadeOutCurve or 0.0)
+            else
+                -- Disable fade out
+                reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", 0)
+            end
+        end
+    end
+    
+    reaper.Undo_EndBlock("Apply Fade Settings to Container Items", -1)
+    reaper.UpdateArrange()
+end
+
+-- Apply fade settings to all containers in a group in real-time
+function Utils.applyFadeSettingsToGroupItems(groupIndex)
+    if not globals.groups or not globals.groups[groupIndex] then
+        return
+    end
+    
+    local group = globals.groups[groupIndex]
+    if not group.containers then
+        return
+    end
+    
+    -- Apply fade settings to all containers in this group
+    for containerIndex, container in ipairs(group.containers) do
+        Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+    end
+end
+
 return Utils

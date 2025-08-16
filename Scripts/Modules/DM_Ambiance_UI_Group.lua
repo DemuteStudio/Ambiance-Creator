@@ -62,7 +62,7 @@ function UI_Group.displayGroupSettings(groupIndex, width)
     globals.UI_Groups.drawGroupPresetControls(groupIndex)
     
     -- TRIGGER SETTINGS SECTION
-    globals.UI.displayTriggerSettings(group, groupId, width, true)
+    globals.UI.displayTriggerSettings(group, groupId, width, true, groupIndex, nil)
 end
 
 return UI_Group
