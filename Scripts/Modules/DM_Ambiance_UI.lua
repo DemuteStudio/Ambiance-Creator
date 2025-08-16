@@ -432,10 +432,11 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
             if isIn then obj.fadeInEnabled = newEnabled
             else obj.fadeOutEnabled = newEnabled end
             -- Queue fade update to avoid ImGui conflicts
+            local modifiedFade = isIn and "fadeIn" or "fadeOut"
             if groupIndex and containerIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
             elseif groupIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, nil)
+                globals.Utils.queueFadeUpdate(groupIndex, nil, modifiedFade)
             end
         end
         
@@ -454,10 +455,11 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
             if isIn then obj.fadeInUsePercentage = not obj.fadeInUsePercentage
             else obj.fadeOutUsePercentage = not obj.fadeOutUsePercentage end
             -- Queue fade update to avoid ImGui conflicts
+            local modifiedFade = isIn and "fadeIn" or "fadeOut"
             if groupIndex and containerIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
             elseif groupIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, nil)
+                globals.Utils.queueFadeUpdate(groupIndex, nil, modifiedFade)
             end
         end
         
@@ -473,10 +475,11 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
             if isIn then obj.fadeInDuration = newDuration
             else obj.fadeOutDuration = newDuration end
             -- Queue fade update to avoid ImGui conflicts
+            local modifiedFade = isIn and "fadeIn" or "fadeOut"
             if groupIndex and containerIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
             elseif groupIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, nil)
+                globals.Utils.queueFadeUpdate(groupIndex, nil, modifiedFade)
             end
         end
         imgui.PopItemWidth(globals.ctx)
@@ -497,10 +500,11 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
             if isIn then obj.fadeInShape = newShape
             else obj.fadeOutShape = newShape end
             -- Queue fade update to avoid ImGui conflicts
+            local modifiedFade = isIn and "fadeIn" or "fadeOut"
             if groupIndex and containerIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, containerIndex)
+                globals.Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
             elseif groupIndex then
-                globals.Utils.queueFadeUpdate(groupIndex, nil)
+                globals.Utils.queueFadeUpdate(groupIndex, nil, modifiedFade)
             end
         end
         imgui.PopItemWidth(globals.ctx)
@@ -524,11 +528,12 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
             if rv then
                 if isIn then obj.fadeInCurve = newCurve
                 else obj.fadeOutCurve = newCurve end
-                -- Apply changes to existing items in real-time
+                -- Queue fade update to avoid ImGui conflicts
+                local modifiedFade = isIn and "fadeIn" or "fadeOut"
                 if groupIndex and containerIndex then
-                    globals.Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+                    globals.Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
                 elseif groupIndex then
-                    globals.Utils.applyFadeSettingsToGroupItems(groupIndex)
+                    globals.Utils.queueFadeUpdate(groupIndex, nil, modifiedFade)
                 end
             end
             imgui.PopItemWidth(globals.ctx)

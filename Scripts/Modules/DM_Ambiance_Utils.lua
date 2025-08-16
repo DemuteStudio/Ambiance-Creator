@@ -920,11 +920,15 @@ end
 local fadeUpdateQueue = {}
 
 -- Add a fade update request to the queue
-function Utils.queueFadeUpdate(groupIndex, containerIndex)
+-- @param groupIndex number: Index of the group
+-- @param containerIndex number: Index of the container (nil for group-wide update)
+-- @param modifiedFade string: Which fade was modified ("fadeIn", "fadeOut", or nil for both)
+function Utils.queueFadeUpdate(groupIndex, containerIndex, modifiedFade)
     local key = groupIndex .. "_" .. (containerIndex or "all")
     fadeUpdateQueue[key] = {
         groupIndex = groupIndex,
         containerIndex = containerIndex,
+        modifiedFade = modifiedFade,
         timestamp = os.clock()
     }
 end
@@ -933,9 +937,9 @@ end
 function Utils.processQueuedFadeUpdates()
     for key, update in pairs(fadeUpdateQueue) do
         if update.containerIndex then
-            Utils.applyFadeSettingsToContainerItems(update.groupIndex, update.containerIndex)
+            Utils.applyFadeSettingsToContainerItems(update.groupIndex, update.containerIndex, update.modifiedFade)
         else
-            Utils.applyFadeSettingsToGroupItems(update.groupIndex)
+            Utils.applyFadeSettingsToGroupItems(update.groupIndex, update.modifiedFade)
         end
     end
     -- Clear the queue
@@ -943,7 +947,10 @@ function Utils.processQueuedFadeUpdates()
 end
 
 -- Apply fade settings to all media items in a specific container in real-time
-function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+-- @param groupIndex number: Index of the group
+-- @param containerIndex number: Index of the container
+-- @param modifiedFade string: Which fade was modified ("fadeIn", "fadeOut", or nil for both)
+function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex, modifiedFade)
     if not globals.groups or not globals.groups[groupIndex] then
         return
     end
@@ -983,57 +990,69 @@ function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
     for i = 0, itemCount - 1 do
         local item = reaper.GetTrackMediaItem(containerTrack, i)
         if item then
-            -- Apply fade in settings
+            local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+            
+            -- Calculate desired fade durations
+            local desiredFadeInDuration = 0
+            local desiredFadeOutDuration = 0
+            
+            -- Calculate fade in duration
             if effectiveParams.fadeInEnabled then
-                local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-                local fadeInDuration = 0.1 -- Default fallback
-                
-                -- Ensure we have a valid duration value
                 local duration = effectiveParams.fadeInDuration or 0.1
-                
                 if effectiveParams.fadeInUsePercentage then
-                    -- Convert percentage to seconds
-                    fadeInDuration = (duration / 100.0) * itemLength
+                    desiredFadeInDuration = (duration / 100.0) * itemLength
                 else
-                    -- Use duration in seconds directly
-                    fadeInDuration = duration
+                    desiredFadeInDuration = duration
                 end
-                
-                -- Ensure fade doesn't exceed item length and is positive
-                fadeInDuration = math.max(0, math.min(fadeInDuration, itemLength))
-                
-                reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", fadeInDuration)
+                desiredFadeInDuration = math.max(0, desiredFadeInDuration)
+            end
+            
+            -- Calculate fade out duration
+            if effectiveParams.fadeOutEnabled then
+                local duration = effectiveParams.fadeOutDuration or 0.1
+                if effectiveParams.fadeOutUsePercentage then
+                    desiredFadeOutDuration = (duration / 100.0) * itemLength
+                else
+                    desiredFadeOutDuration = duration
+                end
+                desiredFadeOutDuration = math.max(0, desiredFadeOutDuration)
+            end
+            
+            -- Apply "push" logic if fades overlap
+            local finalFadeInDuration = desiredFadeInDuration
+            local finalFadeOutDuration = desiredFadeOutDuration
+            
+            if (desiredFadeInDuration + desiredFadeOutDuration) > itemLength then
+                if modifiedFade == "fadeIn" then
+                    -- Fade in is being modified, let it "push" the fade out
+                    finalFadeInDuration = math.min(desiredFadeInDuration, itemLength)
+                    finalFadeOutDuration = math.max(0, itemLength - finalFadeInDuration)
+                elseif modifiedFade == "fadeOut" then
+                    -- Fade out is being modified, let it "push" the fade in
+                    finalFadeOutDuration = math.min(desiredFadeOutDuration, itemLength)
+                    finalFadeInDuration = math.max(0, itemLength - finalFadeOutDuration)
+                else
+                    -- No specific fade being modified, limit both to item length
+                    finalFadeInDuration = math.min(desiredFadeInDuration, itemLength)
+                    finalFadeOutDuration = math.min(desiredFadeOutDuration, itemLength - finalFadeInDuration)
+                end
+            end
+            
+            -- Apply fade in
+            if effectiveParams.fadeInEnabled then
+                reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", finalFadeInDuration)
                 reaper.SetMediaItemInfo_Value(item, "C_FADEINSHAPE", effectiveParams.fadeInShape or 0)
                 reaper.SetMediaItemInfo_Value(item, "D_FADEINDIR", effectiveParams.fadeInCurve or 0.0)
             else
-                -- Disable fade in
                 reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", 0)
             end
             
-            -- Apply fade out settings
+            -- Apply fade out
             if effectiveParams.fadeOutEnabled then
-                local itemLength = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-                local fadeOutDuration = 0.1 -- Default fallback
-                
-                -- Ensure we have a valid duration value
-                local duration = effectiveParams.fadeOutDuration or 0.1
-                
-                if effectiveParams.fadeOutUsePercentage then
-                    -- Convert percentage to seconds
-                    fadeOutDuration = (duration / 100.0) * itemLength
-                else
-                    -- Use duration in seconds directly
-                    fadeOutDuration = duration
-                end
-                
-                -- Ensure fade doesn't exceed item length and is positive
-                fadeOutDuration = math.max(0, math.min(fadeOutDuration, itemLength))
-                
-                reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", fadeOutDuration)
+                reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", finalFadeOutDuration)
                 reaper.SetMediaItemInfo_Value(item, "C_FADEOUTSHAPE", effectiveParams.fadeOutShape or 0)
                 reaper.SetMediaItemInfo_Value(item, "D_FADEOUTDIR", effectiveParams.fadeOutCurve or 0.0)
             else
-                -- Disable fade out
                 reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", 0)
             end
         end
@@ -1044,7 +1063,9 @@ function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
 end
 
 -- Apply fade settings to all containers in a group in real-time
-function Utils.applyFadeSettingsToGroupItems(groupIndex)
+-- @param groupIndex number: Index of the group
+-- @param modifiedFade string: Which fade was modified ("fadeIn", "fadeOut", or nil for both)
+function Utils.applyFadeSettingsToGroupItems(groupIndex, modifiedFade)
     if not globals.groups or not globals.groups[groupIndex] then
         return
     end
@@ -1056,7 +1077,7 @@ function Utils.applyFadeSettingsToGroupItems(groupIndex)
     
     -- Apply fade settings to all containers in this group
     for containerIndex, container in ipairs(group.containers) do
-        Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
+        Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex, modifiedFade)
     end
 end
 
