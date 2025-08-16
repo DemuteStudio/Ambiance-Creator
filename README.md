@@ -214,17 +214,16 @@ You can also customize the interface in the Settings.
 
 ## Planned future additions:
 
-- **Volume Slider for Groups and Containers**: A dedicated volume control slider will be added to both groups and containers, allowing for more precise level adjustments without affecting the randomization parameters.
+- (1.5) **Volume Slider for Groups and Containers**: A dedicated volume control slider will be added to both groups and containers, allowing for more precise level adjustments without affecting the randomization parameters.
 - **Preview Listening for Containers/Groups**: A new function will enable you to preview the sound of a container or an entire group directly within the interface before generating it in REAPER, saving time in the creative process.
 - **Advanced File Splitting**: The ability to split longer audio files into multiple segments and randomize their in/out points. This will allow for more variation from a single source file and enable creating evolving soundscapes from fewer original assets.
 - **Flexible Group Generation Options**: The ability to generate content into a new group, a specific existing group chosen from a list, or directly into the currently selected group, providing more workflow flexibility and integration with existing projects.
 - **Master Group**: A group to rule them all. Allows you to create a master group for better group organization.
 - **Settings Menu**: Introduce a user settings menu to offer a certain level of customization, allowing users to tailor the tool to their preferences and workflow needs.
-- **Chunk Mode**: Implement a fourth mode that enables the creation of “chunks” of sounds. Instead of randomly spacing sounds across the entire time selection, this mode will allow you to define active sound periods (e.g., 10 seconds of sound followed by 20 seconds of silence), repeating this pattern throughout the selection. This will make it possible to structure sound density more precisely over time.
+- (1.5) **Chunk Mode**: Implement a fourth mode that enables the creation of “chunks” of sounds. Instead of randomly spacing sounds across the entire time selection, this mode will allow you to define active sound periods (e.g., 10 seconds of sound followed by 20 seconds of silence), repeating this pattern throughout the selection. This will make it possible to structure sound density more precisely over time.
 - **UI Improvements**: Once the core features are complete, the overall user interface will be polished to ensure a cleaner, more intuitive, and visually appealing experience.
 - **Action List**: Adds some Reaper actions to manipulate containers outside of the tool interface.
 - **Drag and Drop**: Be able to drag and drop items directly into a container instead of using the "Import" button.
-- **Reorganize Groups and Containers**: Allow users to manually drag and drop groups and containers to reorganize them.
 - **Export**: For video games, allow the extraction of one instance of each item variation, so they can be exported and used to replicate the generated behavior in an audio middleware.
 - **Middleware API**: Directly create Random or Sequence containers from the tool in your preferred audio middleware.
 - **Multi Channel Management**: Be able to create quad/ambisonic containers
