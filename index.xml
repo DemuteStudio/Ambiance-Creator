@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<index version="1" commit="208c84a6645a6583df0f1893663a050b0a98ded9">
+<index version="1" commit="9a3394b4773708ccfb6f77fed301643d31f2afb5">
   <category name="Scripts">
     <reapack name="DM_Ambiance Creator.lua" type="script" desc="DM_Ambiance Creator">
       <metadata>
@@ -628,6 +628,105 @@
         <source type="data" file="Icons/DM_Ambiance_refresh_reload_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/208c84a6645a6583df0f1893663a050b0a98ded9/Scripts/Icons/DM_Ambiance_refresh_reload_icon.png</source>
         <source type="data" file="Icons/DM_Ambiance_settings_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/208c84a6645a6583df0f1893663a050b0a98ded9/Scripts/Icons/DM_Ambiance_settings_icon.png</source>
         <source type="data" file="Icons/DM_Ambiance_unlink_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/208c84a6645a6583df0f1893663a050b0a98ded9/Scripts/Icons/DM_Ambiance_unlink_icon.png</source>
+      </version>
+      <version name="2.0.1" author="Anthony Deneyer" time="2025-08-16T15:14:04Z">
+        <changelog><![CDATA[1.0
+    Initial Release
+1.1
+    Fix freeze issue with sliders in the setting windows
+1.2
+    Minor updates and improvements  
+1.3
+    Partial fixes and improvements
+1.4
+    Fix critical ImGui assertion error "Calling End() too many times!"
+        - Fixed improper Begin/End pattern that caused crashes when collapsing window or switching between docked/embedded modes
+        - Improved stability when switching window states and popup handling
+        - No more crashes when clicking collapse arrow or changing dock states
+    Fix confusing UI terminology
+        - Renamed "Override Existing Track" option to "Keep Existing Track" to properly reflect its actual behavior
+        - Inverted internal logic to match the new naming convention
+        - Clarified help text to better explain the two generation modes
+    Fix track folder structure corruption when adding containers to existing groups
+        - Fixed issue where adding a new container to an existing group would change the entire track folder structure
+        - New containers now properly inherit folder structure without affecting other tracks
+    Fix auto-collapse behavior when removing items from container lists
+        - Fixed issue where the "Imported items" section would automatically collapse every time an item was removed
+        - Users can now remove multiple items consecutively without having to re-expand the list each time
+    Added Drag and Drop functionality
+        - Groups can now be reordered by dragging and dropping them
+        - Containers can be moved between groups via drag and drop
+        - REAPER track structure automatically reorganizes to match the new arrangement
+        - Visual feedback during drag operations shows what's being moved
+1.5
+    Volume Control Feature
+    UI Enhancement - PNG Icon Integration
+    Added Link Mode System for Randomization Parameters
+        - New link mode buttons for pitch, volume, and pan controls
+        - Three modes: Unlink (independent), Link (relative movement), Mirror (opposite movement)
+        - Default mode changed to Mirror for intuitive opposite behavior (e.g., pan -100/+100)
+    Fade Control System
+        - Added link mode for fade in/out parameters with Link and Unlink modes only
+        - Fades enabled by default with 0.0 second duration for immediate availability
+        - Default fade link mode set to Link for synchronized fade behavior
+    Pan Envelope Handling Enhancement
+        - Create, update, and remove envelopes based on item selection and randomization settings
+    Real Time Time Parameters and Fade Parameters
+1.6
+    Complete changelog update with all v1.5 features properly documented
+    UI Enhancement - PNG Icon Integration
+    Added Link Mode System for Randomization Parameters
+        - New link mode buttons for pitch, volume, and pan controls
+        - Three modes: Unlink (independent), Link (relative movement), Mirror (opposite movement)
+        - Default mode changed to Mirror for intuitive opposite behavior (e.g., pan -100/+100)
+    Fade Control System
+        - Added link mode for fade in/out parameters with Link and Unlink modes only
+        - Fades enabled by default with 0.0 second duration for immediate availability
+        - Default fade link mode set to Link for synchronized fade behavior
+    Pan Envelope Handling Enhancement
+        - Create, update, and remove envelopes based on item selection and randomization settings
+1.7
+    Fix ReaPack packaging - Include PNG icons in distribution
+    Complete icon integration for all UI elements
+1.8
+    Fix icon download issue - Correct file paths in @provides to match GitHub structure
+    Icons now properly downloaded automatically with ReaPack installation
+1.9
+    Final fix for icon paths - Use relative paths from script location
+    Verified ReaPack packaging compatibility
+1.9.1
+    Fix Icons folder creation in ReaPack installation
+2.0
+    Fix ReaPack conflicts - Rename all icons with DM_Ambiance prefix to avoid conflicts with other packages
+2.0.1
+    Fix Icons folder creation - Use simple @provides syntax]]></changelog>
+        <source main="main">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/DM_Ambiance%20Creator.lua</source>
+        <source file="Modules/DM_AmbianceCreator_Settings.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_AmbianceCreator_Settings.lua</source>
+        <source file="Modules/DM_Ambiance_Constants.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Constants.lua</source>
+        <source file="Modules/DM_Ambiance_ErrorHandler.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_ErrorHandler.lua</source>
+        <source file="Modules/DM_Ambiance_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_Icons.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Icons.lua</source>
+        <source file="Modules/DM_Ambiance_Items.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Items.lua</source>
+        <source file="Modules/DM_Ambiance_Presets.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Presets.lua</source>
+        <source file="Modules/DM_Ambiance_Structures.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Structures.lua</source>
+        <source file="Modules/DM_Ambiance_UI.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Container.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_Container.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Generation.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_Generation.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Group.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_Group.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Groups.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_Groups.lua</source>
+        <source file="Modules/DM_Ambiance_UI_MultiSelection.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_MultiSelection.lua</source>
+        <source file="Modules/DM_Ambiance_UI_Preset.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_UI_Preset.lua</source>
+        <source file="Modules/DM_Ambiance_Utils.lua">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Modules/DM_Ambiance_Utils.lua</source>
+        <source file="Icons/DM_Ambiance_+_add_increase_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_+_add_increase_icon.png</source>
+        <source file="Icons/DM_Ambiance_arrow_left_right_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_arrow_left_right_icon.png</source>
+        <source file="Icons/DM_Ambiance_delete_garbage_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_delete_garbage_icon.png</source>
+        <source file="Icons/DM_Ambiance_download_import_save_down_storage_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_download_import_save_down_storage_icon.png</source>
+        <source file="Icons/DM_Ambiance_export_share_upload_up_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_export_share_upload_up_icon.png</source>
+        <source file="Icons/DM_Ambiance_folder_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_folder_icon.png</source>
+        <source file="Icons/DM_Ambiance_link_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_link_icon.png</source>
+        <source file="Icons/DM_Ambiance_refresh_reload_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_refresh_reload_icon.png</source>
+        <source file="Icons/DM_Ambiance_settings_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_settings_icon.png</source>
+        <source file="Icons/DM_Ambiance_unlink_icon.png">https://github.com/DemuteStudio/Ambiance-Creator/raw/9a3394b4773708ccfb6f77fed301643d31f2afb5/Scripts/Icons/DM_Ambiance_unlink_icon.png</source>
       </version>
     </reapack>
   </category>
