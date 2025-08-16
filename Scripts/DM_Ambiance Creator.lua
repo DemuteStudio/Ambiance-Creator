@@ -1,12 +1,12 @@
 --[[
 @description DM_Ambiance Creator
-@version 2.0
+@version 2.0.1
 @about
     The Ambiance Creator is a tool that makes it easy to create soundscapes by randomly placing audio elements on the REAPER timeline according to user parameters.
 @author Anthony Deneyer
 @provides
     [nomain] Modules/*.lua
-    [data] Icons/*.png > Icons/
+    Icons/*.png
 @changelog
     1.0
         Initial Release
@@ -76,6 +76,8 @@
         Fix Icons folder creation in ReaPack installation
     2.0
         Fix ReaPack conflicts - Rename all icons with DM_Ambiance prefix to avoid conflicts with other packages
+    2.0.1
+        Fix Icons folder creation - Use simple @provides syntax
 
 
 --]]
