@@ -392,6 +392,12 @@ end
 function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, containerIndex)
     local Constants = require("DM_Ambiance_Constants")
     
+    -- Ensure all fade properties are properly initialized with defaults
+    obj.fadeInShape = obj.fadeInShape or Constants.DEFAULTS.FADE_IN_SHAPE
+    obj.fadeOutShape = obj.fadeOutShape or Constants.DEFAULTS.FADE_OUT_SHAPE
+    obj.fadeInCurve = obj.fadeInCurve or Constants.DEFAULTS.FADE_IN_CURVE
+    obj.fadeOutCurve = obj.fadeOutCurve or Constants.DEFAULTS.FADE_OUT_CURVE
+    
     -- Section separator and title
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Fade Settings")
@@ -499,8 +505,10 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
         end
         imgui.PopItemWidth(globals.ctx)
         
-        -- Column 7 & 8: Curve controls (only for Bezier and S-Curve)
-        if shape == Constants.FADE_SHAPES.BEZIER or shape == Constants.FADE_SHAPES.S_CURVE then
+        -- Column 7 & 8: Curve controls (for Linear, Bezier and S-Curve)
+        -- Default to Linear if shape is nil/undefined
+        local actualShape = shape or Constants.FADE_SHAPES.LINEAR
+        if actualShape == Constants.FADE_SHAPES.LINEAR or actualShape == Constants.FADE_SHAPES.BEZIER or actualShape == Constants.FADE_SHAPES.S_CURVE then
             -- Column 7: "Curve:" label (position 440)
             imgui.SameLine(globals.ctx)
             imgui.SetCursorPosX(globals.ctx, colCurveLabel)
