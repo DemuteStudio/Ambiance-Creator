@@ -1000,7 +1000,7 @@ function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
                 end
                 
                 -- Ensure fade doesn't exceed item length and is positive
-                fadeInDuration = math.max(0, math.min(fadeInDuration, itemLength * 0.5))
+                fadeInDuration = math.max(0, math.min(fadeInDuration, itemLength))
                 
                 reaper.SetMediaItemInfo_Value(item, "D_FADEINLEN", fadeInDuration)
                 reaper.SetMediaItemInfo_Value(item, "C_FADEINSHAPE", effectiveParams.fadeInShape or 0)
@@ -1027,7 +1027,7 @@ function Utils.applyFadeSettingsToContainerItems(groupIndex, containerIndex)
                 end
                 
                 -- Ensure fade doesn't exceed item length and is positive
-                fadeOutDuration = math.max(0, math.min(fadeOutDuration, itemLength * 0.5))
+                fadeOutDuration = math.max(0, math.min(fadeOutDuration, itemLength))
                 
                 reaper.SetMediaItemInfo_Value(item, "D_FADEOUTLEN", fadeOutDuration)
                 reaper.SetMediaItemInfo_Value(item, "C_FADEOUTSHAPE", effectiveParams.fadeOutShape or 0)
