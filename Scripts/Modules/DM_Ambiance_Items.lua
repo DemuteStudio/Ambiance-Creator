@@ -45,25 +45,27 @@ end
 function Items.createTakePanEnvelope(take, panValue)
   -- Check if the take is valid
   if not take then 
-    reaper.ShowConsoleMsg("DEBUG: createTakePanEnvelope - invalid take\n")
     return 
   end
   
   -- Get the parent item
   local item = reaper.GetMediaItemTake_Item(take)
   if not item then 
-    reaper.ShowConsoleMsg("DEBUG: createTakePanEnvelope - invalid item\n")
     return 
   end
-  
-  reaper.ShowConsoleMsg("DEBUG: createTakePanEnvelope called with panValue=" .. panValue .. "\n")
   
   -- Get the pan envelope by its name
   local env = reaper.GetTakeEnvelopeByName(take, "Pan")
   
-  -- If the envelope doesn't exist, create it manually but without problematic UI commands
+  -- Check if envelope already exists (even if empty)
+  if env then
+      -- If envelope exists, just update it with new values
+      Items.updateTakePanEnvelope(take, panValue)
+      return
+  end
+  
+  -- If the envelope doesn't exist, create it manually
   if not env then
-      reaper.ShowConsoleMsg("DEBUG: Pan envelope doesn't exist, creating it manually\n")
       
       -- Save the complete current selection
       local numSelectedItems = reaper.CountSelectedMediaItems(0)
@@ -79,25 +81,32 @@ function Items.createTakePanEnvelope(take, panValue)
       -- Use ONLY the create envelope command, no visibility commands
       reaper.Main_OnCommand(40694, 0)  -- Create take pan envelope
       
-      -- Force update and get the created envelope
+      -- Force multiple updates to ensure envelope is created
       reaper.UpdateArrange()
+      reaper.UpdateTimeline()
       
-      env = reaper.GetTakeEnvelopeByName(take, "Pan")
+      -- Try to get the envelope multiple times with small delays
+      local retryCount = 0
+      local maxRetries = 5
       
-      -- Restore the original selection
+      while retryCount < maxRetries do
+          env = reaper.GetTakeEnvelopeByName(take, "Pan")
+          if env then
+              break
+          end
+          retryCount = retryCount + 1
+          reaper.UpdateArrange()
+      end
+      
+      -- Restore the original selection after envelope is confirmed
       reaper.SelectAllMediaItems(0, false)
       for i, selectedItem in ipairs(selectedItems) do
           reaper.SetMediaItemSelected(selectedItem, true)
       end
       
-      if env then
-          reaper.ShowConsoleMsg("DEBUG: Pan envelope created successfully\n")
-      else
-          reaper.ShowConsoleMsg("DEBUG: Failed to create pan envelope\n")
+      if not env then
           return
       end
-  else
-      reaper.ShowConsoleMsg("DEBUG: Pan envelope already exists\n")
   end
   
   if env then
@@ -117,32 +126,67 @@ function Items.createTakePanEnvelope(take, panValue)
       
       -- Force display update to make envelope visible
       reaper.UpdateArrange()
-      reaper.ShowConsoleMsg("DEBUG: Pan envelope points added successfully\n")
-  else
-      reaper.ShowConsoleMsg("DEBUG: No pan envelope available to add points to\n")
   end
+end
+
+-- Function to remove pan envelope completely from a take
+function Items.removeTakePanEnvelope(take)
+  -- Check if the take is valid
+  if not take then 
+    return false
+  end
+  
+  -- Get the existing pan envelope
+  local env = reaper.GetTakeEnvelopeByName(take, "Pan")
+  if not env then
+    return false
+  end
+  
+  -- Get the parent item for selection
+  local item = reaper.GetMediaItemTake_Item(take)
+  if not item then 
+    return false
+  end
+  
+  -- Save current selection
+  local numSelectedItems = reaper.CountSelectedMediaItems(0)
+  local selectedItems = {}
+  for i = 0, numSelectedItems - 1 do
+      selectedItems[i + 1] = reaper.GetSelectedMediaItem(0, i)
+  end
+  
+  -- Select only our target item
+  reaper.SelectAllMediaItems(0, false)
+  reaper.SetMediaItemSelected(item, true)
+  
+  -- Use toggle command to remove take pan envelope (40694 toggles pan envelope on/off)
+  reaper.Main_OnCommand(40694, 0)  -- Toggle take pan envelope (removes it if it exists)
+  
+  -- Restore the original selection
+  reaper.SelectAllMediaItems(0, false)
+  for i, selectedItem in ipairs(selectedItems) do
+      reaper.SetMediaItemSelected(selectedItem, true)
+  end
+  
+  reaper.UpdateArrange()
+  return true
 end
 
 -- Function to update all points in an existing pan envelope
 function Items.updateTakePanEnvelope(take, newPanValue)
   -- Check if the take is valid
   if not take then 
-    reaper.ShowConsoleMsg("DEBUG: updateTakePanEnvelope - invalid take\n")
     return false
   end
-  
-  reaper.ShowConsoleMsg("DEBUG: updateTakePanEnvelope called with newPanValue=" .. newPanValue .. "\n")
   
   -- Get the existing pan envelope
   local env = reaper.GetTakeEnvelopeByName(take, "Pan")
   if not env then
-    reaper.ShowConsoleMsg("DEBUG: No existing pan envelope to update\n")
     return false
   end
   
   -- Get the number of existing points
   local numPoints = reaper.CountEnvelopePoints(env)
-  reaper.ShowConsoleMsg("DEBUG: Found " .. numPoints .. " envelope points to update\n")
   
   if numPoints == 0 then
     -- No points exist, create initial points
@@ -153,21 +197,18 @@ function Items.updateTakePanEnvelope(take, newPanValue)
     reaper.InsertEnvelopePoint(env, 0, newPanValue, 0, 0, false, true)
     reaper.InsertEnvelopePoint(env, itemLength * playRate, newPanValue, 0, 0, false, true)
     reaper.Envelope_SortPoints(env)
-    reaper.ShowConsoleMsg("DEBUG: Created initial points with value " .. newPanValue .. "\n")
   else
     -- Update all existing points with the new pan value
     for i = 0, numPoints - 1 do
       local retval, time, oldValue, shape, tension, selected = reaper.GetEnvelopePoint(env, i)
       if retval then
         reaper.SetEnvelopePoint(env, i, time, newPanValue, shape, tension, selected, true)
-        reaper.ShowConsoleMsg("DEBUG: Updated point " .. i .. " from " .. oldValue .. " to " .. newPanValue .. "\n")
       end
     end
   end
   
   -- Force display update
   reaper.UpdateArrange()
-  reaper.ShowConsoleMsg("DEBUG: Pan envelope updated successfully\n")
   return true
 end
 
