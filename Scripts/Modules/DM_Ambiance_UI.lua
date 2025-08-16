@@ -133,6 +133,86 @@ local function clearContainerSelections()
     globals.shiftAnchorContainerIndex = nil
 end
 
+-- Utility function to cycle through link modes
+local function cycleLinkMode(currentMode)
+    if currentMode == "unlink" then
+        return "link"
+    elseif currentMode == "link" then
+        return "mirror"
+    else -- currentMode == "mirror"
+        return "unlink"
+    end
+end
+
+-- Utility function to cycle through fade link modes (only unlink and link)
+local function cycleFadeLinkMode(currentMode)
+    if currentMode == "unlink" then
+        return "link"
+    else -- currentMode == "link"
+        return "unlink"
+    end
+end
+
+-- Apply linked slider changes
+local function applyLinkedSliderChange(obj, paramType, newMin, newMax, linkMode)
+    if linkMode == "unlink" then
+        -- Independent sliders - just apply the new values
+        return newMin, newMax
+    elseif linkMode == "link" then
+        -- Linked sliders - maintain relative distance
+        local currentMin = obj[paramType .. "Range"].min
+        local currentMax = obj[paramType .. "Range"].max
+        local currentRange = currentMax - currentMin
+        
+        -- Calculate which slider moved and apply the same relative change to both
+        local minDiff = newMin - currentMin
+        local maxDiff = newMax - currentMax
+        
+        if math.abs(minDiff) > math.abs(maxDiff) then
+            -- Min slider moved more, adjust max to maintain relative distance
+            return newMin, newMin + currentRange
+        else
+            -- Max slider moved more, adjust min to maintain relative distance  
+            return newMax - currentRange, newMax
+        end
+    elseif linkMode == "mirror" then
+        -- Mirror sliders - move opposite amounts from center
+        local currentMin = obj[paramType .. "Range"].min
+        local currentMax = obj[paramType .. "Range"].max
+        local center = (currentMin + currentMax) / 2
+        
+        -- Calculate which slider moved and mirror the change
+        local minDiff = newMin - currentMin
+        local maxDiff = newMax - currentMax
+        
+        if math.abs(minDiff) > math.abs(maxDiff) then
+            -- Min slider moved, mirror the change to max
+            local newMinFromCenter = newMin - center
+            return newMin, center - newMinFromCenter
+        else
+            -- Max slider moved, mirror the change to min
+            local newMaxFromCenter = newMax - center
+            return center - newMaxFromCenter, newMax
+        end
+    end
+    
+    return newMin, newMax
+end
+
+-- Apply linked fade changes
+local function applyLinkedFadeChange(obj, fadeType, newValue, linkMode)
+    if linkMode == "unlink" then
+        -- Independent fades - just apply the new value
+        return newValue, obj[fadeType == "In" and "fadeOutDuration" or "fadeInDuration"]
+    elseif linkMode == "link" then
+        -- Linked fades - maintain same value for both
+        return newValue, newValue
+    end
+    
+    -- Fallback to unlink behavior
+    return newValue, obj[fadeType == "In" and "fadeOutDuration" or "fadeInDuration"]
+end
+
 -- Draw the trigger settings section (shared by groups and containers)
 -- dataObj must expose: intervalMode, triggerRate, triggerDrift, fadeIn, fadeOut
 -- callbacks must provide setters for each parameter
@@ -321,23 +401,25 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     local controlWidth = width * 0.50
     local labelOffset = checkboxWidth + controlWidth + 10
 
-    -- Pitch randomization (checkbox + slider on same line)
+    -- Pitch randomization (checkbox + link button + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
     if rv then 
         obj.randomizePitch = newRandomizePitch 
-        -- Debug: Check if parameters are available
-        reaper.ShowConsoleMsg("DEBUG: Pitch checkbox - groupIndex=" .. tostring(groupIndex) .. ", containerIndex=" .. tostring(containerIndex) .. "\n")
         -- Queue randomization update to avoid ImGui conflicts
         if groupIndex and containerIndex then
-            reaper.ShowConsoleMsg("DEBUG: Calling queueRandomizationUpdate for container\n")
             globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pitch")
         elseif groupIndex then
-            reaper.ShowConsoleMsg("DEBUG: Calling queueRandomizationUpdate for group\n")
             globals.Utils.queueRandomizationUpdate(groupIndex, nil, "pitch")
-        else
-            reaper.ShowConsoleMsg("DEBUG: No groupIndex available - randomization update skipped\n")
         end
+    end
+    
+    -- Link mode button for pitch
+    imgui.SameLine(globals.ctx)
+    -- Ensure link mode is initialized
+    if not obj.pitchLinkMode then obj.pitchLinkMode = "mirror" end
+    if globals.Icons.createLinkModeButton(globals.ctx, "pitchLink" .. objId, obj.pitchLinkMode, "Link mode: " .. obj.pitchLinkMode) then
+        obj.pitchLinkMode = cycleLinkMode(obj.pitchLinkMode)
     end
     
     imgui.SameLine(globals.ctx)
@@ -346,8 +428,10 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "##PitchRange", 
         obj.pitchRange.min, obj.pitchRange.max, 0.1, -48, 48, "%.1f", "%.1f")
     if rv then
-        obj.pitchRange.min = newPitchMin
-        obj.pitchRange.max = newPitchMax
+        -- Apply linked slider logic
+        local linkedMin, linkedMax = applyLinkedSliderChange(obj, "pitch", newPitchMin, newPitchMax, obj.pitchLinkMode)
+        obj.pitchRange.min = linkedMin
+        obj.pitchRange.max = linkedMax
         -- Queue randomization update to avoid ImGui conflicts
         if groupIndex and containerIndex then
             globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pitch")
@@ -362,7 +446,7 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     imgui.Text(globals.ctx, "Pitch (semitones)")
     imgui.EndGroup(globals.ctx)
 
-    -- Volume randomization (checkbox + slider on same line)
+    -- Volume randomization (checkbox + link button + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
     if rv then 
@@ -375,14 +459,24 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
         end
     end
     
+    -- Link mode button for volume
+    imgui.SameLine(globals.ctx)
+    -- Ensure link mode is initialized
+    if not obj.volumeLinkMode then obj.volumeLinkMode = "mirror" end
+    if globals.Icons.createLinkModeButton(globals.ctx, "volumeLink" .. objId, obj.volumeLinkMode, "Link mode: " .. obj.volumeLinkMode) then
+        obj.volumeLinkMode = cycleLinkMode(obj.volumeLinkMode)
+    end
+    
     imgui.SameLine(globals.ctx)
     imgui.BeginDisabled(globals.ctx, not obj.randomizeVolume)
     imgui.PushItemWidth(globals.ctx, controlWidth)
     local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "##VolumeRange", 
         obj.volumeRange.min, obj.volumeRange.max, 0.1, -24, 24, "%.1f", "%.1f")
     if rv then
-        obj.volumeRange.min = newVolumeMin
-        obj.volumeRange.max = newVolumeMax
+        -- Apply linked slider logic
+        local linkedMin, linkedMax = applyLinkedSliderChange(obj, "volume", newVolumeMin, newVolumeMax, obj.volumeLinkMode)
+        obj.volumeRange.min = linkedMin
+        obj.volumeRange.max = linkedMax
         -- Queue randomization update to avoid ImGui conflicts
         if groupIndex and containerIndex then
             globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "volume")
@@ -397,7 +491,7 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
     imgui.Text(globals.ctx, "Volume (dB)")
     imgui.EndGroup(globals.ctx)
 
-    -- Pan randomization (checkbox + slider on same line)
+    -- Pan randomization (checkbox + link button + slider on same line)
     imgui.BeginGroup(globals.ctx)
     local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
     if rv then 
@@ -410,14 +504,24 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup, groupIndex, conta
         end
     end
     
+    -- Link mode button for pan
+    imgui.SameLine(globals.ctx)
+    -- Ensure link mode is initialized
+    if not obj.panLinkMode then obj.panLinkMode = "mirror" end
+    if globals.Icons.createLinkModeButton(globals.ctx, "panLink" .. objId, obj.panLinkMode, "Link mode: " .. obj.panLinkMode) then
+        obj.panLinkMode = cycleLinkMode(obj.panLinkMode)
+    end
+    
     imgui.SameLine(globals.ctx)
     imgui.BeginDisabled(globals.ctx, not obj.randomizePan)
     imgui.PushItemWidth(globals.ctx, controlWidth)
     local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "##PanRange", 
         obj.panRange.min, obj.panRange.max, 1, -100, 100, "%.0f", "%.0f")
     if rv then
-        obj.panRange.min = newPanMin
-        obj.panRange.max = newPanMax
+        -- Apply linked slider logic
+        local linkedMin, linkedMax = applyLinkedSliderChange(obj, "pan", newPanMin, newPanMax, obj.panLinkMode)
+        obj.panRange.min = linkedMin
+        obj.panRange.max = linkedMax
         -- Queue randomization update to avoid ImGui conflicts
         if groupIndex and containerIndex then
             globals.Utils.queueRandomizationUpdate(groupIndex, containerIndex, "pan")
@@ -441,6 +545,8 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
     local Constants = require("DM_Ambiance_Constants")
     
     -- Ensure all fade properties are properly initialized with defaults
+    obj.fadeInEnabled = obj.fadeInEnabled or Constants.DEFAULTS.FADE_IN_ENABLED
+    obj.fadeOutEnabled = obj.fadeOutEnabled or Constants.DEFAULTS.FADE_OUT_ENABLED
     obj.fadeInShape = obj.fadeInShape or Constants.DEFAULTS.FADE_IN_SHAPE
     obj.fadeOutShape = obj.fadeOutShape or Constants.DEFAULTS.FADE_OUT_SHAPE
     obj.fadeInCurve = obj.fadeInCurve or Constants.DEFAULTS.FADE_IN_CURVE
@@ -448,7 +554,17 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
     
     -- Section separator and title
     imgui.Separator(globals.ctx)
+    imgui.BeginGroup(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Fade Settings")
+    
+    -- Link mode button for fades
+    imgui.SameLine(globals.ctx)
+    -- Ensure link mode is initialized
+    if not obj.fadeLinkMode then obj.fadeLinkMode = "link" end
+    if globals.Icons.createLinkModeButton(globals.ctx, "fadeLink" .. objId, obj.fadeLinkMode, "Fade link mode: " .. obj.fadeLinkMode) then
+        obj.fadeLinkMode = cycleFadeLinkMode(obj.fadeLinkMode)
+    end
+    imgui.EndGroup(globals.ctx)
     
     -- Column positions for perfect alignment
     local colCheckbox = 0      -- Checkbox column
@@ -520,8 +636,10 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix, groupIndex, 
         local rv, newDuration = imgui.SliderDouble(globals.ctx, "##Duration" .. suffix,
             duration or 0.1, 0, maxVal, format)
         if rv then
-            if isIn then obj.fadeInDuration = newDuration
-            else obj.fadeOutDuration = newDuration end
+            -- Apply linked fade logic
+            local newInDuration, newOutDuration = applyLinkedFadeChange(obj, fadeType, newDuration, obj.fadeLinkMode or "link")
+            obj.fadeInDuration = newInDuration
+            obj.fadeOutDuration = newOutDuration
             -- Queue fade update to avoid ImGui conflicts
             local modifiedFade = isIn and "fadeIn" or "fadeOut"
             if groupIndex and containerIndex then

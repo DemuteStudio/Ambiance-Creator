@@ -49,7 +49,13 @@ function Structures.createGroup(name)
         fadeInShape = Constants.DEFAULTS.FADE_IN_SHAPE,
         fadeOutShape = Constants.DEFAULTS.FADE_OUT_SHAPE,
         fadeInCurve = Constants.DEFAULTS.FADE_IN_CURVE,
-        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE
+        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE,
+        -- Link modes for randomization parameters
+        pitchLinkMode = "mirror", -- "unlink", "link", "mirror"
+        volumeLinkMode = "mirror",
+        panLinkMode = "mirror",
+        -- Link modes for fade parameters  
+        fadeLinkMode = "link"
     }
 end
 
@@ -87,7 +93,13 @@ function Structures.createContainer(name)
         fadeInShape = Constants.DEFAULTS.FADE_IN_SHAPE,
         fadeOutShape = Constants.DEFAULTS.FADE_OUT_SHAPE,
         fadeInCurve = Constants.DEFAULTS.FADE_IN_CURVE,
-        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE
+        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE,
+        -- Link modes for randomization parameters
+        pitchLinkMode = "mirror", -- "unlink", "link", "mirror"
+        volumeLinkMode = "mirror",
+        panLinkMode = "mirror",
+        -- Link modes for fade parameters  
+        fadeLinkMode = "link"
     }
 end
 
@@ -147,6 +159,12 @@ function Structures.getEffectiveContainerParams(group, container)
     effectiveParams.fadeOutShape = group.fadeOutShape
     effectiveParams.fadeInCurve = group.fadeInCurve
     effectiveParams.fadeOutCurve = group.fadeOutCurve
+    
+    -- Inherit link modes
+    effectiveParams.pitchLinkMode = group.pitchLinkMode or "mirror"
+    effectiveParams.volumeLinkMode = group.volumeLinkMode or "mirror"
+    effectiveParams.panLinkMode = group.panLinkMode or "mirror"
+    effectiveParams.fadeLinkMode = group.fadeLinkMode or "link"
     
     return effectiveParams
 end

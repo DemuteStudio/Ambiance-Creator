@@ -83,10 +83,10 @@ Constants.DEFAULTS = {
     CHUNK_DURATION_VARIATION = 20,      -- Default chunk duration variation percentage
     CHUNK_SILENCE_VARIATION = 20,       -- Default silence duration variation percentage
     -- Fade defaults
-    FADE_IN_ENABLED = false,            -- Default fade in state
-    FADE_OUT_ENABLED = false,           -- Default fade out state
-    FADE_IN_DURATION = 0.1,             -- Default fade in duration (seconds)
-    FADE_OUT_DURATION = 0.1,            -- Default fade out duration (seconds)
+    FADE_IN_ENABLED = true,             -- Default fade in state
+    FADE_OUT_ENABLED = true,            -- Default fade out state
+    FADE_IN_DURATION = 0.0,             -- Default fade in duration (seconds)
+    FADE_OUT_DURATION = 0.0,            -- Default fade out duration (seconds)
     FADE_IN_USE_PERCENTAGE = false,     -- Use percentage by default
     FADE_OUT_USE_PERCENTAGE = false,    -- Use percentage by default
     FADE_IN_SHAPE = 0,                  -- Default to linear fade
