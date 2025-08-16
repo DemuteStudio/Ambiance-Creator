@@ -396,44 +396,56 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Fade Settings")
     
-    local checkboxWidth = 20
-    local unitButtonWidth = 35
-    local durationWidth = width * 0.20
-    local shapeWidth = width * 0.25
-    local curveWidth = width * 0.15
+    -- Column positions for perfect alignment
+    local colCheckbox = 0      -- Checkbox column
+    local colLabel = 25        -- Label column 
+    local colUnit = 100        -- Unit button column
+    local colDuration = 145    -- Duration slider column
+    local colShapeLabel = 275  -- "Shape:" label column
+    local colShape = 315       -- Shape dropdown column
+    local colCurveLabel = 440  -- "Curve:" label column (when visible)
+    local colCurve = 480       -- Curve slider column (when visible)
     
-    -- Helper function to draw fade controls in a compact line
+    -- Element widths
+    local unitButtonWidth = 40
+    local durationWidth = 120
+    local shapeWidth = 120
+    local curveWidth = 80
+    
+    -- Helper function to draw fade controls with column-based alignment
     local function drawFadeControls(fadeType, enabled, usePercentage, duration, shape, curve)
         local suffix = fadeType .. objId
         local isIn = fadeType == "In"
         
-        -- First line: Enable checkbox, unit toggle, duration slider, shape dropdown
         imgui.BeginGroup(globals.ctx)
         
-        -- Checkbox
+        -- Column 1: Checkbox (position 0)
+        imgui.SetCursorPosX(globals.ctx, colCheckbox)
         local rv, newEnabled = imgui.Checkbox(globals.ctx, "##Enable" .. suffix, enabled or false)
         if rv then 
             if isIn then obj.fadeInEnabled = newEnabled
             else obj.fadeOutEnabled = newEnabled end
         end
         
+        -- Column 2: Label (position 25)
         imgui.SameLine(globals.ctx)
+        imgui.SetCursorPosX(globals.ctx, colLabel)
+        imgui.AlignTextToFramePadding(globals.ctx)
         imgui.Text(globals.ctx, "Fade " .. fadeType .. ":")
         
+        -- Column 3: Unit button (position 100)
         imgui.SameLine(globals.ctx)
+        imgui.SetCursorPosX(globals.ctx, colUnit)
         imgui.BeginDisabled(globals.ctx, not enabled)
-        
-        -- Unit toggle button
         local unitText = usePercentage and "%" or "sec"
-        imgui.PushItemWidth(globals.ctx, unitButtonWidth)
-        if imgui.SmallButton(globals.ctx, unitText .. "##Unit" .. suffix) then
+        if imgui.Button(globals.ctx, unitText .. "##Unit" .. suffix, unitButtonWidth, 0) then
             if isIn then obj.fadeInUsePercentage = not obj.fadeInUsePercentage
             else obj.fadeOutUsePercentage = not obj.fadeOutUsePercentage end
         end
-        imgui.PopItemWidth(globals.ctx)
         
-        -- Duration slider
+        -- Column 4: Duration slider (position 145)
         imgui.SameLine(globals.ctx)
+        imgui.SetCursorPosX(globals.ctx, colDuration)
         imgui.PushItemWidth(globals.ctx, durationWidth)
         local maxVal = usePercentage and 100 or 10
         local format = usePercentage and "%.0f%%" or "%.2f"
@@ -445,10 +457,15 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         end
         imgui.PopItemWidth(globals.ctx)
         
-        -- Shape dropdown
+        -- Column 5: "Shape:" label (position 275)
         imgui.SameLine(globals.ctx)
+        imgui.SetCursorPosX(globals.ctx, colShapeLabel)
+        imgui.AlignTextToFramePadding(globals.ctx)
         imgui.Text(globals.ctx, "Shape:")
+        
+        -- Column 6: Shape dropdown (position 315)
         imgui.SameLine(globals.ctx)
+        imgui.SetCursorPosX(globals.ctx, colShape)
         imgui.PushItemWidth(globals.ctx, shapeWidth)
         local fadeShapes = "Linear\0Fast Start\0Fast End\0Fast S/E\0Slow S/E\0Bezier\0S-Curve\0\0"
         local rv, newShape = imgui.Combo(globals.ctx, "##Shape" .. suffix, shape or 0, fadeShapes)
@@ -458,11 +475,17 @@ function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
         end
         imgui.PopItemWidth(globals.ctx)
         
-        -- Curve control on same line if applicable
+        -- Column 7 & 8: Curve controls (only for Bezier and S-Curve)
         if shape == Constants.FADE_SHAPES.BEZIER or shape == Constants.FADE_SHAPES.S_CURVE then
+            -- Column 7: "Curve:" label (position 440)
             imgui.SameLine(globals.ctx)
+            imgui.SetCursorPosX(globals.ctx, colCurveLabel)
+            imgui.AlignTextToFramePadding(globals.ctx)
             imgui.Text(globals.ctx, "Curve:")
+            
+            -- Column 8: Curve slider (position 480)
             imgui.SameLine(globals.ctx)
+            imgui.SetCursorPosX(globals.ctx, colCurve)
             imgui.PushItemWidth(globals.ctx, curveWidth)
             local rv, newCurve = imgui.SliderDouble(globals.ctx, "##Curve" .. suffix,
                 curve or 0.0, -1.0, 1.0, "%.1f")
