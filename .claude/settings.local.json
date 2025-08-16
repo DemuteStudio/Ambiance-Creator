@@ -8,7 +8,12 @@
       "mcp__context7__resolve-library-id",
       "mcp__context7__get-library-docs",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:www.extremraym.com)"
+      "WebFetch(domain:www.extremraym.com)",
+      "Bash(powershell:*)",
+      "Bash(reapack-index:*)",
+      "Bash(git add:*)",
+      "Bash(grep:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

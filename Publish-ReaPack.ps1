@@ -94,11 +94,11 @@ function Update-ReaPackIndex {
     # Remove old index
     if (Test-Path "index.xml") {
         Remove-Item "index.xml" -Force
-        Write-ColorMessage "🗑️ Removed old index.xml" $InfoColor
+        Write-ColorMessage "Removed old index.xml" $InfoColor
     }
     
     # Generate new index
-    Write-ColorMessage "🔄 Generating new index..." $InfoColor
+    Write-ColorMessage "Generating new index..." $InfoColor
     $process = Start-Process -FilePath "reapack-index" -ArgumentList "--scan --output index.xml --verbose ." -NoNewWindow -Wait -PassThru
     
     if ($process.ExitCode -ne 0) {
@@ -202,7 +202,7 @@ if ($DryRun) {
     Write-ColorMessage "`n🔍 DRY RUN - Would perform these actions:" $InfoColor
     Write-ColorMessage "1. Update $SCRIPT_PATH to version $nextVersion" $InfoColor
     Write-ColorMessage "2. Add changelog entry: $changelogEntry" $InfoColor
-    Write-ColorMessage "3. Commit changes with message: 'Release v$nextVersion'" $InfoColor
+    Write-ColorMessage "3. Commit changes with message: Release v$nextVersion" $InfoColor
     Write-ColorMessage "4. Generate new ReaPack index" $InfoColor
     Write-ColorMessage "5. Commit index and push to origin" $InfoColor
     exit 0
