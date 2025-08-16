@@ -227,8 +227,8 @@ You can also customize the interface in the Settings.
 - **Export**: For video games, allow the extraction of one instance of each item variation, so they can be exported and used to replicate the generated behavior in an audio middleware.
 - **Middleware API**: Directly create Random or Sequence containers from the tool in your preferred audio middleware.
 - **Multi Channel Management**: Be able to create quad/ambisonic containers
-- **Fade System**: Create a whole fade system to configure item's fade wihtin a container
-
+- (1.5)**Fade System**: Create a whole fade system to configure item's fade wihtin a container
+- (1.5) **Real time adjustement**: Being able to adjust fades and random parameter in real time.
 
 
 ## Known Issues
