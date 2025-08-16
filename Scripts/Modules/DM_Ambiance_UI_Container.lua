@@ -232,14 +232,8 @@ function UI_Container.displayContainerSettings(groupIndex, containerIndex, width
 
     -- Display trigger/randomization settings or inheritance info
     if container.overrideParent then
-        -- Show a message that the container uses its own settings
-        imgui.TextColored(globals.ctx, 0x00AA00FF, "Using container's own settings")
         -- Display the trigger and randomization settings for this container
         globals.UI.displayTriggerSettings(container, containerId, width, false)
-    else
-        -- Show a message that the container inherits settings from its parent group
-        imgui.TextColored(globals.ctx, 0x0088FFFF, "Inheriting settings from parent group")
-        --imgui.TextColored(globals.ctx, 0xAAAAAAFF, "Enable 'Override Parent Settings' to customize parameters")
     end
 end
 

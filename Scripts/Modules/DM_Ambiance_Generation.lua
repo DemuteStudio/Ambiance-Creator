@@ -201,6 +201,36 @@ function Generation.placeItemsForContainer(group, container, containerGroup, xfa
                 -- Use envelope instead of directly modifying the property
                 Items.createTakePanEnvelope(newTake, randomPan)
             end
+            
+            -- Apply fade in if enabled
+            if effectiveParams.fadeInEnabled then
+                local fadeInDuration = effectiveParams.fadeInDuration or 0.1
+                -- Convert percentage to seconds if using percentage mode
+                if effectiveParams.fadeInUsePercentage then
+                    fadeInDuration = (fadeInDuration / 100) * actualLen
+                end
+                -- Ensure fade doesn't exceed item length
+                fadeInDuration = math.min(fadeInDuration, actualLen)
+                
+                reaper.SetMediaItemInfo_Value(newItem, "D_FADEINLEN", fadeInDuration)
+                reaper.SetMediaItemInfo_Value(newItem, "C_FADEINSHAPE", effectiveParams.fadeInShape or 0)
+                reaper.SetMediaItemInfo_Value(newItem, "D_FADEINDIR", effectiveParams.fadeInCurve or 0.0)
+            end
+            
+            -- Apply fade out if enabled
+            if effectiveParams.fadeOutEnabled then
+                local fadeOutDuration = effectiveParams.fadeOutDuration or 0.1
+                -- Convert percentage to seconds if using percentage mode
+                if effectiveParams.fadeOutUsePercentage then
+                    fadeOutDuration = (fadeOutDuration / 100) * actualLen
+                end
+                -- Ensure fade doesn't exceed item length
+                fadeOutDuration = math.min(fadeOutDuration, actualLen)
+                
+                reaper.SetMediaItemInfo_Value(newItem, "D_FADEOUTLEN", fadeOutDuration)
+                reaper.SetMediaItemInfo_Value(newItem, "C_FADEOUTSHAPE", effectiveParams.fadeOutShape or 0)
+                reaper.SetMediaItemInfo_Value(newItem, "D_FADEOUTDIR", effectiveParams.fadeOutCurve or 0.0)
+            end
 
             -- Create crossfade if items overlap (negative triggerRate)
             if lastItemRef and position < lastItemEnd then
@@ -794,6 +824,36 @@ function Generation.generateItemsInTimeRange(effectiveParams, containerGroup, ra
             randomPan = math.max(-1, math.min(1, randomPan))
             -- Use envelope instead of directly modifying the property
             require("DM_Ambiance_Items").createTakePanEnvelope(newTake, randomPan)
+        end
+        
+        -- Apply fade in if enabled
+        if effectiveParams.fadeInEnabled then
+            local fadeInDuration = effectiveParams.fadeInDuration or 0.1
+            -- Convert percentage to seconds if using percentage mode
+            if effectiveParams.fadeInUsePercentage then
+                fadeInDuration = (fadeInDuration / 100) * actualLength
+            end
+            -- Ensure fade doesn't exceed item length
+            fadeInDuration = math.min(fadeInDuration, actualLength)
+            
+            reaper.SetMediaItemInfo_Value(newItem, "D_FADEINLEN", fadeInDuration)
+            reaper.SetMediaItemInfo_Value(newItem, "C_FADEINSHAPE", effectiveParams.fadeInShape or 0)
+            reaper.SetMediaItemInfo_Value(newItem, "D_FADEINDIR", effectiveParams.fadeInCurve or 0.0)
+        end
+        
+        -- Apply fade out if enabled
+        if effectiveParams.fadeOutEnabled then
+            local fadeOutDuration = effectiveParams.fadeOutDuration or 0.1
+            -- Convert percentage to seconds if using percentage mode
+            if effectiveParams.fadeOutUsePercentage then
+                fadeOutDuration = (fadeOutDuration / 100) * actualLength
+            end
+            -- Ensure fade doesn't exceed item length
+            fadeOutDuration = math.min(fadeOutDuration, actualLength)
+            
+            reaper.SetMediaItemInfo_Value(newItem, "D_FADEOUTLEN", fadeOutDuration)
+            reaper.SetMediaItemInfo_Value(newItem, "C_FADEOUTSHAPE", effectiveParams.fadeOutShape or 0)
+            reaper.SetMediaItemInfo_Value(newItem, "D_FADEOUTDIR", effectiveParams.fadeOutCurve or 0.0)
         end
 
         -- Create crossfade if items overlap

@@ -317,83 +317,181 @@ function UI.displayTriggerSettings(obj, objId, width, isGroup)
     imgui.Separator(globals.ctx)
     imgui.Text(globals.ctx, titlePrefix .. "Randomization parameters")
 
-    local controlWidth = width * 0.55
-    local padding = 5
+    local checkboxWidth = 20
+    local controlWidth = width * 0.50
+    local labelOffset = checkboxWidth + controlWidth + 10
 
-    -- Pitch randomization
-    do
-        imgui.BeginGroup(globals.ctx)
-        local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
-        if rv then obj.randomizePitch = newRandomizePitch end
-        imgui.SameLine(globals.ctx)
-        imgui.Text(globals.ctx, "Randomize Pitch")
-        imgui.EndGroup(globals.ctx)
+    -- Pitch randomization (checkbox + slider on same line)
+    imgui.BeginGroup(globals.ctx)
+    local rv, newRandomizePitch = imgui.Checkbox(globals.ctx, "##RandomizePitch", obj.randomizePitch)
+    if rv then obj.randomizePitch = newRandomizePitch end
+    
+    imgui.SameLine(globals.ctx)
+    imgui.BeginDisabled(globals.ctx, not obj.randomizePitch)
+    imgui.PushItemWidth(globals.ctx, controlWidth)
+    local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "##PitchRange", 
+        obj.pitchRange.min, obj.pitchRange.max, 0.1, -48, 48, "%.1f", "%.1f")
+    if rv then
+        obj.pitchRange.min = newPitchMin
+        obj.pitchRange.max = newPitchMax
     end
+    imgui.PopItemWidth(globals.ctx)
+    imgui.EndDisabled(globals.ctx)
+    
+    imgui.SameLine(globals.ctx)
+    imgui.Text(globals.ctx, "Pitch (semitones)")
+    imgui.EndGroup(globals.ctx)
 
-    -- Pitch range if randomization enabled
-    if obj.randomizePitch then
+    -- Volume randomization (checkbox + slider on same line)
+    imgui.BeginGroup(globals.ctx)
+    local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
+    if rv then obj.randomizeVolume = newRandomizeVolume end
+    
+    imgui.SameLine(globals.ctx)
+    imgui.BeginDisabled(globals.ctx, not obj.randomizeVolume)
+    imgui.PushItemWidth(globals.ctx, controlWidth)
+    local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "##VolumeRange", 
+        obj.volumeRange.min, obj.volumeRange.max, 0.1, -24, 24, "%.1f", "%.1f")
+    if rv then
+        obj.volumeRange.min = newVolumeMin
+        obj.volumeRange.max = newVolumeMax
+    end
+    imgui.PopItemWidth(globals.ctx)
+    imgui.EndDisabled(globals.ctx)
+    
+    imgui.SameLine(globals.ctx)
+    imgui.Text(globals.ctx, "Volume (dB)")
+    imgui.EndGroup(globals.ctx)
+
+    -- Pan randomization (checkbox + slider on same line)
+    imgui.BeginGroup(globals.ctx)
+    local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
+    if rv then obj.randomizePan = newRandomizePan end
+    
+    imgui.SameLine(globals.ctx)
+    imgui.BeginDisabled(globals.ctx, not obj.randomizePan)
+    imgui.PushItemWidth(globals.ctx, controlWidth)
+    local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "##PanRange", 
+        obj.panRange.min, obj.panRange.max, 1, -100, 100, "%.0f", "%.0f")
+    if rv then
+        obj.panRange.min = newPanMin
+        obj.panRange.max = newPanMax
+    end
+    imgui.PopItemWidth(globals.ctx)
+    imgui.EndDisabled(globals.ctx)
+    
+    imgui.SameLine(globals.ctx)
+    imgui.Text(globals.ctx, "Pan (-100/+100)")
+    imgui.EndGroup(globals.ctx)
+    
+    -- Fade Settings section
+    UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
+end
+
+-- Function to draw fade settings controls
+function UI.drawFadeSettingsSection(obj, objId, width, titlePrefix)
+    local Constants = require("DM_Ambiance_Constants")
+    
+    -- Section separator and title
+    imgui.Separator(globals.ctx)
+    imgui.Text(globals.ctx, titlePrefix .. "Fade Settings")
+    
+    local checkboxWidth = 20
+    local unitButtonWidth = 35
+    local durationWidth = width * 0.20
+    local shapeWidth = width * 0.25
+    local curveWidth = width * 0.15
+    
+    -- Helper function to draw fade controls in a compact line
+    local function drawFadeControls(fadeType, enabled, usePercentage, duration, shape, curve)
+        local suffix = fadeType .. objId
+        local isIn = fadeType == "In"
+        
+        -- First line: Enable checkbox, unit toggle, duration slider, shape dropdown
         imgui.BeginGroup(globals.ctx)
-        imgui.PushItemWidth(globals.ctx, controlWidth)
-        local rv, newPitchMin, newPitchMax = imgui.DragFloatRange2(globals.ctx, "##PitchRange", 
-            obj.pitchRange.min, obj.pitchRange.max, 0.1, -48, 48)
-        if rv then
-            obj.pitchRange.min = newPitchMin
-            obj.pitchRange.max = newPitchMax
+        
+        -- Checkbox
+        local rv, newEnabled = imgui.Checkbox(globals.ctx, "##Enable" .. suffix, enabled or false)
+        if rv then 
+            if isIn then obj.fadeInEnabled = newEnabled
+            else obj.fadeOutEnabled = newEnabled end
         end
+        
         imgui.SameLine(globals.ctx)
-        imgui.Text(globals.ctx, "Pitch Range (semitones)")
-        imgui.EndGroup(globals.ctx)
-    end
-
-    -- Volume randomization
-    do
-        imgui.BeginGroup(globals.ctx)
-        local rv, newRandomizeVolume = imgui.Checkbox(globals.ctx, "##RandomizeVolume", obj.randomizeVolume)
-        if rv then obj.randomizeVolume = newRandomizeVolume end
+        imgui.Text(globals.ctx, "Fade " .. fadeType .. ":")
+        
         imgui.SameLine(globals.ctx)
-        imgui.Text(globals.ctx, "Randomize Volume")
-        imgui.EndGroup(globals.ctx)
-    end
-
-    -- Volume range if randomization enabled
-    if obj.randomizeVolume then
-        imgui.BeginGroup(globals.ctx)
-        imgui.PushItemWidth(globals.ctx, controlWidth)
-        local rv, newVolumeMin, newVolumeMax = imgui.DragFloatRange2(globals.ctx, "##VolumeRange", 
-            obj.volumeRange.min, obj.volumeRange.max, 0.1, -24, 24)
-        if rv then
-            obj.volumeRange.min = newVolumeMin
-            obj.volumeRange.max = newVolumeMax
+        imgui.BeginDisabled(globals.ctx, not enabled)
+        
+        -- Unit toggle button
+        local unitText = usePercentage and "%" or "sec"
+        imgui.PushItemWidth(globals.ctx, unitButtonWidth)
+        if imgui.SmallButton(globals.ctx, unitText .. "##Unit" .. suffix) then
+            if isIn then obj.fadeInUsePercentage = not obj.fadeInUsePercentage
+            else obj.fadeOutUsePercentage = not obj.fadeOutUsePercentage end
         end
-        imgui.EndGroup(globals.ctx)
-        imgui.SameLine(globals.ctx, controlWidth + padding)
-        imgui.Text(globals.ctx, "Volume Range (dB)")
-    end
-
-    -- Pan randomization
-    do
-        imgui.BeginGroup(globals.ctx)
-        local rv, newRandomizePan = imgui.Checkbox(globals.ctx, "##RandomizePan", obj.randomizePan)
-        if rv then obj.randomizePan = newRandomizePan end
+        imgui.PopItemWidth(globals.ctx)
+        
+        -- Duration slider
         imgui.SameLine(globals.ctx)
-        imgui.Text(globals.ctx, "Randomize Pan")
-        imgui.EndGroup(globals.ctx)
-    end
-
-    -- Pan range if randomization enabled
-    if obj.randomizePan then
-        imgui.BeginGroup(globals.ctx)
-        imgui.PushItemWidth(globals.ctx, controlWidth)
-        local rv, newPanMin, newPanMax = imgui.DragFloatRange2(globals.ctx, "##PanRange", 
-            obj.panRange.min, obj.panRange.max, 1, -100, 100)
+        imgui.PushItemWidth(globals.ctx, durationWidth)
+        local maxVal = usePercentage and 100 or 10
+        local format = usePercentage and "%.0f%%" or "%.2f"
+        local rv, newDuration = imgui.SliderDouble(globals.ctx, "##Duration" .. suffix,
+            duration or 0.1, 0, maxVal, format)
         if rv then
-            obj.panRange.min = newPanMin
-            obj.panRange.max = newPanMax
+            if isIn then obj.fadeInDuration = newDuration
+            else obj.fadeOutDuration = newDuration end
         end
+        imgui.PopItemWidth(globals.ctx)
+        
+        -- Shape dropdown
+        imgui.SameLine(globals.ctx)
+        imgui.Text(globals.ctx, "Shape:")
+        imgui.SameLine(globals.ctx)
+        imgui.PushItemWidth(globals.ctx, shapeWidth)
+        local fadeShapes = "Linear\0Fast Start\0Fast End\0Fast S/E\0Slow S/E\0Bezier\0S-Curve\0\0"
+        local rv, newShape = imgui.Combo(globals.ctx, "##Shape" .. suffix, shape or 0, fadeShapes)
+        if rv then
+            if isIn then obj.fadeInShape = newShape
+            else obj.fadeOutShape = newShape end
+        end
+        imgui.PopItemWidth(globals.ctx)
+        
+        -- Curve control on same line if applicable
+        if shape == Constants.FADE_SHAPES.BEZIER or shape == Constants.FADE_SHAPES.S_CURVE then
+            imgui.SameLine(globals.ctx)
+            imgui.Text(globals.ctx, "Curve:")
+            imgui.SameLine(globals.ctx)
+            imgui.PushItemWidth(globals.ctx, curveWidth)
+            local rv, newCurve = imgui.SliderDouble(globals.ctx, "##Curve" .. suffix,
+                curve or 0.0, -1.0, 1.0, "%.1f")
+            if rv then
+                if isIn then obj.fadeInCurve = newCurve
+                else obj.fadeOutCurve = newCurve end
+            end
+            imgui.PopItemWidth(globals.ctx)
+        end
+        
+        imgui.EndDisabled(globals.ctx)
         imgui.EndGroup(globals.ctx)
-        imgui.SameLine(globals.ctx, controlWidth + padding)
-        imgui.Text(globals.ctx, "Pan Range (-100/+100)")
     end
+    
+    -- Draw Fade In controls
+    drawFadeControls("In", 
+        obj.fadeInEnabled, 
+        obj.fadeInUsePercentage, 
+        obj.fadeInDuration, 
+        obj.fadeInShape, 
+        obj.fadeInCurve)
+    
+    -- Draw Fade Out controls  
+    drawFadeControls("Out",
+        obj.fadeOutEnabled,
+        obj.fadeOutUsePercentage,
+        obj.fadeOutDuration,
+        obj.fadeOutShape,
+        obj.fadeOutCurve)
 end
 
 -- Check if a container is selected

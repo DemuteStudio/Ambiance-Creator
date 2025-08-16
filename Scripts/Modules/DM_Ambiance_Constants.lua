@@ -55,6 +55,17 @@ Constants.TRIGGER_MODES = {
     CHUNK = 3,                          -- Chunk mode: structured sound/silence periods
 }
 
+-- Fade Shape Constants (Reaper API values)
+Constants.FADE_SHAPES = {
+    LINEAR = 0,                         -- Linear fade
+    FAST_START = 1,                     -- Fast start (log)
+    FAST_END = 2,                       -- Fast end (exp)
+    FAST_START_END = 3,                 -- Fast start/end
+    SLOW_START_END = 4,                 -- Slow start/end  
+    BEZIER = 5,                         -- Bezier curve
+    S_CURVE = 6,                        -- S-curve
+}
+
 -- Default Values
 Constants.DEFAULTS = {
     TRIGGER_RATE = 10.0,                -- Default trigger rate
@@ -71,6 +82,17 @@ Constants.DEFAULTS = {
     CHUNK_SILENCE = 5.0,                -- Default silence duration in seconds
     CHUNK_DURATION_VARIATION = 20,      -- Default chunk duration variation percentage
     CHUNK_SILENCE_VARIATION = 20,       -- Default silence duration variation percentage
+    -- Fade defaults
+    FADE_IN_ENABLED = false,            -- Default fade in state
+    FADE_OUT_ENABLED = false,           -- Default fade out state
+    FADE_IN_DURATION = 0.1,             -- Default fade in duration (seconds)
+    FADE_OUT_DURATION = 0.1,            -- Default fade out duration (seconds)
+    FADE_IN_USE_PERCENTAGE = false,     -- Use percentage by default
+    FADE_OUT_USE_PERCENTAGE = false,    -- Use percentage by default
+    FADE_IN_SHAPE = 0,                  -- Default to linear fade
+    FADE_OUT_SHAPE = 0,                 -- Default to linear fade
+    FADE_IN_CURVE = 0.0,                -- Default curve control
+    FADE_OUT_CURVE = 0.0,               -- Default curve control
 }
 
 return Constants

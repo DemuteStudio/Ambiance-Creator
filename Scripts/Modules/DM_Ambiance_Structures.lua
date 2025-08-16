@@ -38,7 +38,18 @@ function Structures.createGroup(name)
         chunkDuration = Constants.DEFAULTS.CHUNK_DURATION,
         chunkSilence = Constants.DEFAULTS.CHUNK_SILENCE,
         chunkDurationVariation = Constants.DEFAULTS.CHUNK_DURATION_VARIATION,
-        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION
+        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION,
+        -- Fade parameters
+        fadeInEnabled = Constants.DEFAULTS.FADE_IN_ENABLED,
+        fadeOutEnabled = Constants.DEFAULTS.FADE_OUT_ENABLED,
+        fadeInDuration = Constants.DEFAULTS.FADE_IN_DURATION,
+        fadeOutDuration = Constants.DEFAULTS.FADE_OUT_DURATION,
+        fadeInUsePercentage = Constants.DEFAULTS.FADE_IN_USE_PERCENTAGE,
+        fadeOutUsePercentage = Constants.DEFAULTS.FADE_OUT_USE_PERCENTAGE,
+        fadeInShape = Constants.DEFAULTS.FADE_IN_SHAPE,
+        fadeOutShape = Constants.DEFAULTS.FADE_OUT_SHAPE,
+        fadeInCurve = Constants.DEFAULTS.FADE_IN_CURVE,
+        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE
     }
 end
 
@@ -65,7 +76,18 @@ function Structures.createContainer(name)
         chunkDuration = Constants.DEFAULTS.CHUNK_DURATION,
         chunkSilence = Constants.DEFAULTS.CHUNK_SILENCE,
         chunkDurationVariation = Constants.DEFAULTS.CHUNK_DURATION_VARIATION,
-        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION
+        chunkSilenceVariation = Constants.DEFAULTS.CHUNK_SILENCE_VARIATION,
+        -- Fade parameters
+        fadeInEnabled = Constants.DEFAULTS.FADE_IN_ENABLED,
+        fadeOutEnabled = Constants.DEFAULTS.FADE_OUT_ENABLED,
+        fadeInDuration = Constants.DEFAULTS.FADE_IN_DURATION,
+        fadeOutDuration = Constants.DEFAULTS.FADE_OUT_DURATION,
+        fadeInUsePercentage = Constants.DEFAULTS.FADE_IN_USE_PERCENTAGE,
+        fadeOutUsePercentage = Constants.DEFAULTS.FADE_OUT_USE_PERCENTAGE,
+        fadeInShape = Constants.DEFAULTS.FADE_IN_SHAPE,
+        fadeOutShape = Constants.DEFAULTS.FADE_OUT_SHAPE,
+        fadeInCurve = Constants.DEFAULTS.FADE_IN_CURVE,
+        fadeOutCurve = Constants.DEFAULTS.FADE_OUT_CURVE
     }
 end
 
@@ -113,6 +135,18 @@ function Structures.getEffectiveContainerParams(group, container)
     effectiveParams.chunkSilence = group.chunkSilence
     effectiveParams.chunkDurationVariation = group.chunkDurationVariation
     effectiveParams.chunkSilenceVariation = group.chunkSilenceVariation
+    
+    -- Inherit fade settings
+    effectiveParams.fadeInEnabled = group.fadeInEnabled
+    effectiveParams.fadeOutEnabled = group.fadeOutEnabled
+    effectiveParams.fadeInDuration = group.fadeInDuration
+    effectiveParams.fadeOutDuration = group.fadeOutDuration
+    effectiveParams.fadeInUsePercentage = group.fadeInUsePercentage
+    effectiveParams.fadeOutUsePercentage = group.fadeOutUsePercentage
+    effectiveParams.fadeInShape = group.fadeInShape
+    effectiveParams.fadeOutShape = group.fadeOutShape
+    effectiveParams.fadeInCurve = group.fadeInCurve
+    effectiveParams.fadeOutCurve = group.fadeOutCurve
     
     return effectiveParams
 end
