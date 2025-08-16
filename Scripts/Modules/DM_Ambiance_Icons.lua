@@ -46,7 +46,8 @@ local function getIconPaths()
                 upload = scripts_dir .. separator .. "Icons" .. separator .. "export_share_upload_up_icon.png",
                 download = scripts_dir .. separator .. "Icons" .. separator .. "download_import_save_down_storage_icon.png",
                 settings = scripts_dir .. separator .. "Icons" .. separator .. "settings_icon.png",
-                folder = scripts_dir .. separator .. "Icons" .. separator .. "folder_icon.png"
+                folder = scripts_dir .. separator .. "Icons" .. separator .. "folder_icon.png",
+                add = scripts_dir .. separator .. "Icons" .. separator .. "+_add_increase_icon.png"
             }
         end
     end
@@ -58,7 +59,8 @@ local function getIconPaths()
         upload = "",
         download = "",
         settings = "",
-        folder = ""
+        folder = "",
+        add = ""
     }
 end
 
@@ -200,7 +202,26 @@ function Icons.loadIcons()
         iconTextures.folder = nil
     end
     
-    return iconTextures.delete ~= nil or iconTextures.regen ~= nil or iconTextures.upload ~= nil or iconTextures.download ~= nil or iconTextures.settings ~= nil or iconTextures.folder ~= nil
+    -- Try to load add icon from file
+    if fileExists(iconPaths.add) then
+        local success, result = pcall(function()
+            local img = globals.imgui.CreateImage(iconPaths.add)
+            if img then
+                globals.imgui.Attach(globals.ctx, img)
+            end
+            return img
+        end)
+        
+        if success and result then
+            iconTextures.add = result
+        else
+            iconTextures.add = nil
+        end
+    else
+        iconTextures.add = nil
+    end
+    
+    return iconTextures.delete ~= nil or iconTextures.regen ~= nil or iconTextures.upload ~= nil or iconTextures.download ~= nil or iconTextures.settings ~= nil or iconTextures.folder ~= nil or iconTextures.add ~= nil
 end
 
 -- Get icon size (48x48 based on actual icon files)
@@ -392,6 +413,30 @@ function Icons.getFolderIcon()
     return iconTextures.folder
 end
 
+-- Create an add icon button
+function Icons.createAddButton(ctx, id, tooltip)
+    if not iconTextures.add then
+        -- Fallback to text button if icon failed to load
+        local result = globals.imgui.Button(ctx, "+##" .. id)
+        if globals.imgui.IsItemHovered(ctx) then
+            globals.imgui.SetTooltip(ctx, tooltip or "Add")
+        end
+        return result
+    end
+    
+    local width, height = Icons.getIconSize()
+    
+    -- Use ImageButton with proper parameters (same format as other buttons)
+    local buttonId = "##ImgAdd_" .. id  -- ## prefix hides the label
+    local result = globals.imgui.ImageButton(ctx, buttonId, iconTextures.add, width, height)
+    
+    if globals.imgui.IsItemHovered(ctx) then
+        globals.imgui.SetTooltip(ctx, tooltip or "Add")
+    end
+    
+    return result
+end
+
 -- Check if icons are loaded successfully
 function Icons.isLoaded()
     return iconTextures.delete ~= nil and iconTextures.regen ~= nil
@@ -401,7 +446,8 @@ end
 function Icons.areAllLoaded()
     return iconTextures.delete ~= nil and iconTextures.regen ~= nil and 
            iconTextures.upload ~= nil and iconTextures.download ~= nil and
-           iconTextures.settings ~= nil and iconTextures.folder ~= nil
+           iconTextures.settings ~= nil and iconTextures.folder ~= nil and
+           iconTextures.add ~= nil
 end
 
 return Icons

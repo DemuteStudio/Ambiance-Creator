@@ -446,7 +446,22 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
             end
         end
 
-        -- Delete and regenerate buttons
+        -- Action buttons: Add, Delete, and Regenerate
+        imgui.SameLine(globals.ctx)
+        if globals.Icons.createAddButton(globals.ctx, groupId, "Add container") then
+            table.insert(group.containers, globals.Structures.createContainer())
+            clearContainerSelections()
+            local newContainerIndex = #group.containers
+            toggleContainerSelection(i, newContainerIndex)
+            globals.selectedGroupIndex = i
+            globals.selectedContainerIndex = newContainerIndex
+            globals.inMultiSelectMode = false
+            globals.shiftAnchorGroupIndex = i
+            globals.shiftAnchorContainerIndex = newContainerIndex
+            -- Ensure the group is expanded to show the new container
+            group.expanded = true
+        end
+        
         imgui.SameLine(globals.ctx)
         if globals.Icons.createDeleteButton(globals.ctx, groupId, "Delete group") then
             groupToDelete = i
@@ -458,18 +473,6 @@ function UI_Groups.drawGroupsPanel(width, isContainerSelected, toggleContainerSe
 
         -- If the group is open, display its content
         if groupOpen then
-            -- Add container button
-            if imgui.Button(globals.ctx, "Add Container##" .. groupId) then
-                table.insert(group.containers, globals.Structures.createContainer())
-                clearContainerSelections()
-                local newContainerIndex = #group.containers
-                toggleContainerSelection(i, newContainerIndex)
-                globals.selectedGroupIndex = i
-                globals.selectedContainerIndex = newContainerIndex
-                globals.inMultiSelectMode = false
-                globals.shiftAnchorGroupIndex = i
-                globals.shiftAnchorContainerIndex = newContainerIndex
-            end
 
             -- Help marker
             imgui.SameLine(globals.ctx)
