@@ -265,5 +265,17 @@ You can also customize the interface in the Settings.
             - Groups can now be reordered by dragging and dropping them
             - Containers can be moved between groups via drag and drop
             - REAPER track structure automatically reorganizes to match the new arrangement
-            - Visual feedback during drag operations shows what's being moved
-
+            - Visual feedback during drag operations shows what's being moved          
+    1.5
+        Volume Control Feature
+        UI Enhancement - PNG Icon Integration
+        Added Link Mode System for Randomization Parameters
+            - New link mode buttons for pitch, volume, and pan controls
+            - Three modes: Unlink (independent), Link (relative movement), Mirror (opposite movement)
+            - Default mode changed to Mirror for intuitive opposite behavior (e.g., pan -100/+100)
+        Fade Control System
+            - Added a fade system.
+            - Added link mode for fade in/out parameters with Link and Unlink modes only
+            - Fades enabled by default with 0.0 second duration for immediate availability
+            - Default fade link mode set to Link for synchronized fade behavior
+        Real Time Time Parameters and Fade Parameters
